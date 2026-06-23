@@ -2,7 +2,7 @@
 
 ## Current State
 
-This repository is initialized and contains planning/contract documentation plus the first implementation slice for a local-first AI-assisted study app. PR #7 merged issue #1 with a Bun/Vite/Hono runtime scaffold, minimal Mneme app shell, health route, and unit smoke test.
+This repository is initialized and contains planning/contract documentation plus implementation slices for a local-first AI-assisted study app. PR #7 merged issue #1 with a Bun/Vite/Hono runtime scaffold, minimal Mneme app shell, health route, and unit smoke test. PR #8 implements issue #2 with Markdown excerpt import, source attribution, local SQLite persistence, and import-result UI.
 
 Git:
 
@@ -76,8 +76,11 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Owns: package/config, initial app/server folders, smoke tests
 
 2. [#2 Import chapter excerpt with source attribution](https://github.com/Jayanth-Balasubramanian/mneme/issues/2)
-   - State: `ready-for-agent`
-   - Blocked by: none; issue 1 is merged
+   - State: `state:ready-for-review`
+   - PR: [#8 Import chapter excerpts with source attribution](https://github.com/Jayanth-Balasubramanian/mneme/pull/8)
+   - Review gates: pending code hygiene, security, and documentation-agent review.
+   - CI: passing on PR #8 after the import slice checks.
+   - Blocked by: review gates
    - Owns: source metadata, source anchors, import flow, attribution display
 
 3. [#3 Generate validated lesson drafts with a mocked provider](https://github.com/Jayanth-Balasubramanian/mneme/issues/3)
@@ -105,3 +108,30 @@ GitHub is the source of truth for issue state. These issues have been created:
 1. Decide whether self-assessment remains the only PoC grading mode, or whether optional post-answer AI feedback is allowed.
 2. Decide whether deployed Cloudflare storage may retain full source Markdown, or whether full source text remains local-only.
 3. Choose the initial OpenAI model for the live adapter.
+
+## Latest Loop Run: Issue #2 Source Import
+
+Deliverables:
+
+- Added `POST /api/chapter-sources` for user-supplied Markdown excerpt import.
+- Added source metadata validation, SHA-256 content hashing, Markdown paragraph source anchors, and source credit response shape.
+- Added local SQLite migration/repository support and activated `bun run db:migrate`.
+- Added a mobile-first import form with paste/upload support and an import result that credits *Deep Learning*, Chapter 17.
+- Updated CI to run a temp-path migration check.
+- Added ADR 0002 documenting the repository-first SQLite decision.
+
+Completed:
+
+- Local verification passed: `bun run typecheck`, `bun test`, `bun run lint`, `bun run build`, and `MNEME_DB_PATH=/private/tmp/mneme-issue-2-verification.sqlite bun run db:migrate`.
+- PR #8 was opened against `main` and linked to issue #2.
+
+Todos:
+
+- Run code hygiene, security, and documentation-agent review gates for PR #8.
+- Fix any review findings before moving issue #2 to `state:lgtm` or `state:ready-to-merge`.
+- After issue #2 merges, schedule issue #3 only after checking for shared-schema/API conflicts with the import slice.
+
+Issues:
+
+- Browser e2e remains deferred until the complete import -> generation -> review -> study path exists.
+- The local SQLite adapter is Bun-specific behind `src/server/db/`; Cloudflare D1 support should be added as a separate adapter later.
