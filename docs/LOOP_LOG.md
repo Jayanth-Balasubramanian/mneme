@@ -145,10 +145,18 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - Keep the loop autonomous and stop only for genuine human input blockers.
 - Coding-agent fallback: if `gpt-5.3-codex-spark` hits capacity or quality limits, use `gpt-5.5` with xhigh reasoning.
 
+### 2026-06-23T17:19Z
+
+- PR #9 review gates requested changes:
+  - Code hygiene: reject malformed mixed arrays in provider `conceptKeys` and source-anchor `headingPath`; do not let `provider: "openai"` succeed through the mock provider.
+  - Security: verify generated source anchors against the imported chapter source URL and server-derived anchors before persistence; do not expose or persist raw provider exception details as public generation output.
+- Moved issue #3 to `state:changes-requested`.
+- Scheduling a focused coding fix agent on the same branch before rerunning review gates.
+
 ## Queue Snapshot
 
 - #2 Import chapter excerpt with source attribution: `merged`; PR #8 merged; issue #2 closed.
-- #3 Generate validated lesson drafts with a mocked provider: `ready-for-review`; PR #9 open.
+- #3 Generate validated lesson drafts with a mocked provider: `changes-requested`; PR #9 open; fixes in progress.
 - #4 Review lesson units and regenerate a single unit: blocked by #3.
 - #5 Study approved units and record telemetry: blocked by #4.
 - #6 Expand CI with app-specific security tests and Cloudflare deployment: `needs-spec`.

@@ -89,11 +89,12 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Owns: source metadata, source anchors, import flow, attribution display
 
 3. [#3 Generate validated lesson drafts with a mocked provider](https://github.com/Jayanth-Balasubramanian/mneme/issues/3)
-   - State: `state:ready-for-review`
+   - State: `state:changes-requested`
    - Branch/worktree: `issue-3-mocked-generation` at `/private/tmp/mneme-issue-3`
    - PR: [#9 Generate validated lesson drafts with a mocked provider](https://github.com/Jayanth-Balasubramanian/mneme/pull/9)
    - Verification reported by coding subagent: `bun run typecheck`, `bun test`, `bun run lint`, `bun run build`, and `MNEME_DB_PATH=/private/tmp/mneme-issue-3-verification.sqlite bun run db:migrate`.
-   - Blocked by: code hygiene and security review gates
+   - Review gates: code hygiene and security requested fixes.
+   - Blocked by: focused review fixes on PR #9
    - Priority note: after this lands, continue toward a working guided lesson UI with checkpoint MCQs, accepting manually seeded lesson content from the credited public Chapter 17 source if needed.
    - Owns: `LessonGenerator` contract, output validation, generation runs
 
