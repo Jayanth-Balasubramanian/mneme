@@ -55,10 +55,10 @@ Workflow:
 - Use rebase-only integration.
 - At most two implementation agents should run in parallel.
 - Coding subagents use `gpt-5.3-codex-spark` with xhigh reasoning.
-- Code hygiene and security review subagents use `gpt-5.5` with xhigh reasoning and post findings as PR comments.
-- Documentation-agent review subagents use `gpt-5.5` with high reasoning and post findings as PR comments.
+- Code hygiene and security review subagents use `gpt-5.5` with xhigh reasoning. They remain PR review gates and post pass/fail findings as PR comments.
+- Documentation-agent updater subagents use `gpt-5.5` with high reasoning after code hygiene and security pass. They make scoped documentation updates directly and post a summary comment with the commit and verification; they are not repeated review or nitpick gates.
 - GitHub Actions owns CI, initially for policy/security checks and tests; later for continuous deployment.
-- Before merge, each implementation PR needs code hygiene review, security review, documentation-agent review, and a short feature video recorded with browser-harness or Chrome tooling.
+- Before merge, each implementation PR needs passing code hygiene and security review gates, scoped documentation cleanup after those gates pass, and a short feature video recorded with browser-harness or Chrome tooling.
 - `docs/LOOP_LOG.md` is the running proof-of-work log and should be monitored for live progress.
 
 Security posture:
@@ -82,9 +82,9 @@ GitHub is the source of truth for issue state. These issues have been created:
 2. [#2 Import chapter excerpt with source attribution](https://github.com/Jayanth-Balasubramanian/mneme/issues/2)
    - State: `state:ready-for-review`
    - PR: [#8 Import chapter excerpts with source attribution](https://github.com/Jayanth-Balasubramanian/mneme/pull/8)
-   - Review gates: initial code hygiene and documentation-agent fixes applied; follow-up review gates pending.
-   - CI: passing on PR #8 after `abe6f7b`.
-   - Blocked by: follow-up review gates and feature video before merge
+   - Review gates: code hygiene follow-up passed; security follow-up passed; documentation cleanup is being applied under the updated scoped-updater workflow.
+   - CI: must be checked after the documentation cleanup commit lands on PR #8.
+   - Blocked by: CI, feature video, and merge readiness
    - Owns: source metadata, source anchors, import flow, attribution display
 
 3. [#3 Generate validated lesson drafts with a mocked provider](https://github.com/Jayanth-Balasubramanian/mneme/issues/3)
@@ -129,10 +129,18 @@ Completed:
 - Local verification passed: `bun run typecheck`, `bun test`, `bun run lint`, `bun run build`, and `MNEME_DB_PATH=/private/tmp/mneme-issue-2-verification.sqlite bun run db:migrate`.
 - PR #8 was opened against `main` and linked to issue #2.
 
+Current PR #8 state:
+
+- Code hygiene follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/8#issuecomment-4781225906>.
+- Security follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/8#issuecomment-4781224173>.
+- The old documentation review comment is cleanup input, not a repeated review gate: <https://github.com/Jayanth-Balasubramanian/mneme/pull/8#issuecomment-4781248688>.
+- Documentation cleanup is being applied now.
+- Next gates are CI, feature video, and merge readiness.
+
 Todos:
 
-- Run code hygiene, security, and documentation-agent review gates for PR #8.
-- Fix any review findings before moving issue #2 to `state:lgtm` or `state:ready-to-merge`.
+- Check CI after the documentation cleanup commit lands on PR #8.
+- Record the feature video before moving issue #2 toward `state:ready-to-merge`.
 - After issue #2 merges, schedule issue #3 only after checking for shared-schema/API conflicts with the import slice.
 
 Issues:
