@@ -150,10 +150,11 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Blocked by: none
    - Owns: `bun run security:check`, scanner unit tests, CI security command wiring, and dry-run detector proof
    - Verification reported by implementation worker: `bun run security:check`, `bun run security:check --self-test`, `bun run typecheck`, `bun test`, `bun run lint`, `bun run build`, and `MNEME_DB_PATH=/tmp/mneme-security-ci.sqlite bun run db:migrate`. PR #13 GitHub Actions passed after the implementation push.
-   - Code hygiene passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/13#issuecomment-4783001530>.
-   - Security passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/13#issuecomment-4782997306>.
+   - Code hygiene passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/13#issuecomment-4783006606>.
+   - Security passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/13#issuecomment-4783007158>.
+   - Evidence video: `docs/artifacts/issue-12-security-checks.mp4`
    - Scoped documentation update: complete for README command text, security notes, test contract verification, handoff state, and loop log; no application code, tests, scripts, package config, or CI files were changed in the docs-updater pass.
-   - Remaining merge gates after the docs-updater pass: keep PR #13 GitHub Actions green on the final head, then rebase-merge. No feature video is required for this CI/security maintenance slice.
+   - Remaining merge gates after the evidence-video commit: keep PR #13 GitHub Actions green on the final head, then rebase-merge.
    - Implementation state: the security command scans executable Markdown/MDX rendering paths, required LLM validation coverage markers, known full Chapter 17 body-text signatures, tracked env/private-key/generated-artifact paths, common token-like values, and an in-memory synthetic secret-like fixture that must trip the detector before repository scanning proceeds.
 
 ## Remaining Human Inputs
