@@ -190,10 +190,19 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - Main-branch CI for the PR #9 merge completed successfully.
 - Issue #4 is now the next unblocked implementation slice. Keep it UI-focused so the app moves toward a working guided lesson with MCQ checkpoints.
 
+### 2026-06-23T17:45Z
+
+- Started issue #4, "Review lesson units and regenerate a single unit".
+- Branch/worktree: `issue-4-review-workflow` at `/private/tmp/mneme-issue-4`.
+- Issue #4 is `state:in-progress`.
+- The issue #4 worktree already contained WIP review UI/API changes, so a coding subagent is continuing that WIP rather than restarting.
+- Coding model: `gpt-5.5` with xhigh reasoning, using the user-approved fallback because this is a large UI-heavy WIP that needs cleanup as well as completion.
+- Issue #5 remains unscheduled because it overlaps the same UI/API/study path and depends on approved-unit review behavior from issue #4.
+
 ## Queue Snapshot
 
 - #2 Import chapter excerpt with source attribution: `merged`; PR #8 merged; issue #2 closed.
 - #3 Generate validated lesson drafts with a mocked provider: `merged`; PR #9 merged; issue #3 closed.
-- #4 Review lesson units and regenerate a single unit: `ready-for-agent`; next candidate, should stay UI-focused.
+- #4 Review lesson units and regenerate a single unit: `in-progress`; coding subagent active on `issue-4-review-workflow`.
 - #5 Study approved units and record telemetry: blocked by #4; next product priority is a working guided lesson UI with MCQ checkpoints.
 - #6 Expand CI with app-specific security tests and Cloudflare deployment: `needs-spec`.

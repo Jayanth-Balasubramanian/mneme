@@ -104,8 +104,10 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Owns: `LessonGenerator` contract, output validation, generation runs
 
 4. [#4 Review lesson units and regenerate a single unit](https://github.com/Jayanth-Balasubramanian/mneme/issues/4)
-   - State: `ready-for-agent`
+   - State: `state:in-progress`
+   - Branch/worktree: `issue-4-review-workflow` at `/private/tmp/mneme-issue-4`
    - Blocked by: none; issues 1-3 are merged
+   - Assignment: coding subagent continuing existing WIP with `gpt-5.5` xhigh because the slice is UI-heavy and already had substantial local edits.
    - Owns: review states, editing, approving/rejecting, single-unit regeneration
 
 5. [#5 Study approved units and record telemetry](https://github.com/Jayanth-Balasubramanian/mneme/issues/5)
