@@ -387,12 +387,24 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 
 ### 2026-06-23T20:05Z
 
-- PR #13 code hygiene passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/13#issuecomment-4783001530>.
-- PR #13 security passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/13#issuecomment-4782997306>.
+- PR #13 code hygiene passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/13#issuecomment-4783006606>.
+- PR #13 security passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/13#issuecomment-4783007158>.
 - GitHub issue #12 is labeled `state:lgtm`; PR #13 merge state is clean and CI is green.
 - Scoped documentation updater pass completed after the review gates. It aligned README command text, SECURITY self-test wording, TEST_CONTRACT verification, HANDOFF state, and this loop log. This was not a repeated review or nitpick gate.
-- Remaining merge gates after the docs-updater pass: keep PR #13 GitHub Actions green on the final head, then rebase-merge. No feature video is required for this CI/security maintenance slice.
+- Remaining merge gates after the docs-updater pass: command-evidence video, green checks at final PR head, then rebase-merge.
 - Cloudflare deployment remains out of scope for issue #12 and stays blocked under issue #6 pending target, secrets, rollback, and staging policy decisions.
+
+### 2026-06-23T20:10Z
+
+- Recorded the PR #13 command-evidence video using real command output rendered in isolated Chrome frames.
+- Video artifact: `docs/artifacts/issue-12-security-checks.mp4`.
+- Video evidence:
+  - Viewport: 1280 x 720.
+  - Duration: 8 seconds.
+  - Size: 155 KiB.
+  - Flow shown: issue #12 split summary, `bun run security:check --self-test` dry-run detector proof, `bun run security:check` repository scan result, and green PR #13 GitHub checks.
+- The evidence artifact contains no real secrets and no copied Chapter 17 text.
+- Final merge readiness now depends on green GitHub checks on the evidence-video commit.
 
 ## Queue Snapshot
 
@@ -401,4 +413,4 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - #4 Review lesson units and regenerate a single unit: `merged`; PR #10 merged; issue #4 closed.
 - #5 Study approved units and record telemetry: `merged`; PR #11 merged; issue #5 closed.
 - #6 Add Cloudflare deployment after target and secrets policy: `needs-human`; blocked on Cloudflare target/secrets/rollback decisions.
-- #12 Add app-specific CI security tests: `lgtm`; PR #13 open with code hygiene/security gates passed and scoped docs update applied.
+- #12 Add app-specific CI security tests: `lgtm`; PR #13 open with code hygiene/security/doc gates passed and command-evidence video recorded.
