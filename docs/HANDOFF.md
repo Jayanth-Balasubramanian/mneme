@@ -2,7 +2,7 @@
 
 ## Current State
 
-This repository is initialized and contains planning/contract documentation for a local-first AI-assisted study app. Issue #1 scaffolds the Bun/Vite/Hono runtime with a minimal Mneme app shell, health route, and unit smoke test.
+This repository is initialized and contains planning/contract documentation for a local-first AI-assisted study app. PR #7 implements issue #1 with a Bun/Vite/Hono runtime scaffold, minimal Mneme app shell, health route, and unit smoke test.
 
 Git:
 
@@ -60,7 +60,7 @@ Workflow:
 Security posture:
 
 - The repository is public, so agents must treat committed files, fixtures, logs, screenshots, and CI artifacts as public.
-- Public-repo policy checks belong in CI from day one. Dependabot and deeper dependency security checks should be enabled after `package.json` exists.
+- Public-repo policy checks belong in CI from day one. Dependabot and deeper dependency security checks are ready follow-up work now that `package.json` exists; track the broader CI/security expansion under issue #6.
 - Full copyrighted chapter text must not be committed without explicit reuse rights.
 
 ## GitHub Issues
@@ -68,7 +68,9 @@ Security posture:
 GitHub is the source of truth for issue state. These issues have been created:
 
 1. [#1 Scaffold local Bun/Vite/Hono app](https://github.com/Jayanth-Balasubramanian/mneme/issues/1)
-   - State: implementation recovered into branch `issue-1-scaffold`; move through PR review before merge
+   - State: `state:ready-for-review`
+   - PR: [#7 Scaffold local Bun/Vite/Hono app](https://github.com/Jayanth-Balasubramanian/mneme/pull/7)
+   - Review gates: code hygiene requested a `typecheck` fix; documentation requested scaffold-doc updates; security passed.
    - Blocked by: none
    - Owns: package/config, initial app/server folders, smoke tests
 

@@ -49,12 +49,17 @@ bun run dev
 bun test
 bun run typecheck
 bun run lint
+bun run test:e2e
+bun run db:migrate
+bun run db:studio
 bun run build
 ```
 
 `bun run dev` starts the Hono API and Vite web app together. Override local ports with `API_PORT` and `WEB_PORT` when defaults are occupied.
 
 The initial runtime smoke endpoint is `GET /api/health`.
+
+`test:e2e`, `db:migrate`, and `db:studio` are stable command placeholders in the scaffold. They print an explicit deferred message until the UI flow and persistence slices land.
 
 ## CI
 
