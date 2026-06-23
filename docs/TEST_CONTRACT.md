@@ -81,7 +81,7 @@ Behavior:
 
 - A user can edit, approve, reject, or mark one lesson unit as `needs_regeneration`.
 - A user can edit checkpoint prompt, expected answer, and rubric content before approval.
-- Review responses include bounded source context derived from stored chapter Markdown and source anchors.
+- Review responses include bounded source context derived from stored chapter Markdown and source anchors, without returning full chapter dumps.
 - Regeneration targets a single lesson unit and preserves the rest of the lesson draft.
 - Regeneration validates provider output and source-anchor provenance before replacing the unit.
 - Only approved units are studyable.
@@ -94,7 +94,7 @@ Tests:
 - Integration: lesson-unit responses include bounded source-context snippets.
 - Integration: checkpoint edits survive save and approval into the study path.
 - Integration: unit-level regeneration replaces one unit and leaves other unit IDs/content unchanged.
-- Integration: invalid regenerated output and invalid regenerated anchors save failed generation runs and leave the existing unit unchanged.
+- Integration: invalid regenerated output and invalid regenerated anchors save failed generation runs and leave the existing unit plus all other units unchanged.
 - Browser: review screen can approve one unit and exclude rejected/draft units from study.
 
 Verification:

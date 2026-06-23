@@ -231,7 +231,7 @@ type LessonUnitListResponse = {
 };
 ```
 
-Lesson-unit responses include bounded `sourceContext` snippets derived from the stored chapter Markdown and the unit's `sourceAnchors`. The API must not return the full chapter Markdown as review context.
+Lesson-unit responses include bounded `sourceContext` snippets derived from the stored chapter Markdown and the unit's `sourceAnchors`. The API must return only review-sized snippets around matched anchors, not the full chapter Markdown or unbounded source dumps.
 
 ## `PATCH /api/lesson-units/:id`
 
@@ -338,7 +338,7 @@ Verification:
 - Preserve all other lesson units in the draft.
 - Use the original unit's concept keys, source anchors, source context, and reviewer notes.
 - Validate regenerated provider output with the same generated-output and provenance checks as initial generation before saving a successful generation run or replacing the unit.
-- Save invalid regenerated output, invalid regenerated anchors, and provider exceptions as failed generation runs with sanitized error text, leaving the existing unit unchanged.
+- Save invalid regenerated output, invalid regenerated anchors, and provider exceptions as failed generation runs with sanitized error text, leaving the existing unit and every other unit unchanged.
 
 ## `GET /api/study-paths/:chapterSourceId`
 
