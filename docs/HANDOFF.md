@@ -7,7 +7,9 @@ This repository is initialized locally and contains planning/contract documentat
 Git:
 
 - Branch: `main`
-- Initial commit: `1b365db docs: initialize study app planning loop`
+- Commits:
+  - `1b365db docs: initialize study app planning loop`
+  - `18d77a6 docs: move issue queue to GitHub workflow`
 - Remote: not configured
 
 GitHub:
