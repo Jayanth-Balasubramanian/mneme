@@ -1,6 +1,7 @@
 import { Database } from "bun:sqlite";
 
 import { SQLiteChapterSourceRepository } from "./chapterSources";
+import { SQLiteGenerationPersistence } from "./generation";
 import { migrateDatabase } from "./migrations";
 
 export function getLocalDatabasePath(): string {
@@ -17,4 +18,10 @@ export function createLocalChapterSourceRepository(
   path = getLocalDatabasePath(),
 ): SQLiteChapterSourceRepository {
   return new SQLiteChapterSourceRepository(openLocalDatabase(path));
+}
+
+export function createLocalGenerationRepository(
+  path = getLocalDatabasePath(),
+): SQLiteGenerationPersistence {
+  return new SQLiteGenerationPersistence(openLocalDatabase(path));
 }

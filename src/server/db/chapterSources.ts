@@ -1,11 +1,28 @@
 import type { Database } from "bun:sqlite";
 
 import { toSourceCredit, type PreparedChapterSource } from "../../domain/source";
-import type { ChapterSourceResponse, SourceAnchor } from "../../shared/source";
+import type {
+  ChapterSourceResponse,
+  SourceAnchor,
+  SourceCredit,
+} from "../../shared/source";
+
+type ChapterSourceGenerationContext = {
+  id: string;
+  bookTitle: string;
+  chapterTitle: string;
+  sourceUrl: string;
+  markdown: string;
+  anchors: SourceAnchor[];
+  sourceCredit: SourceCredit;
+};
 
 export type ChapterSourceRepository = {
   create(source: PreparedChapterSource): Promise<ChapterSourceResponse>;
   findById(id: string): Promise<ChapterSourceResponse | null>;
+  findGenerationContextById(
+    id: string,
+  ): Promise<ChapterSourceGenerationContext | null>;
 };
 
 type ChapterSourceRow = {
@@ -185,5 +202,68 @@ export class SQLiteChapterSourceRepository implements ChapterSourceRepository {
       .get(id);
 
     return row ? mapChapterSourceRow(row) : null;
+  }
+
+  async findGenerationContextById(
+    id: string,
+  ): Promise<ChapterSourceGenerationContext | null> {
+    const row = this.database
+      .query<
+        {
+          id: string;
+          markdown: string;
+          book_title: string;
+          chapter_title: string;
+          source_url: string;
+          anchors_json: string;
+          authors_json: string;
+          publisher: string | null;
+          year: number | null;
+          chapter_number: string | null;
+          citation_text: string;
+        },
+        [string]
+      >(
+        `
+          SELECT
+            id,
+            markdown,
+            book_title,
+            chapter_title,
+            source_url,
+            anchors_json,
+            authors_json,
+            publisher,
+            year,
+            chapter_number,
+            citation_text
+          FROM chapter_sources
+          WHERE id = ?
+        `,
+      )
+      .get(id);
+
+    if (!row) {
+      return null;
+    }
+
+    return {
+      id: row.id,
+      bookTitle: row.book_title,
+      chapterTitle: row.chapter_title,
+      sourceUrl: row.source_url,
+      markdown: row.markdown,
+      anchors: parseSourceAnchors(row.anchors_json),
+      sourceCredit: {
+        title: row.book_title,
+        authors: parseStringArray(row.authors_json),
+        publisher: row.publisher ?? undefined,
+        year: row.year ?? undefined,
+        chapterTitle: row.chapter_title,
+        chapterNumber: row.chapter_number ?? undefined,
+        sourceUrl: row.source_url,
+        citationText: row.citation_text,
+      },
+    };
   }
 }
