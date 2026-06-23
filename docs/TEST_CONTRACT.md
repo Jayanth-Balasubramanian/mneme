@@ -105,7 +105,7 @@ Verification:
 
 Notes:
 
-- `bun run test:e2e` runs the mobile import -> mock generation -> approval -> study checkpoint attempt browser flow against a temporary SQLite database.
+- `bun run test:e2e` runs the mobile import -> mock generation -> approval -> study checkpoint attempt flow in headless Chrome against a temporary SQLite database.
 
 ## Study And Telemetry
 
@@ -129,7 +129,7 @@ Verification:
 
 Note:
 
-- `test:e2e` validates the visible study transition states with browser DOM interactions and checks that a wrong or partial checkpoint attempt creates weak-concept feedback.
+- `test:e2e` validates the visible study transition states with real browser DOM interactions and checks that a wrong or partial checkpoint attempt creates weak-concept feedback.
 
 ## Repository And Security Gates
 
