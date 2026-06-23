@@ -39,8 +39,25 @@ Agents and reviewers must audit for:
 - `docs/SOURCES.md`: source credit.
 - `docs/HANDOFF.md`: senior-engineer handoff.
 
+## Local Development
+
+Use Bun for all package and project commands.
+
+```bash
+bun install
+bun run dev
+bun test
+bun run typecheck
+bun run lint
+bun run build
+```
+
+`bun run dev` starts the Hono API and Vite web app together. Override local ports with `API_PORT` and `WEB_PORT` when defaults are occupied.
+
+The initial runtime smoke endpoint is `GET /api/health`.
+
 ## CI
 
-GitHub Actions runs on pushes to `main` and pull requests. Initial CI is docs/security aware and will run Bun-based project commands once the app is scaffolded.
+GitHub Actions runs on pushes to `main` and pull requests. CI runs the Bun project checks when `package.json` exists and keeps public-repo policy checks for secrets, `.env` files, generated build artifacts, and full chapter text.
 
-Dependabot and deeper dependency security checks should be enabled after `package.json` exists.
+Dependabot and deeper dependency security checks should be enabled after the dependency baseline settles.
