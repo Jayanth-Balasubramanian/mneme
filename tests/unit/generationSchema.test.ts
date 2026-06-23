@@ -24,6 +24,178 @@ describe("generation request schema", () => {
       },
     });
   });
+
+  test("accepts checkpoint patch updates", () => {
+    const result = parseUpdateLessonUnitRequest({
+      checkpointPatches: [
+        {
+          checkpointId: "checkpoint-1",
+          promptMd: "Reworded prompt",
+          expectedAnswerMd: "Reworded answer",
+          rubric: [
+            {
+              rating: "wrong",
+              description: "No clear sample-based explanation.",
+            },
+            {
+              rating: "partial",
+              description: "Some explanation present.",
+            },
+            {
+              rating: "correct",
+              description: "Correct explanation given.",
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      value: {
+        checkpointPatches: [
+          {
+            checkpointId: "checkpoint-1",
+            promptMd: "Reworded prompt",
+            expectedAnswerMd: "Reworded answer",
+            rubric: [
+              {
+                rating: "wrong",
+                description: "No clear sample-based explanation.",
+              },
+              {
+                rating: "partial",
+                description: "Some explanation present.",
+              },
+              {
+                rating: "correct",
+                description: "Correct explanation given.",
+              },
+            ],
+          },
+        ],
+      },
+    });
+  });
+
+  test("accepts checkpoint replacements", () => {
+    const result = parseUpdateLessonUnitRequest({
+      checkpointReplacements: [
+        {
+          promptMd: "Replacement prompt",
+          expectedAnswerMd: "Replacement answer",
+          rubric: [
+            {
+              rating: "wrong",
+              description: "Needs all three samples.",
+            },
+            {
+              rating: "partial",
+              description: "Mentions a partial idea.",
+            },
+            {
+              rating: "correct",
+              description: "Provides full response.",
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      value: {
+        checkpointReplacements: [
+          {
+            promptMd: "Replacement prompt",
+            expectedAnswerMd: "Replacement answer",
+            rubric: [
+              {
+                rating: "wrong",
+                description: "Needs all three samples.",
+              },
+              {
+                rating: "partial",
+                description: "Mentions a partial idea.",
+              },
+              {
+                rating: "correct",
+                description: "Provides full response.",
+              },
+            ],
+          },
+        ],
+      },
+    });
+  });
+
+  test("rejects empty checkpoint patch arrays", () => {
+    expect(parseUpdateLessonUnitRequest({ checkpointPatches: [] })).toEqual({
+      ok: false,
+      issues: [
+        {
+          field: "checkpointPatches",
+          message: "Expected at least one valid checkpoint patch.",
+        },
+      ],
+    });
+  });
+
+  test("rejects simultaneous checkpoint patch and replacement payloads", () => {
+    expect(
+      parseUpdateLessonUnitRequest({
+        checkpointPatches: [
+          {
+            checkpointId: "checkpoint-1",
+            promptMd: "Reworded prompt",
+            expectedAnswerMd: "Reworded answer",
+            rubric: [
+              {
+                rating: "wrong",
+                description: "No clear sample-based explanation.",
+              },
+              {
+                rating: "partial",
+                description: "Some explanation present.",
+              },
+              {
+                rating: "correct",
+                description: "Correct explanation given.",
+              },
+            ],
+          },
+        ],
+        checkpointReplacements: [
+          {
+            promptMd: "Replacement prompt",
+            expectedAnswerMd: "Replacement answer",
+            rubric: [
+              {
+                rating: "wrong",
+                description: "Needs all three samples.",
+              },
+              {
+                rating: "partial",
+                description: "Mentions a partial idea.",
+              },
+              {
+                rating: "correct",
+                description: "Provides full response.",
+              },
+            ],
+          },
+        ],
+      }),
+    ).toEqual({
+      ok: false,
+      issues: [
+        {
+          field: "body",
+          message: "Cannot provide both checkpointPatches and checkpointReplacements.",
+        },
+      ],
+    });
+  });
 });
 
 describe("lesson generation draft validation", () => {

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+  extractSourceContextFromAnchors,
   assertUsableSourceAnchors,
   createMarkdownContentHash,
   deriveSourceAnchors,
@@ -120,5 +121,48 @@ describe("source anchors and hashes", () => {
       sourceUrl: sourceMetadata.sourceUrl,
       citationText: sourceMetadata.citationText,
     });
+  });
+
+  test("extracts bounded source context around anchors", () => {
+    const markdown = [
+      "# Sampling",
+      "",
+      "Paragraph one introduces the setup.",
+      "",
+      "Paragraph two gives a basic analogy.",
+      "",
+      "## Estimators",
+      "",
+      "Paragraph three motivates estimation.",
+      "",
+      "Paragraph four discusses variance.",
+      "",
+      "Paragraph five closes the section.",
+    ].join("\n");
+
+    const context = extractSourceContextFromAnchors(
+      markdown,
+      [
+        {
+          headingPath: ["Sampling", "Estimators"],
+          paragraphStart: 3,
+          paragraphEnd: 3,
+          sourceUrl: sourceMetadata.sourceUrl,
+        },
+      ],
+      {
+        contextRadius: 1,
+        maxParagraphs: 4,
+      },
+    );
+
+    expect(context).toHaveLength(3);
+    expect(context[0].paragraphIndex).toBe(2);
+    expect(context[1].paragraphIndex).toBe(3);
+    expect(context[2].paragraphIndex).toBe(4);
+    expect(context[2].headingPath).toEqual(["Sampling", "Estimators"]);
+    expect(context.map((snippet) => snippet.text)).toContain(
+      "Paragraph three motivates estimation.",
+    );
   });
 });

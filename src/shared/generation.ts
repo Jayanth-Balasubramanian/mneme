@@ -1,4 +1,8 @@
-import type { SourceAnchor, SourceCredit } from "./source";
+import type {
+  SourceAnchor,
+  SourceContextSnippet,
+  SourceCredit,
+} from "./source";
 
 export type ValidationIssue = {
   field: string;
@@ -20,6 +24,13 @@ export type LessonGenerationCheckpoint = {
   promptMd: string;
   expectedAnswerMd: string;
   rubric: LessonGenerationRubricItem[];
+};
+
+export type UpdateCheckpointPatch = {
+  checkpointId: string;
+  promptMd?: string;
+  expectedAnswerMd?: string;
+  rubric?: LessonGenerationRubricItem[];
 };
 
 export type LessonGenerationUnit = {
@@ -98,6 +109,7 @@ export type LessonUnitResponse = {
   reviewStatus: ReviewStatus;
   reviewerNotes?: string;
   checkpoints: CheckpointResponse[];
+  sourceContext?: SourceContextSnippet[];
   sourceCredit: SourceCredit;
   createdAt: string;
   updatedAt: string;
@@ -115,6 +127,8 @@ export type UpdateLessonUnitRequest = {
   notationMd?: string;
   exampleMd?: string;
   misconceptionMd?: string;
+  checkpointPatches?: UpdateCheckpointPatch[];
+  checkpointReplacements?: LessonGenerationCheckpoint[];
   reviewerNotes?: string;
   reviewStatus?: ReviewStatus;
 };
@@ -282,7 +296,17 @@ function readRubric(
   value: unknown,
   field: string,
   issues: ValidationIssue[],
+  required = true,
 ): LessonGenerationRubricItem[] {
+  if (value === undefined) {
+    if (!required) {
+      return [];
+    }
+
+    issues.push({ field, message: "Expected at least one rubric item." });
+    return [];
+  }
+
   if (!Array.isArray(value) || value.length === 0) {
     issues.push({ field, message: "Expected at least one rubric item." });
     return [];
@@ -470,6 +494,176 @@ function readOptionalSourceAnchors(
   }
 
   return result.value;
+}
+
+function parseUpdateCheckpointPatch(
+  rawPatch: unknown,
+  field: string,
+  index: number,
+  issues: ValidationIssue[],
+): UpdateCheckpointPatch | undefined {
+  if (!isRecord(rawPatch)) {
+    issues.push({
+      field: `${field}[${index}]`,
+      message: "Expected a checkpoint patch object.",
+    });
+    return undefined;
+  }
+
+  const checkpointId = readRequiredString(rawPatch, "checkpointId", issues);
+  const promptMd = readOptionalUpdatableString(
+    rawPatch,
+    "promptMd",
+    issues,
+  );
+  const expectedAnswerMd = readOptionalUpdatableString(
+    rawPatch,
+    "expectedAnswerMd",
+    issues,
+  );
+  const hasRubric = Object.prototype.hasOwnProperty.call(
+    rawPatch,
+    "rubric",
+  );
+  const rubricRaw = (rawPatch as Record<string, unknown>).rubric;
+  const rubric = hasRubric
+    ? readRubric(rubricRaw, `${field}[${index}].rubric`, issues, true)
+    : [];
+
+  if (
+    checkpointId.length === 0 ||
+    (promptMd === undefined &&
+      expectedAnswerMd === undefined &&
+      rubric.length === 0 &&
+      !hasRubric)
+  ) {
+    if (checkpointId.length > 0) {
+      issues.push({
+        field: `${field}[${index}]`,
+        message: "Expected at least one editable checkpoint field.",
+      });
+    }
+
+    return undefined;
+  }
+
+  if (checkpointId.length === 0) {
+    return undefined;
+  }
+
+  return {
+    ...{ checkpointId },
+    ...(promptMd === undefined ? {} : { promptMd }),
+    ...(expectedAnswerMd === undefined ? {} : { expectedAnswerMd }),
+    ...(rubric.length === 0 ? {} : { rubric }),
+  };
+}
+
+function parseCheckpointReplacements(
+  rawCheckpoints: unknown,
+  field: string,
+  issues: ValidationIssue[],
+): LessonGenerationCheckpoint[] | undefined {
+  if (rawCheckpoints === undefined) {
+    return undefined;
+  }
+
+  if (!Array.isArray(rawCheckpoints)) {
+    issues.push({
+      field,
+      message: "Expected an array.",
+    });
+    return undefined;
+  }
+
+  if (rawCheckpoints.length === 0) {
+    issues.push({
+      field,
+      message: "Expected at least one checkpoint.",
+    });
+    return [];
+  }
+
+  const checkpoints: LessonGenerationCheckpoint[] = [];
+
+  for (let index = 0; index < rawCheckpoints.length; index += 1) {
+    const rawCheckpoint = rawCheckpoints[index];
+
+    if (!isRecord(rawCheckpoint)) {
+      issues.push({
+        field: `${field}[${index}]`,
+        message: "Expected a checkpoint object.",
+      });
+      continue;
+    }
+
+    const promptMd = readRequiredString(
+      rawCheckpoint,
+      "promptMd",
+      issues,
+    );
+    const expectedAnswerMd = readRequiredString(
+      rawCheckpoint,
+      "expectedAnswerMd",
+      issues,
+    );
+    const rubric = readRubric(
+      rawCheckpoint.rubric,
+      `${field}[${index}].rubric`,
+      issues,
+    );
+
+    if (promptMd && expectedAnswerMd && rubric.length > 0) {
+      checkpoints.push({
+        promptMd,
+        expectedAnswerMd,
+        rubric,
+      });
+    }
+  }
+
+  return checkpoints;
+}
+
+function parseCheckpointPatches(
+  input: Record<string, unknown>,
+  field: string,
+  issues: ValidationIssue[],
+): UpdateCheckpointPatch[] | undefined {
+  const rawValue = input[field];
+
+  if (rawValue === undefined) {
+    return undefined;
+  }
+
+  if (!Array.isArray(rawValue)) {
+    issues.push({
+      field,
+      message: "Expected an array.",
+    });
+    return undefined;
+  }
+
+  const updates: UpdateCheckpointPatch[] = [];
+
+  for (let index = 0; index < rawValue.length; index += 1) {
+    const patch = parseUpdateCheckpointPatch(
+      rawValue[index],
+      field,
+      index,
+      issues,
+    );
+
+    if (patch) {
+      updates.push(patch);
+    }
+  }
+
+  if (rawValue.length > 0 && updates.length === 0) {
+    return [];
+  }
+
+  return updates;
 }
 
 export function parseCreateGenerationRunRequest(
@@ -701,11 +895,48 @@ export function parseUpdateLessonUnitRequest(
     "reviewerNotes",
     issues,
   );
+  const checkpointPatches = parseCheckpointPatches(
+    payload,
+    "checkpointPatches",
+    issues,
+  );
+  const checkpointReplacements = parseCheckpointReplacements(
+    payload.checkpointReplacements,
+    "checkpointReplacements",
+    issues,
+  );
 
   const hasReviewStatus = payload.reviewStatus !== undefined;
   const reviewStatus = !hasReviewStatus
     ? undefined
     : readRequiredReviewStatus(payload, "reviewStatus", issues);
+
+  if (
+    checkpointPatches !== undefined &&
+    checkpointReplacements !== undefined
+  ) {
+    issues.push({
+      field: "body",
+      message: "Cannot provide both checkpointPatches and checkpointReplacements.",
+    });
+  }
+
+  if (checkpointPatches !== undefined && checkpointPatches.length === 0) {
+    issues.push({
+      field: "checkpointPatches",
+      message: "Expected at least one valid checkpoint patch.",
+    });
+  }
+
+  if (
+    checkpointReplacements !== undefined &&
+    checkpointReplacements.length === 0
+  ) {
+    issues.push({
+      field: "checkpointReplacements",
+      message: "Expected at least one checkpoint replacement.",
+    });
+  }
 
   if (
     title === undefined &&
@@ -716,6 +947,8 @@ export function parseUpdateLessonUnitRequest(
     exampleMd === undefined &&
     misconceptionMd === undefined &&
     reviewerNotes === undefined &&
+    checkpointPatches === undefined &&
+    checkpointReplacements === undefined &&
     !hasReviewStatus
   ) {
     issues.push({
@@ -740,6 +973,10 @@ export function parseUpdateLessonUnitRequest(
       ...(notationMd === undefined ? {} : { notationMd }),
       ...(exampleMd === undefined ? {} : { exampleMd }),
       ...(misconceptionMd === undefined ? {} : { misconceptionMd }),
+      ...(checkpointPatches === undefined ? {} : { checkpointPatches }),
+      ...(checkpointReplacements === undefined
+        ? {}
+        : { checkpointReplacements }),
       ...(reviewerNotes === undefined ? {} : { reviewerNotes }),
       ...(reviewStatus === undefined ? {} : { reviewStatus }),
     },

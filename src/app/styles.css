@@ -311,6 +311,32 @@ p {
   font-size: 0.9rem;
 }
 
+.unit-card__source-context {
+  margin: 0;
+  border: 1px solid #d8e1ec;
+  border-radius: 0.5rem;
+  padding: 0.75rem 0.9rem;
+  background: #f8fafc;
+}
+
+.unit-card__source-context summary {
+  cursor: pointer;
+  color: #16453c;
+  font-weight: 800;
+}
+
+.unit-card__source-context ol {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.5rem 0 0;
+  padding-left: 1.15rem;
+}
+
+.unit-card__source-context li {
+  color: #415166;
+  line-height: 1.35;
+}
+
 .unit-card label {
   display: grid;
   gap: 0.45rem;
@@ -346,6 +372,20 @@ p {
   gap: 0.35rem;
   margin: 0.5rem 0 0;
   padding-left: 1.25rem;
+}
+
+.checkpoint-rubric {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.checkpoint-rubric__item {
+  display: grid;
+  gap: 0.45rem;
+  border: 1px solid #d8e1ec;
+  border-radius: 0.5rem;
+  padding: 0.6rem;
+  background: #ffffff;
 }
 
 .study-units-preview {

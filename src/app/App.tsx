@@ -10,6 +10,7 @@ import type {
 import type {
   CreateGenerationRunRequest,
   GenerationRunResponse,
+  LessonGenerationRubricItem,
   LessonUnitResponse,
   RegenerateLessonUnitRequest,
   ReviewStatus,
@@ -43,6 +44,14 @@ type LessonUnitDraft = {
   misconceptionMd: string;
   reviewerNotes: string;
   reviewStatus: ReviewStatus;
+  checkpoints: CheckpointDraft[];
+};
+
+type CheckpointDraft = {
+  id: string;
+  promptMd: string;
+  expectedAnswerMd: string;
+  rubric: LessonGenerationRubricItem[];
 };
 
 const deepLearningDefaults: ImportFormState = {
@@ -106,6 +115,14 @@ function toLessonUnitDraft(unit: LessonUnitResponse): LessonUnitDraft {
     misconceptionMd: unit.misconceptionMd ?? "",
     reviewerNotes: unit.reviewerNotes ?? "",
     reviewStatus: unit.reviewStatus,
+    checkpoints: unit.checkpoints.map((checkpoint) => ({
+      id: checkpoint.id,
+      promptMd: checkpoint.promptMd,
+      expectedAnswerMd: checkpoint.expectedAnswerMd,
+      rubric: checkpoint.rubric.map((rubricItem) => ({
+        ...rubricItem,
+      })),
+    })),
   };
 }
 
@@ -235,6 +252,16 @@ function formatSourceAnchors(units: LessonUnitResponse): string {
     .join("; ");
 }
 
+function formatSourceContext(unit: LessonUnitResponse): string[] {
+  return unit.sourceContext?.map((snippet) => {
+    const heading = snippet.headingPath.length > 0
+      ? snippet.headingPath.join(" » ")
+      : "Untitled section";
+
+    return `[${snippet.paragraphIndex}] ${heading}: ${snippet.text.trim()}`;
+  }) ?? [];
+}
+
 function buildUnitPayload(draft: LessonUnitDraft): UpdateLessonUnitRequest {
   return {
     title: draft.title,
@@ -245,7 +272,80 @@ function buildUnitPayload(draft: LessonUnitDraft): UpdateLessonUnitRequest {
     exampleMd: draft.exampleMd,
     misconceptionMd: draft.misconceptionMd,
     reviewerNotes: draft.reviewerNotes,
-    reviewStatus: draft.reviewStatus,
+  };
+}
+
+function buildCheckpointEdits(
+  current: LessonUnitResponse,
+  draft: LessonUnitDraft,
+): Pick<
+  UpdateLessonUnitRequest,
+  "checkpointPatches" | "checkpointReplacements"
+> {
+  const hasCheckpointMismatch =
+    current.checkpoints.length !== draft.checkpoints.length ||
+    draft.checkpoints.some((checkpointDraft, index) => {
+      const currentCheckpoint = current.checkpoints[index];
+      return !currentCheckpoint || currentCheckpoint.id !== checkpointDraft.id;
+    });
+
+  if (hasCheckpointMismatch) {
+    return {
+      checkpointReplacements: draft.checkpoints.map((checkpoint) => ({
+        promptMd: checkpoint.promptMd,
+        expectedAnswerMd: checkpoint.expectedAnswerMd,
+        rubric: checkpoint.rubric,
+      })),
+    };
+  }
+
+  const patches: NonNullable<UpdateLessonUnitRequest["checkpointPatches"]> = [];
+
+  for (const [index, checkpointDraft] of draft.checkpoints.entries()) {
+    const currentCheckpoint = current.checkpoints[index]!;
+
+    const checkpointPatch: NonNullable<
+      UpdateLessonUnitRequest["checkpointPatches"]
+    >[number] = {
+      checkpointId: checkpointDraft.id,
+    };
+    let hasPatch = false;
+
+    if (checkpointDraft.promptMd !== currentCheckpoint.promptMd) {
+      checkpointPatch.promptMd = checkpointDraft.promptMd;
+      hasPatch = true;
+    }
+
+    if (checkpointDraft.expectedAnswerMd !== currentCheckpoint.expectedAnswerMd) {
+      checkpointPatch.expectedAnswerMd = checkpointDraft.expectedAnswerMd;
+      hasPatch = true;
+    }
+
+    if (
+      JSON.stringify(checkpointDraft.rubric) !==
+      JSON.stringify(currentCheckpoint.rubric)
+    ) {
+      checkpointPatch.rubric = checkpointDraft.rubric;
+      hasPatch = true;
+    }
+
+    if (hasPatch) {
+      patches.push(checkpointPatch);
+    }
+  }
+
+  return patches.length > 0 ? { checkpointPatches: patches } : {};
+}
+
+function buildLessonUnitPayload(
+  unit: LessonUnitResponse,
+  draft: LessonUnitDraft,
+): UpdateLessonUnitRequest {
+  const checkpointEdits = buildCheckpointEdits(unit, draft);
+
+  return {
+    ...buildUnitPayload(draft),
+    ...checkpointEdits,
   };
 }
 
@@ -295,6 +395,79 @@ export function App() {
         [field]: value,
       },
     }));
+  }
+
+  function setCheckpointDraftField(
+    unitId: string,
+    checkpointId: string,
+    field: keyof Omit<CheckpointDraft, "id">,
+    value: string,
+  ): void {
+    setEditDrafts((current) => {
+      const draft = current[unitId];
+
+      if (!draft) {
+        return current;
+      }
+
+      const nextCheckpoints = draft.checkpoints.map((checkpoint) =>
+        checkpoint.id === checkpointId
+          ? { ...checkpoint, [field]: value }
+          : checkpoint,
+      );
+
+      return {
+        ...current,
+        [unitId]: {
+          ...draft,
+          checkpoints: nextCheckpoints,
+        },
+      };
+    });
+  }
+
+  function setCheckpointRubricField(
+    unitId: string,
+    checkpointId: string,
+    itemIndex: number,
+    field: keyof LessonGenerationRubricItem,
+    value: string,
+  ): void {
+    setEditDrafts((current) => {
+      const draft = current[unitId];
+
+      if (!draft) {
+        return current;
+      }
+
+      const nextCheckpoints = draft.checkpoints.map((checkpoint) => {
+        if (checkpoint.id !== checkpointId) {
+          return checkpoint;
+        }
+
+        const nextRubric = checkpoint.rubric.map((rubricItem, rubricIndex) =>
+          rubricIndex === itemIndex
+            ? {
+                ...rubricItem,
+                [field]: value,
+              }
+            : rubricItem,
+        );
+
+        return {
+          ...checkpoint,
+          rubric: nextRubric,
+        };
+      });
+
+      return {
+        ...current,
+        [unitId]: {
+          ...draft,
+          checkpoints: nextCheckpoints,
+        },
+      };
+    });
   }
 
   async function loadLessonUnits(sourceId: string): Promise<void> {
@@ -477,7 +650,7 @@ export function App() {
       return;
     }
 
-    const payload = buildUnitPayload(draft);
+    const payload = buildLessonUnitPayload(current, draft);
     const updated = await patchLessonUnit(unitId, payload);
 
     if (!updated) {
@@ -509,8 +682,13 @@ export function App() {
       return;
     }
 
+    const current = lessonUnits.find((unit) => unit.id === unitId);
+    if (!current) {
+      return;
+    }
+
     const payload = {
-      ...buildUnitPayload(draft),
+      ...buildLessonUnitPayload(current, draft),
       reviewStatus,
     };
 
@@ -864,6 +1042,8 @@ export function App() {
 
           {lessonUnits.map((unit) => {
             const draft = editDrafts[unit.id] ?? toLessonUnitDraft(unit);
+            const sourceContext = formatSourceContext(unit);
+
             return (
               <article className="unit-card" key={unit.id}>
                 <div className="unit-card__header">
@@ -877,28 +1057,111 @@ export function App() {
                 </div>
 
                 <p className="unit-card__anchors">
-                  Source context: {formatSourceAnchors(unit)}
+                  Source anchors: {formatSourceAnchors(unit)}
                 </p>
+                {sourceContext.length > 0 ? (
+                  <details className="unit-card__source-context">
+                    <summary>Source excerpts from imported markdown</summary>
+                    <ol>
+                      {sourceContext.map((snippet, index) => (
+                        <li key={`${unit.id}-${index}`}>{snippet}</li>
+                      ))}
+                    </ol>
+                  </details>
+                ) : null}
 
                 <div className="checkpoint-list" aria-label="Generated checkpoints">
-                  {unit.checkpoints.map((checkpoint) => (
-                    <section key={checkpoint.id}>
-                      <h4>Checkpoint {checkpoint.orderIndex + 1}</h4>
-                      <p>{checkpoint.promptMd}</p>
-                      <details>
-                        <summary>Expected answer and self-check rubric</summary>
-                        <p>{checkpoint.expectedAnswerMd}</p>
-                        <ul>
-                          {checkpoint.rubric.map((rubricItem) => (
-                            <li key={rubricItem.rating}>
-                              <strong>{rubricItem.rating}:</strong>{" "}
-                              {rubricItem.description}
-                            </li>
+                  {unit.checkpoints.map((checkpoint, index) => {
+                    const checkpointDraft = draft.checkpoints[index] ?? {
+                      id: checkpoint.id,
+                      promptMd: checkpoint.promptMd,
+                      expectedAnswerMd: checkpoint.expectedAnswerMd,
+                      rubric: checkpoint.rubric.map((rubricItem) => ({
+                        ...rubricItem,
+                      })),
+                    };
+
+                    return (
+                      <section key={checkpoint.id}>
+                        <h4>Checkpoint {checkpoint.orderIndex + 1}</h4>
+                        <label>
+                          <span>Checkpoint prompt</span>
+                          <textarea
+                            rows={3}
+                            value={checkpointDraft.promptMd}
+                            onChange={(event) =>
+                              setCheckpointDraftField(
+                                unit.id,
+                                checkpoint.id,
+                                "promptMd",
+                                event.target.value,
+                              )
+                            }
+                          />
+                        </label>
+                        <label>
+                          <span>Expected answer</span>
+                          <textarea
+                            rows={3}
+                            value={checkpointDraft.expectedAnswerMd}
+                            onChange={(event) =>
+                              setCheckpointDraftField(
+                                unit.id,
+                                checkpoint.id,
+                                "expectedAnswerMd",
+                                event.target.value,
+                              )
+                            }
+                          />
+                        </label>
+                        <div className="checkpoint-rubric">
+                          <h5>Rubric</h5>
+                          {checkpointDraft.rubric.map((rubricItem, rubricIndex) => (
+                            <div
+                              className="checkpoint-rubric__item"
+                              key={`${checkpoint.id}-${rubricItem.rating}-${rubricIndex}`}
+                            >
+                              <label>
+                                <span>Rating</span>
+                                <select
+                                  value={rubricItem.rating}
+                                  onChange={(event) =>
+                                    setCheckpointRubricField(
+                                      unit.id,
+                                      checkpoint.id,
+                                      rubricIndex,
+                                      "rating",
+                                      event.target.value as LessonGenerationRubricItem["rating"],
+                                    )
+                                  }
+                                >
+                                  <option value="wrong">wrong</option>
+                                  <option value="partial">partial</option>
+                                  <option value="correct">correct</option>
+                                </select>
+                              </label>
+                              <label>
+                                <span>Description</span>
+                                <textarea
+                                  rows={2}
+                                  value={rubricItem.description}
+                                  onChange={(event) =>
+                                    setCheckpointRubricField(
+                                      unit.id,
+                                      checkpoint.id,
+                                      rubricIndex,
+                                      "description",
+                                      event.target.value,
+                                    )
+                                  }
+                                />
+                              </label>
+                            </div>
                           ))}
-                        </ul>
-                      </details>
-                    </section>
-                  ))}
+                        </div>
+                      </section>
+                    );
+                  })}
                 </div>
 
                 <label>
