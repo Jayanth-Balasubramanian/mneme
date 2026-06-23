@@ -207,10 +207,20 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - Reported verification passed: `bun run typecheck`, `bun test`, `bun run lint`, `bun run build`, `MNEME_DB_PATH=/private/tmp/mneme-issue-4-verification.sqlite bun run db:migrate`, and `bun run test:e2e` as a deferred placeholder.
 - Current caveat: GitHub reports PR #10 merge state as `DIRTY`, and no PR checks have reported yet. Review gates can proceed, but merge readiness will require a rebase/conflict pass and green checks.
 
+### 2026-06-23T18:07Z
+
+- PR #10 review gates requested changes:
+  - Code hygiene: checkpoint prompt/expected answer/rubric must be editable before approval.
+  - Code hygiene: review screen must show actual bounded source-context snippets, not only source-anchor metadata.
+  - Security: single-unit regeneration must route output through the same schema/provenance validation path as initial generation and leave the existing unit unchanged on invalid regenerated output.
+- Review comments: <https://github.com/Jayanth-Balasubramanian/mneme/pull/10#issuecomment-4782092371> and <https://github.com/Jayanth-Balasubramanian/mneme/pull/10#issuecomment-4782075869>.
+- Moved issue #4 to `state:changes-requested`.
+- Scheduling a focused fix agent on `issue-4-review-workflow`.
+
 ## Queue Snapshot
 
 - #2 Import chapter excerpt with source attribution: `merged`; PR #8 merged; issue #2 closed.
 - #3 Generate validated lesson drafts with a mocked provider: `merged`; PR #9 merged; issue #3 closed.
-- #4 Review lesson units and regenerate a single unit: `ready-for-review`; PR #10 open; merge state dirty, review gates pending.
+- #4 Review lesson units and regenerate a single unit: `changes-requested`; PR #10 open; review fixes in progress.
 - #5 Study approved units and record telemetry: blocked by #4; next product priority is a working guided lesson UI with MCQ checkpoints.
 - #6 Expand CI with app-specific security tests and Cloudflare deployment: `needs-spec`.
