@@ -55,6 +55,7 @@ Workflow:
 - Use rebase-only integration.
 - At most two implementation agents should run in parallel.
 - GitHub Actions owns CI, initially for policy/security checks and tests; later for continuous deployment.
+- Before merge, each implementation PR needs code hygiene review, security review, and a documentation-agent pass for frontend/backend/API docs.
 
 Security posture:
 

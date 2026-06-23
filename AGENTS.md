@@ -53,6 +53,7 @@ This file is the working contract for agents building the AI-assisted technical 
 - For repository, migration, or persistence changes, run integration tests against an isolated SQLite database.
 - For UI workflow changes, run a browser flow covering import, generation with a mocked provider, review, study, and attempt recording.
 - For AI generation changes, validate provider output against a schema before saving and test invalid-output handling.
+- Before merging implementation pull requests, run a documentation-agent pass that checks frontend docs, backend/API docs, test contracts, and handoff notes are current.
 - If a required check cannot run, report the command, failure reason, and residual risk.
 - Expected project commands, once scaffolded, are:
 
@@ -102,6 +103,7 @@ When using subagents:
 - If `gh` is unavailable or unauthenticated, mark GitHub sync as `needs-human` in the handoff rather than creating a docs issue queue.
 - Implementation subagents should open pull requests, not local-only merge requests.
 - Review subagents should leave findings on the pull request or linked GitHub issues.
+- Documentation subagents should review implementation pull requests before merge and verify `README.md`, `docs/API_CONTRACT.md`, `docs/TEST_CONTRACT.md`, `docs/SPEC.md`, and `docs/HANDOFF.md` remain accurate.
 - The GitHub repository should be public for CI credit usage; this is an intentional security-audit constraint.
 
 ## Open Questions For User
