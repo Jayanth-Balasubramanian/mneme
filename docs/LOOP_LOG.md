@@ -153,10 +153,23 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - Moved issue #3 to `state:changes-requested`.
 - Scheduling a focused coding fix agent on the same branch before rerunning review gates.
 
+### 2026-06-23T17:24Z
+
+- Review-fix agent pushed commit `cac3deb5078aa9d66212a9eb1acdddaa08d68128`.
+- Fix summary:
+  - Strictly rejects malformed provider arrays instead of silently dropping invalid members.
+  - Keeps `provider: "openai"` from succeeding through the mock provider.
+  - Validates generated source anchors against imported chapter provenance before persistence.
+  - Sanitizes provider exception failure output.
+- Review-fix PR comment: <https://github.com/Jayanth-Balasubramanian/mneme/pull/9#issuecomment-4781740292>.
+- CI passed on PR #9 after the fix commit.
+- Issue #3 returned to `state:ready-for-review`.
+- Next gates: follow-up code hygiene and security review comments.
+
 ## Queue Snapshot
 
 - #2 Import chapter excerpt with source attribution: `merged`; PR #8 merged; issue #2 closed.
-- #3 Generate validated lesson drafts with a mocked provider: `changes-requested`; PR #9 open; fixes in progress.
+- #3 Generate validated lesson drafts with a mocked provider: `ready-for-review`; PR #9 open; follow-up review gates pending.
 - #4 Review lesson units and regenerate a single unit: blocked by #3.
 - #5 Study approved units and record telemetry: blocked by #4.
 - #6 Expand CI with app-specific security tests and Cloudflare deployment: `needs-spec`.
