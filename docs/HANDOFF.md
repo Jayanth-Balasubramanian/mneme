@@ -153,6 +153,7 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Code hygiene passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/13#issuecomment-4783001530>.
    - Security passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/13#issuecomment-4782997306>.
    - Scoped documentation update: complete for README command text, security notes, test contract verification, handoff state, and loop log; no application code, tests, scripts, package config, or CI files were changed in the docs-updater pass.
+   - Remaining merge gates after the docs-updater pass: keep PR #13 GitHub Actions green on the final head, then rebase-merge. No feature video is required for this CI/security maintenance slice.
    - Implementation state: the security command scans executable Markdown/MDX rendering paths, required LLM validation coverage markers, known full Chapter 17 body-text signatures, tracked env/private-key/generated-artifact paths, common token-like values, and an in-memory synthetic secret-like fixture that must trip the detector before repository scanning proceeds.
 
 ## Remaining Human Inputs
