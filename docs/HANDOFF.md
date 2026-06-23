@@ -2,7 +2,7 @@
 
 ## Current State
 
-This repository is initialized and contains planning/contract documentation plus implementation slices for a local-first AI-assisted study app. PR #7 merged issue #1 with a Bun/Vite/Hono runtime scaffold, minimal Mneme app shell, health route, and unit smoke test. PR #8 implemented issue #2 with Markdown excerpt import, source attribution, local SQLite persistence, and import-result UI. PR #9 implemented issue #3 with validated mocked lesson generation. PR #10 implemented issue #4 with lesson review, edit, approval, source-context snippets, and single-unit regeneration. PR #11 implements issue #5 with guided study, checkpoint attempts, weak-concept telemetry, and real browser e2e coverage; code hygiene and security gates have passed and the scoped documentation update is in progress.
+This repository is initialized and contains planning/contract documentation plus implementation slices for a local-first AI-assisted study app. PR #7 merged issue #1 with a Bun/Vite/Hono runtime scaffold, minimal Mneme app shell, health route, and unit smoke test. PR #8 implemented issue #2 with Markdown excerpt import, source attribution, local SQLite persistence, and import-result UI. PR #9 implemented issue #3 with validated mocked lesson generation. PR #10 implemented issue #4 with lesson review, edit, approval, source-context snippets, and single-unit regeneration. PR #11 implements issue #5 with guided study, checkpoint attempts, weak-concept telemetry, and real browser e2e coverage; code hygiene and security gates have passed and the scoped documentation update is complete.
 
 Git:
 
@@ -127,7 +127,9 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Security passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/11#issuecomment-4782704698>.
    - Verification reported by coding subagent: `bun run typecheck`, `bun test`, `bun run lint`, `bun run build`, `bun run test:e2e`, and `MNEME_DB_PATH=/private/tmp/mneme-issue-5-verification.sqlite bun run db:migrate`.
    - Implemented contract: approved units render in a mobile guided study UI; checkpoint choices, answer/rubric reveal, self-rating, confidence, local attempt feedback, and weak-concept feedback are available; `POST /api/study-attempts` records approved-checkpoint attempts; `GET /api/weak-concepts?chapterSourceId=:id` aggregates wrong/partial concept events; `study_attempts` and `concept_events` are SQLite/D1-compatible; `bun run test:e2e` is now a real headless Chrome DOM flow for import -> mock generation -> approve -> study checkpoint attempt.
-   - Remaining gates: scoped documentation update completion, feature video, green checks at final PR head, and merge readiness.
+   - Scoped documentation update: complete for README command/status text, study API/test/spec contracts, handoff state, and loop log; no source text was added.
+   - CI: green on the rebased PR head before this docs-only update; after the docs update is pushed, confirm GitHub checks on the final head.
+   - Remaining gates: feature video, green checks at final PR head, and merge readiness.
    - Owns: study path, attempts, weak-concept query
 
 6. [#6 Expand CI with app-specific security tests and Cloudflare deployment](https://github.com/Jayanth-Balasubramanian/mneme/issues/6)
@@ -239,7 +241,8 @@ Completed:
 - Coding verification passed: `bun run typecheck`, `bun test`, `bun run lint`, `bun run build`, `bun run test:e2e`, and `MNEME_DB_PATH=/private/tmp/mneme-issue-5-verification.sqlite bun run db:migrate`.
 - Code hygiene passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/11#issuecomment-4782709208>.
 - Security passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/11#issuecomment-4782704698>.
+- Scoped documentation update completed after the passed review gates; README, API contract, test contract, spec, handoff, and loop log now reflect the active study telemetry and e2e behavior.
 
 Next:
 
-- Complete this scoped documentation update, record a feature video, confirm green checks at the final PR head, then move PR #11 to merge readiness.
+- Record a feature video, confirm green checks at the final PR head after this docs-only update, then move PR #11 to merge readiness.

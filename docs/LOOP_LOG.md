@@ -300,14 +300,15 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 
 - PR #11 code hygiene passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/11#issuecomment-4782709208>.
 - PR #11 security passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/11#issuecomment-4782704698>.
-- Issue #5 is `state:lgtm` with the scoped documentation updater pass running after the passed review gates.
-- Documentation cleanup is limited to README endpoint inventory, study telemetry API behavior, handoff state, and this loop log. It is not a repeated review or nitpick gate.
-- Remaining PR #11 gates after documentation cleanup: feature video, green checks at the final PR head, and merge readiness.
+- Issue #5 is `state:lgtm`; the scoped documentation updater pass is complete after the passed review gates.
+- Documentation cleanup verified README endpoint inventory and active `bun run test:e2e` status, study telemetry API behavior, the test/spec contracts, handoff state, and this loop log. It was not a repeated review or nitpick gate.
+- PR #11 was clean and GitHub CI was green on the rebased head before this docs-only update.
+- Remaining PR #11 gates after this docs update is pushed: feature video, green checks at the final PR head, and merge readiness.
 
 ## Queue Snapshot
 
 - #2 Import chapter excerpt with source attribution: `merged`; PR #8 merged; issue #2 closed.
 - #3 Generate validated lesson drafts with a mocked provider: `merged`; PR #9 merged; issue #3 closed.
 - #4 Review lesson units and regenerate a single unit: `merged`; PR #10 merged; issue #4 closed.
-- #5 Study approved units and record telemetry: `lgtm`; PR #11 open from branch/worktree `issue-5-study-telemetry` at `/private/tmp/mneme-issue-5`; code hygiene and security review gates passed.
+- #5 Study approved units and record telemetry: `lgtm`; PR #11 open from branch/worktree `issue-5-study-telemetry` at `/private/tmp/mneme-issue-5`; code hygiene and security review gates passed, and scoped documentation cleanup is complete.
 - #6 Expand CI with app-specific security tests and Cloudflare deployment: `needs-spec`.
