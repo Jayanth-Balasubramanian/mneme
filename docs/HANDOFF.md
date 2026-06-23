@@ -2,7 +2,7 @@
 
 ## Current State
 
-This repository is initialized locally and contains planning/contract documentation for a local-first AI-assisted study app. The implementation has not been scaffolded yet.
+This repository is initialized and contains planning/contract documentation for a local-first AI-assisted study app. Issue #1 scaffolds the Bun/Vite/Hono runtime with a minimal Mneme app shell, health route, and unit smoke test.
 
 Git:
 
@@ -44,7 +44,7 @@ Stack:
 - Vite React SPA
 - Hono/Web Fetch API
 - Drizzle over local SQLite with D1-compatible schema direction
-- shadcn/ui and Tailwind, copied selectively
+- shadcn/ui components, copied selectively when a concrete screen needs them
 - OpenAI behind a provider interface, mocked provider first
 
 Workflow:
@@ -68,7 +68,7 @@ Security posture:
 GitHub is the source of truth for issue state. These issues have been created:
 
 1. [#1 Scaffold local Bun/Vite/Hono app](https://github.com/Jayanth-Balasubramanian/mneme/issues/1)
-   - State: `ready-for-agent`
+   - State: implementation recovered into branch `issue-1-scaffold`; move through PR review before merge
    - Blocked by: none
    - Owns: package/config, initial app/server folders, smoke tests
 

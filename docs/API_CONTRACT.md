@@ -6,6 +6,24 @@ Base path: `/api`
 
 All request bodies and responses must be validated with shared schemas. Markdown and LLM output are untrusted data.
 
+## `GET /api/health`
+
+Return a stable local runtime health response.
+
+Response:
+
+```ts
+type HealthResponse = {
+  status: "ok";
+  service: "mneme";
+};
+```
+
+Verification:
+
+- Unit: route returns HTTP 200 with the stable response.
+- Runtime smoke: local API responds at `/api/health`.
+
 ## Source Metadata
 
 The first source is:

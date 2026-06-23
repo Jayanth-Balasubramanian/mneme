@@ -2,6 +2,27 @@
 
 This contract gates the PoC implementation. Do not move issues to `ready-for-agent` unless the relevant behavior below has concrete verification steps.
 
+## Scaffold And Health
+
+Behavior:
+
+- The repository has a Bun-managed Vite React SPA and Hono/Web Fetch API scaffold.
+- The app shell renders the Mneme workflow entry point and credits the Chapter 17 source.
+- `GET /api/health` returns a stable health response.
+
+Tests:
+
+- Unit: health route returns `{ status: "ok", service: "mneme" }`.
+- Build: Vite/TypeScript production build succeeds.
+- Runtime smoke: local API and app shell are reachable.
+
+Verification:
+
+- `bun test`
+- `bun run typecheck`
+- `bun run lint`
+- `bun run build`
+
 ## Source Attribution
 
 Behavior:
