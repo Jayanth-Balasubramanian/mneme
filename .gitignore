@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+.vite/
+
+# Local environment and secrets
+.env
+.env.*
+.dev.vars
+
+# Local databases
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+
+# Cloudflare / local tool state
+.wrangler/
+
+# Test artifacts
+test-results/
+playwright-report/
+coverage/
+
+# OS/editor noise
+.DS_Store
