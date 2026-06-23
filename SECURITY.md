@@ -35,6 +35,9 @@ The app-specific security command checks:
 - Detector self-test: a synthetic secret-like dry-run fixture is generated in
   memory and must trigger the detector before repository files are scanned.
 
+Run `bun run security:check --self-test` to execute only the detector self-test
+without scanning repository files.
+
 CI also keeps the project checks for lint, typecheck, Bun tests, database
 migration, and build.
 

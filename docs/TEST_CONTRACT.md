@@ -159,6 +159,7 @@ Tests:
 Verification:
 
 - `bun run security:check`
+- `bun run security:check --self-test`
 - `bun run lint`
 - `bun run typecheck`
 - `bun test`

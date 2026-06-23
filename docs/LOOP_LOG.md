@@ -385,6 +385,14 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - GitHub Actions passed on PR #13 after the follow-up push.
 - Posted the required PR verification and dry-run proof comment: <https://github.com/Jayanth-Balasubramanian/mneme/pull/13#issuecomment-4782964403>.
 
+### 2026-06-23T20:05Z
+
+- PR #13 code hygiene passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/13#issuecomment-4783001530>.
+- PR #13 security passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/13#issuecomment-4782997306>.
+- GitHub issue #12 is labeled `state:lgtm`; PR #13 merge state is clean and CI is green.
+- Scoped documentation updater pass completed after the review gates. It aligned README command text, SECURITY self-test wording, TEST_CONTRACT verification, HANDOFF state, and this loop log. This was not a repeated review or nitpick gate.
+- Cloudflare deployment remains out of scope for issue #12 and stays blocked under issue #6 pending target, secrets, rollback, and staging policy decisions.
+
 ## Queue Snapshot
 
 - #2 Import chapter excerpt with source attribution: `merged`; PR #8 merged; issue #2 closed.
@@ -392,4 +400,4 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - #4 Review lesson units and regenerate a single unit: `merged`; PR #10 merged; issue #4 closed.
 - #5 Study approved units and record telemetry: `merged`; PR #11 merged; issue #5 closed.
 - #6 Add Cloudflare deployment after target and secrets policy: `needs-human`; blocked on Cloudflare target/secrets/rollback decisions.
-- #12 Add app-specific CI security tests: `ready-for-review`; PR #13 open.
+- #12 Add app-specific CI security tests: `lgtm`; PR #13 open with code hygiene and security gates passed.
