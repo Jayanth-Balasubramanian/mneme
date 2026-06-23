@@ -259,10 +259,18 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - The excerpt used for capture is synthetic and does not include copied chapter text.
 - Final merge readiness now depends on green GitHub checks on the current PR head.
 
+### 2026-06-23T18:45Z
+
+- PR #10 passed GitHub checks after the feature-video artifact commit.
+- PR #10 was rebase-merged into `main`: merge commit `5782403470fe30ef1060400ca7dc3e3976ed753a`.
+- Issue #4 was closed and relabeled `state:merged`.
+- Main-branch CI for the PR #10 merge completed successfully: <https://github.com/Jayanth-Balasubramanian/mneme/actions/runs/28048909049>.
+- Issue #5 is now the next unblocked implementation slice. The loop priority is a working guided lesson UI with checkpoint MCQs and telemetry; manually seeded, credited Chapter 17 lesson content is acceptable if it avoids committing full chapter text.
+
 ## Queue Snapshot
 
 - #2 Import chapter excerpt with source attribution: `merged`; PR #8 merged; issue #2 closed.
 - #3 Generate validated lesson drafts with a mocked provider: `merged`; PR #9 merged; issue #3 closed.
-- #4 Review lesson units and regenerate a single unit: PR #10 open; issue #4 is `state:lgtm`; code hygiene/security follow-ups passed; scoped documentation update complete; feature video recorded; final gate is green GitHub checks on current head before merge.
-- #5 Study approved units and record telemetry: blocked by #4 landing; next product priority is completing study and telemetry with a working guided lesson UI and MCQ checkpoint attempts.
+- #4 Review lesson units and regenerate a single unit: `merged`; PR #10 merged; issue #4 closed.
+- #5 Study approved units and record telemetry: `ready-for-agent`; unblocked; next product priority is completing study and telemetry with a working guided lesson UI and MCQ checkpoint attempts.
 - #6 Expand CI with app-specific security tests and Cloudflare deployment: `needs-spec`.

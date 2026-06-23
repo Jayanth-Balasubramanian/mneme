@@ -2,7 +2,7 @@
 
 ## Current State
 
-This repository is initialized and contains planning/contract documentation plus implementation slices for a local-first AI-assisted study app. PR #7 merged issue #1 with a Bun/Vite/Hono runtime scaffold, minimal Mneme app shell, health route, and unit smoke test. PR #8 implemented issue #2 with Markdown excerpt import, source attribution, local SQLite persistence, and import-result UI. PR #9 implemented issue #3 with validated mocked lesson generation. PR #10 for issue #4 is open with review workflow fixes applied and code hygiene/security follow-ups passed.
+This repository is initialized and contains planning/contract documentation plus implementation slices for a local-first AI-assisted study app. PR #7 merged issue #1 with a Bun/Vite/Hono runtime scaffold, minimal Mneme app shell, health route, and unit smoke test. PR #8 implemented issue #2 with Markdown excerpt import, source attribution, local SQLite persistence, and import-result UI. PR #9 implemented issue #3 with validated mocked lesson generation. PR #10 implemented issue #4 with lesson review, edit, approval, source-context snippets, and single-unit regeneration.
 
 Git:
 
@@ -17,7 +17,7 @@ GitHub:
 - Intended repository name: `mneme`.
 - Intended visibility: public, to use GitHub Actions CI credits.
 - Repository URL: <https://github.com/Jayanth-Balasubramanian/mneme>
-- CI status: passing on `main` after the scaffold merge; use GitHub Actions for the current run state.
+- CI status: passing on current `main`; use GitHub Actions for the current run state.
 
 ## Product Decision
 
@@ -104,25 +104,22 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Owns: `LessonGenerator` contract, output validation, generation runs
 
 4. [#4 Review lesson units and regenerate a single unit](https://github.com/Jayanth-Balasubramanian/mneme/issues/4)
-   - State: `state:lgtm`; scoped documentation cleanup complete, feature video recorded, final merge readiness pending
+   - State: `state:merged`, closed
    - Branch/worktree: `issue-4-review-workflow` at `/private/tmp/mneme-issue-4`
    - PR: [#10 Review generated lesson units](https://github.com/Jayanth-Balasubramanian/mneme/pull/10)
    - Video: `docs/artifacts/issue-4-review-flow.mp4`
-   - Head before final merge gate: `299c6cf1a58c3a3d0fc20f4407d69905e83054be`
-   - Merge state before latest main rebase: clean, rebased onto current `main`
-   - CI before latest docs update: green after review fixes
+   - Merge: rebase-merged into `main` at `5782403470fe30ef1060400ca7dc3e3976ed753a`; main CI passed after merge.
    - Blocked by: none; issues 1-3 are merged
    - Assignment: coding subagent continuing existing WIP with `gpt-5.5` xhigh because the slice is UI-heavy and already had substantial local edits.
    - Code hygiene follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/10#issuecomment-4782257229>.
    - Security follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/10#issuecomment-4782262804>.
    - Documentation cleanup: scoped updater pass updated the spec, API contract, test contract, handoff, and loop log after passed review gates; this is not a repeated review gate.
    - Implemented contract: lesson fields plus checkpoint prompt/expected answer/rubric can be edited before approval; review statuses are `draft`, `approved`, `rejected`, and `needs_regeneration`; only approved units are returned for study; review responses and UI expose bounded source-context snippets rather than full chapter dumps; single-unit regeneration validates output/provenance before replacing only the selected unit, resets the replacement to draft, and leaves all existing units unchanged on failed regeneration.
-   - Remaining gate: green GitHub checks on the current PR head, then merge readiness.
    - Owns: review states, editing, approving/rejecting, single-unit regeneration
 
 5. [#5 Study approved units and record telemetry](https://github.com/Jayanth-Balasubramanian/mneme/issues/5)
    - State: `ready-for-agent`
-   - Blocked by: issue 4
+   - Blocked by: none; issue 4 is merged
    - Next priority after issue #4 lands: complete the guided study and telemetry slice, with emphasis on a working guided lesson UI and MCQ checkpoint attempts.
    - Owns: study path, attempts, weak-concept query
 
@@ -211,10 +208,12 @@ Completed:
 - Code hygiene follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/10#issuecomment-4782257229>.
 - Security follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/10#issuecomment-4782262804>.
 - PR #10 was rebased onto current `main`; merge state was clean and CI was green after review fixes.
-- Issue #4 is `state:lgtm`.
 - Documentation cleanup ran as a scoped updater pass after code hygiene/security, not a repeated review gate.
+- Feature video recorded at `docs/artifacts/issue-4-review-flow.mp4` using an isolated Chrome instance and direct Chrome DevTools Protocol capture.
+- PR #10 was rebase-merged into `main` at `5782403470fe30ef1060400ca7dc3e3976ed753a`.
+- Issue #4 is closed with `state:merged`.
+- Main-branch CI passed after the merge.
 
 Next:
 
-- Confirm green GitHub checks on the video artifact commit and merge PR #10 if no human review is needed.
-- After issue #4 lands, prioritize issue #5: complete study and telemetry with a working guided lesson UI and MCQ checkpoint attempts.
+- Start issue #5: complete study and telemetry with a working guided lesson UI and MCQ checkpoint attempts. The fastest acceptable path may use manually seeded, credited Chapter 17 lesson content while preserving source attribution and avoiding full chapter text in git.
