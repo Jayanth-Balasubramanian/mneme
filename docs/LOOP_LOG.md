@@ -90,7 +90,7 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - The earlier documentation review comment remains useful cleanup input under the old model, but it is not a live gate under the updated workflow: <https://github.com/Jayanth-Balasubramanian/mneme/pull/8#issuecomment-4781248688>.
 - Documentation cleanup for the new workflow and PR #8 state was applied in commit `4468318`.
 - CI passed on PR #8 after `4468318`.
-- Next gates are feature video and merge readiness.
+- At this point, the remaining gates were feature video and merge readiness.
 
 ### 2026-06-23T16:48Z
 
@@ -99,9 +99,21 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - Code hygiene and security remain passed; documentation cleanup is complete under the updated workflow.
 - Preparing the feature video gate before merge.
 
+### 2026-06-23T16:54Z
+
+- Recorded the PR #8 source-import feature video using an isolated Chrome instance and direct Chrome DevTools Protocol capture after browser-harness daemon attachment failed to honor the explicit CDP endpoint.
+- Video artifact: `docs/artifacts/issue-2-import-flow.mp4`.
+- Video evidence:
+  - Mobile viewport: 390 x 844.
+  - Duration: 7 seconds.
+  - Size: 153 KiB.
+  - Flow shown: source-import form, synthetic Markdown excerpt, import submission, workflow state changing to `Imported`, and saved source attribution with content hash, source anchors, citation, and study emphasis.
+- The excerpt used for capture is synthetic and does not include copied chapter text.
+- Final merge readiness now depends on the current PR head having green GitHub checks.
+
 ## Queue Snapshot
 
-- #2 Import chapter excerpt with source attribution: `lgtm`; PR #8 open; code hygiene and security passed, documentation cleanup complete, CI green; next gates are feature video and merge readiness.
+- #2 Import chapter excerpt with source attribution: `lgtm`; PR #8 open; code hygiene and security passed, documentation cleanup complete, feature video recorded; final gate is green GitHub checks on the current PR head before merge.
 - #3 Generate validated lesson drafts with a mocked provider: `ready-for-agent`, intentionally waiting on #2 because of overlap.
 - #4 Review lesson units and regenerate a single unit: blocked by #2 and #3.
 - #5 Study approved units and record telemetry: blocked by #4.
