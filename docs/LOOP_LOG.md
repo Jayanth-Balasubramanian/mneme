@@ -282,10 +282,24 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - Closed that worker and continued with a single fallback coding subagent using `gpt-5.5` xhigh on the same `issue-5-study-telemetry` worktree, as allowed by the user.
 - The fallback worker was instructed to preserve and finish the existing WIP rather than restarting or discarding it.
 
+### 2026-06-23T19:16Z
+
+- Fallback coding worker completed issue #5 after the previous Spark worker hit its usage limit.
+- Commit `550f820` implements the guided study and telemetry slice:
+  - SQLite/D1-compatible `study_attempts` and `concept_events` persistence;
+  - `POST /api/study-attempts` and `GET /api/weak-concepts`;
+  - approved-only checkpoint attempts with weak-concept aggregation;
+  - mobile guided study UI with checkpoint choices, answer/rubric reveal, self-rating, confidence, and weak-concept feedback;
+  - active `bun run test:e2e` browser flow using a synthetic credited excerpt.
+- PR #11 opened: <https://github.com/Jayanth-Balasubramanian/mneme/pull/11>.
+- Verification passed: `bun run typecheck`, `bun test`, `bun run lint`, `bun run build`, `bun run test:e2e`, and `MNEME_DB_PATH=/private/tmp/mneme-issue-5-verification.sqlite bun run db:migrate`.
+- `bun run test:e2e` required escalation in the Codex sandbox because the test starts localhost listeners for Hono, Vite, and Chrome DevTools Protocol.
+- Next gates: code hygiene review, security review, documentation updater pass after review approval, feature video, and merge readiness.
+
 ## Queue Snapshot
 
 - #2 Import chapter excerpt with source attribution: `merged`; PR #8 merged; issue #2 closed.
 - #3 Generate validated lesson drafts with a mocked provider: `merged`; PR #9 merged; issue #3 closed.
 - #4 Review lesson units and regenerate a single unit: `merged`; PR #10 merged; issue #4 closed.
-- #5 Study approved units and record telemetry: `in-progress`; branch/worktree `issue-5-study-telemetry` at `/private/tmp/mneme-issue-5`; next product priority is completing study and telemetry with a working guided lesson UI and MCQ checkpoint attempts.
+- #5 Study approved units and record telemetry: `lgtm`; PR #11 open from branch/worktree `issue-5-study-telemetry` at `/private/tmp/mneme-issue-5`; code hygiene and security review gates passed.
 - #6 Expand CI with app-specific security tests and Cloudflare deployment: `needs-spec`.
