@@ -1,7 +1,9 @@
 import type { SourceAnchor } from "../../shared/source";
 import type {
   LessonGenerationDraft,
+  LessonGenerationCheckpoint,
   LessonGenerationUnit,
+  LessonUnitResponse,
 } from "../../shared/generation";
 import type {
   GenerateLessonInput,
@@ -22,6 +24,46 @@ function buildDefaultAnchor(): SourceAnchor {
     paragraphStart: 1,
     paragraphEnd: 1,
     sourceUrl: "https://example.com/local-source",
+  };
+}
+
+function cloneCheckpoints(
+  checkpoints: LessonUnitResponse["checkpoints"],
+): LessonGenerationCheckpoint[] {
+  return checkpoints.map((checkpoint) => ({
+    promptMd: `${checkpoint.promptMd} (reframed)`,
+    expectedAnswerMd: checkpoint.expectedAnswerMd,
+    rubric: checkpoint.rubric.map((rubricItem) => ({ ...rubricItem })),
+  }));
+}
+
+export function buildMockRegeneratedLessonUnit(
+  unit: LessonUnitResponse,
+  reviewerNotes?: string,
+): LessonGenerationUnit {
+  const trimmedNotes = reviewerNotes?.trim();
+  const notesSuffix = trimmedNotes
+    ? ` Incorporated reviewer notes: ${trimmedNotes}.`
+    : "";
+  const anchorLabel =
+    unit.sourceAnchors[0]?.headingPath.at(-1) ?? "selected concept";
+
+  return {
+    title: `${unit.title} (Revised)`,
+    learningObjective: `${unit.learningObjective} (rephrased)`,
+    conceptKeys: [...unit.conceptKeys],
+    sourceAnchors: unit.sourceAnchors.map((anchor) => ({
+      ...anchor,
+      headingPath: [...anchor.headingPath],
+    })),
+    explanationMd: `Revised draft for ${anchorLabel}.${notesSuffix}\n\n${unit.explanationMd}`,
+    intuitionMd: `Revised intuition for ${anchorLabel}.${notesSuffix}\n\n${unit.intuitionMd}`,
+    notationMd: unit.notationMd,
+    exampleMd: unit.exampleMd,
+    misconceptionMd:
+      unit.misconceptionMd ||
+      "Review the distinction between expectation and bias for this concept.",
+    checkpoints: cloneCheckpoints(unit.checkpoints),
   };
 }
 

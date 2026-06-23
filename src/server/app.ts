@@ -52,9 +52,15 @@ export function createServerApp(options: ServerAppOptions = {}): Hono {
       throw new Error(`Provider '${provider}' is not configured in this deployment.`);
     },
   });
-  registerLessonUnitRoutes(app, () => {
-    generationRepository ??= createLocalGenerationRepository();
-    return generationRepository;
+  registerLessonUnitRoutes(app, {
+    getChapterSourceRepository: () => {
+      chapterSourceRepository ??= createLocalChapterSourceRepository();
+      return chapterSourceRepository;
+    },
+    getGenerationPersistence: () => {
+      generationRepository ??= createLocalGenerationRepository();
+      return generationRepository;
+    },
   });
 
   app.notFound((context) =>

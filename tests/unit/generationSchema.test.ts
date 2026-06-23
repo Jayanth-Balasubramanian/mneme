@@ -3,6 +3,8 @@ import { describe, expect, test } from "bun:test";
 import {
   parseLessonGenerationDraft,
   parseCreateGenerationRunRequest,
+  parseUpdateLessonUnitRequest,
+  parseRegenerateLessonUnitRequest,
 } from "../../src/shared/generation";
 
 describe("generation request schema", () => {
@@ -225,5 +227,99 @@ describe("lesson generation draft validation", () => {
     expect(result.issues.map((issue) => issue.field)).toContain(
       "sourceAnchors[0].headingPath[1]",
     );
+  });
+
+  test("validates review status transitions", () => {
+    const draft = parseUpdateLessonUnitRequest({
+      reviewStatus: "approved",
+    });
+
+    expect(draft).toEqual({
+      ok: true,
+      value: {
+        reviewStatus: "approved",
+      },
+    });
+
+    const rejected = parseUpdateLessonUnitRequest({
+      reviewStatus: "rejected",
+      learningObjective: "Refine this objective for review.",
+      reviewerNotes: "Needs stronger intuition examples.",
+    });
+
+    expect(rejected).toEqual({
+      ok: true,
+      value: {
+        reviewStatus: "rejected",
+        learningObjective: "Refine this objective for review.",
+        reviewerNotes: "Needs stronger intuition examples.",
+      },
+    });
+
+    const regenerateRequest = parseUpdateLessonUnitRequest({
+      reviewStatus: "needs_regeneration",
+    });
+
+    expect(regenerateRequest).toEqual({
+      ok: true,
+      value: {
+        reviewStatus: "needs_regeneration",
+      },
+    });
+  });
+
+  test("rejects invalid review-status changes", () => {
+    const badRequest = parseUpdateLessonUnitRequest({
+      reviewStatus: "pending",
+    });
+
+    expect(badRequest).toEqual({
+      ok: false,
+      issues: [
+        {
+          field: "reviewStatus",
+          message: "Expected one of: draft, approved, rejected, needs_regeneration.",
+        },
+      ],
+    });
+  });
+
+  test("rejects empty lesson-unit patch body", () => {
+    expect(parseUpdateLessonUnitRequest({})).toEqual({
+      ok: false,
+      issues: [
+        {
+          field: "body",
+          message: "Expected at least one updatable field.",
+        },
+      ],
+    });
+  });
+
+  test("parses mock-only regenerate requests", () => {
+    const body = parseRegenerateLessonUnitRequest({
+      provider: "mock",
+      reviewerNotes: "Need stronger intuition examples.",
+    });
+
+    expect(body).toEqual({
+      ok: true,
+      value: {
+        provider: "mock",
+        reviewerNotes: "Need stronger intuition examples.",
+      },
+    });
+  });
+
+  test("rejects invalid regenerate provider", () => {
+    expect(parseRegenerateLessonUnitRequest({ provider: "palm" })).toEqual({
+      ok: false,
+      issues: [
+        {
+          field: "provider",
+          message: 'Expected "mock" or "openai".',
+        },
+      ],
+    });
   });
 });

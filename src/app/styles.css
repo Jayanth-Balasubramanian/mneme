@@ -23,6 +23,7 @@ body {
 button,
 a,
 input,
+select,
 textarea {
   font: inherit;
 }
@@ -42,6 +43,7 @@ button:disabled {
 }
 
 input,
+select,
 textarea {
   width: 100%;
   border: 1px solid #c9d3df;
@@ -70,6 +72,7 @@ a {
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
+select:focus-visible,
 textarea:focus-visible {
   outline: 3px solid #197266;
   outline-offset: 3px;
@@ -78,6 +81,7 @@ textarea:focus-visible {
 h1,
 h2,
 h3,
+h4,
 p {
   margin: 0;
 }
@@ -136,7 +140,9 @@ p {
 .source-panel,
 .workspace,
 .import-panel,
-.import-result {
+.import-result,
+.generation-section,
+.review-section {
   border-top: 1px solid #d8e1ec;
   padding: 1.25rem 0;
 }
@@ -149,7 +155,9 @@ p {
 .source-panel h2,
 .workspace h2,
 .import-panel h2,
-.import-result h2 {
+.import-result h2,
+.generation-section h2,
+.review-section h2 {
   margin-top: 0.35rem;
   font-size: 1.35rem;
   line-height: 1.15;
@@ -212,6 +220,7 @@ p {
 }
 
 .import-form label span,
+.unit-card label span,
 .import-result dt {
   color: #314056;
   font-size: 0.9rem;
@@ -260,6 +269,111 @@ p {
   margin: 0;
   color: #415166;
   line-height: 1.5;
+}
+
+.unit-card {
+  margin-top: 1rem;
+  border: 1px solid #d8e1ec;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  background: #ffffff;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.unit-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.unit-card__header h3 {
+  font-size: 1.15rem;
+}
+
+.unit-card__header .eyebrow {
+  margin-top: 0.2rem;
+  color: #445166;
+}
+
+.unit-card__status {
+  border: 1px solid #c9d3df;
+  border-radius: 999px;
+  padding: 0.25rem 0.6rem;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+}
+
+.unit-card__anchors {
+  margin: 0;
+  color: #425166;
+  font-size: 0.9rem;
+}
+
+.unit-card label {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.checkpoint-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.checkpoint-list section {
+  display: grid;
+  gap: 0.5rem;
+  border: 1px solid #d8e1ec;
+  border-radius: 0.5rem;
+  padding: 0.85rem;
+  background: #f6f8fb;
+}
+
+.checkpoint-list h4 {
+  color: #314056;
+  font-size: 0.95rem;
+}
+
+.checkpoint-list summary {
+  cursor: pointer;
+  color: #16453c;
+  font-weight: 800;
+}
+
+.checkpoint-list ul {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.study-units-preview {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.study-units-preview li {
+  display: grid;
+  gap: 0.35rem;
+  border: 1px solid #d8e1ec;
+  border-radius: 0.5rem;
+  padding: 0.9rem;
+  background: #ffffff;
+}
+
+.study-units-preview span {
+  color: #415166;
+  line-height: 1.45;
+}
+
+.review-section p {
+  color: #314056;
+  margin: 0;
+  line-height: 1.45;
 }
 
 .import-result code {
@@ -314,5 +428,9 @@ p {
 
   .form-actions button {
     justify-self: start;
+  }
+
+  .unit-card__header {
+    align-items: center;
   }
 }
