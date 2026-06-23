@@ -235,7 +235,7 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - PR #10 code hygiene follow-up passed after the review workflow fixes: <https://github.com/Jayanth-Balasubramanian/mneme/pull/10#issuecomment-4782257229>.
 - PR #10 security follow-up passed after the regeneration validation fixes: <https://github.com/Jayanth-Balasubramanian/mneme/pull/10#issuecomment-4782262804>.
 - PR #10 is rebased onto current `main`; merge state is clean and CI is green after review fixes.
-- Issue #4 is `state:lgtm`; documentation cleanup is being applied as a scoped updater pass.
+- Issue #4 is `state:lgtm`; documentation cleanup is complete as a scoped updater pass.
 - The issue #4 implementation now covers the required follow-up themes:
   - checkpoint prompt, expected answer, and rubric are editable before approval;
   - review statuses are `draft`, `approved`, `rejected`, and `needs_regeneration`, and only approved units are exposed through the study path;
@@ -251,6 +251,6 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 
 - #2 Import chapter excerpt with source attribution: `merged`; PR #8 merged; issue #2 closed.
 - #3 Generate validated lesson drafts with a mocked provider: `merged`; PR #9 merged; issue #3 closed.
-- #4 Review lesson units and regenerate a single unit: PR #10 open; issue #4 is `state:lgtm`; code hygiene/security follow-ups passed; scoped documentation update in progress after green CI.
+- #4 Review lesson units and regenerate a single unit: PR #10 open; issue #4 is `state:lgtm`; code hygiene/security follow-ups passed; scoped documentation update complete; next gates are feature video, green checks on current head, and merge readiness.
 - #5 Study approved units and record telemetry: blocked by #4 landing; next product priority is completing study and telemetry with a working guided lesson UI and MCQ checkpoint attempts.
 - #6 Expand CI with app-specific security tests and Cloudflare deployment: `needs-spec`.
