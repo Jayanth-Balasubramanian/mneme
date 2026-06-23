@@ -111,10 +111,17 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - The excerpt used for capture is synthetic and does not include copied chapter text.
 - Final merge readiness now depends on the current PR head having green GitHub checks.
 
+### 2026-06-23T16:58Z
+
+- PR #8 was rebase-merged into `main`: merge commit `ebbc0260b967973c9f5a7e61d7998d2f8a93736d`.
+- Issue #2 was closed and relabeled `state:merged`.
+- Main-branch CI for the PR #8 merge completed successfully.
+- Issue #3 is now the next unblocked implementation slice. It should start only after confirming no new conflicts with the merged source-import API/schema.
+
 ## Queue Snapshot
 
-- #2 Import chapter excerpt with source attribution: `lgtm`; PR #8 open; code hygiene and security passed, documentation cleanup complete, feature video recorded; final gate is green GitHub checks on the current PR head before merge.
-- #3 Generate validated lesson drafts with a mocked provider: `ready-for-agent`, intentionally waiting on #2 because of overlap.
-- #4 Review lesson units and regenerate a single unit: blocked by #2 and #3.
+- #2 Import chapter excerpt with source attribution: `merged`; PR #8 merged; issue #2 closed.
+- #3 Generate validated lesson drafts with a mocked provider: `ready-for-agent`; issue #2 is merged, so this is the next candidate.
+- #4 Review lesson units and regenerate a single unit: blocked by #3.
 - #5 Study approved units and record telemetry: blocked by #4.
 - #6 Expand CI with app-specific security tests and Cloudflare deployment: `needs-spec`.

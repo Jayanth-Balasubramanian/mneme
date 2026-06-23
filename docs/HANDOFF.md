@@ -80,22 +80,22 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Owns: package/config, initial app/server folders, smoke tests
 
 2. [#2 Import chapter excerpt with source attribution](https://github.com/Jayanth-Balasubramanian/mneme/issues/2)
-   - State: `state:lgtm`
+   - State: `state:merged`, closed
    - PR: [#8 Import chapter excerpts with source attribution](https://github.com/Jayanth-Balasubramanian/mneme/pull/8)
    - Review gates: code hygiene follow-up passed; security follow-up passed; documentation cleanup complete under the updated scoped-updater workflow.
    - Video: `docs/artifacts/issue-2-import-flow.mp4`
-   - CI: must be green on the current PR head before merge.
-   - Blocked by: final GitHub checks on the video artifact commit
+   - CI: passing on PR #8 before merge and on `main` after merge.
+   - Blocked by: none
    - Owns: source metadata, source anchors, import flow, attribution display
 
 3. [#3 Generate validated lesson drafts with a mocked provider](https://github.com/Jayanth-Balasubramanian/mneme/issues/3)
    - State: `ready-for-agent`
-   - Blocked by: none; issue 1 is merged
+   - Blocked by: none; issues 1 and 2 are merged
    - Owns: `LessonGenerator` contract, output validation, generation runs
 
 4. [#4 Review lesson units and regenerate a single unit](https://github.com/Jayanth-Balasubramanian/mneme/issues/4)
    - State: `ready-for-agent`
-   - Blocked by: issues 2 and 3
+   - Blocked by: issue 3
    - Owns: review states, editing, approving/rejecting, single-unit regeneration
 
 5. [#5 Study approved units and record telemetry](https://github.com/Jayanth-Balasubramanian/mneme/issues/5)
@@ -130,18 +130,20 @@ Completed:
 - Local verification passed: `bun run typecheck`, `bun test`, `bun run lint`, `bun run build`, and `MNEME_DB_PATH=/private/tmp/mneme-issue-2-verification.sqlite bun run db:migrate`.
 - PR #8 was opened against `main` and linked to issue #2.
 
-Current PR #8 state:
+Final PR #8 state:
 
 - Code hygiene follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/8#issuecomment-4781225906>.
 - Security follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/8#issuecomment-4781224173>.
 - The old documentation review comment is cleanup input, not a repeated review gate: <https://github.com/Jayanth-Balasubramanian/mneme/pull/8#issuecomment-4781248688>.
 - Documentation cleanup is complete under the updated workflow.
 - Feature video recorded at `docs/artifacts/issue-2-import-flow.mp4` using an isolated Chrome instance and direct Chrome DevTools Protocol capture.
-- Next gate is green GitHub checks on the current PR head, then rebase merge if no human review is needed.
+- PR #8 was rebase-merged into `main` at `ebbc0260b967973c9f5a7e61d7998d2f8a93736d`.
+- Issue #2 is closed with `state:merged`.
+- Main-branch CI passed after the merge.
 
 Todos:
 
-- After issue #2 merges, schedule issue #3 only after checking for shared-schema/API conflicts with the import slice.
+- Schedule issue #3 after checking for shared-schema/API conflicts with the merged import slice.
 
 Issues:
 
