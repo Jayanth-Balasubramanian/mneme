@@ -125,10 +125,30 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - Moved issue #3 to `state:in-progress`.
 - Scheduling a single coding subagent because issue #3 touches shared schemas, AI contracts, server persistence, and integration tests. Issues #4 and #5 stay unscheduled until #3 lands.
 
+### 2026-06-23T17:12Z
+
+- Coding subagent completed issue #3 and opened PR #9: <https://github.com/Jayanth-Balasubramanian/mneme/pull/9>.
+- Head commit: `40399e8f96251b20ef9c0db91886b6fa8a4f41f8`.
+- Issue #3 moved to `state:ready-for-review`.
+- Reported verification passed:
+  - `bun run typecheck`
+  - `bun test`
+  - `bun run lint`
+  - `bun run build`
+- `MNEME_DB_PATH=/private/tmp/mneme-issue-3-verification.sqlite bun run db:migrate`
+- Next gates: code hygiene review comment and security review comment on PR #9. Documentation cleanup runs only after those gates pass.
+
+### 2026-06-23T17:13Z
+
+- User set the overnight loop priority: complete the remaining PRs, prioritizing a working app UI for a guided lesson with checkpoint MCQs.
+- It is acceptable to ship manually seeded lesson content generated from the credited public Chapter 17 source if that gets the guided lesson workflow working sooner than fully automated generation.
+- Keep the loop autonomous and stop only for genuine human input blockers.
+- Coding-agent fallback: if `gpt-5.3-codex-spark` hits capacity or quality limits, use `gpt-5.5` with xhigh reasoning.
+
 ## Queue Snapshot
 
 - #2 Import chapter excerpt with source attribution: `merged`; PR #8 merged; issue #2 closed.
-- #3 Generate validated lesson drafts with a mocked provider: `in-progress`; assigned to `issue-3-mocked-generation`.
+- #3 Generate validated lesson drafts with a mocked provider: `ready-for-review`; PR #9 open.
 - #4 Review lesson units and regenerate a single unit: blocked by #3.
 - #5 Study approved units and record telemetry: blocked by #4.
 - #6 Expand CI with app-specific security tests and Cloudflare deployment: `needs-spec`.
