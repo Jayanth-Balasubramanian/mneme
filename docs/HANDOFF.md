@@ -135,9 +135,16 @@ GitHub is the source of truth for issue state. These issues have been created:
 
 6. [#6 Expand CI with app-specific security tests and Cloudflare deployment](https://github.com/Jayanth-Balasubramanian/mneme/issues/6)
    - State: `state:needs-human`
-   - Blocked by: Cloudflare deployment target, secrets policy, rollback/staging policy, and whether to split app-specific CI security tests from deployment.
+   - Current scope: Cloudflare deployment after target and secrets policy.
+   - Blocked by: Cloudflare deployment target, secrets policy, and rollback/staging policy.
    - Blocker comment: <https://github.com/Jayanth-Balasubramanian/mneme/issues/6#issuecomment-4782843534>
-   - Owns: app-specific security tests and future continuous deployment
+   - Owns: future continuous deployment
+
+7. [#12 Add app-specific CI security tests](https://github.com/Jayanth-Balasubramanian/mneme/issues/12)
+   - State: `state:ready-for-agent`
+   - Split from: issue #6
+   - Blocked by: none
+   - Owns: app-specific security tests, CI security command, and dry-run detector proof
 
 ## Remaining Human Inputs
 

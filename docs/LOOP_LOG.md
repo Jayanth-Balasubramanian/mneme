@@ -332,10 +332,18 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - Blocker comment posted: <https://github.com/Jayanth-Balasubramanian/mneme/issues/6#issuecomment-4782843534>.
 - Required human/spec decisions before issue #6 becomes agent-ready: Cloudflare target, secrets ownership/policy, rollback/staging gate, and whether to split app-specific CI security tests from deployment.
 
+### 2026-06-23T19:48Z
+
+- Split the app-specific CI security-test work out of issue #6 because it does not require Cloudflare credentials or deployment target decisions.
+- Created issue #12, "Add app-specific CI security tests": <https://github.com/Jayanth-Balasubramanian/mneme/issues/12>.
+- Issue #12 is `state:ready-for-agent` with acceptance criteria for Markdown/rendering policy checks, LLM output validation coverage checks, source-text leakage checks, secret leakage checks, and a deliberate secret-like dry-run proof.
+- Issue #6 was narrowed to Cloudflare deployment after target/secrets/rollback policy and remains `state:needs-human`.
+
 ## Queue Snapshot
 
 - #2 Import chapter excerpt with source attribution: `merged`; PR #8 merged; issue #2 closed.
 - #3 Generate validated lesson drafts with a mocked provider: `merged`; PR #9 merged; issue #3 closed.
 - #4 Review lesson units and regenerate a single unit: `merged`; PR #10 merged; issue #4 closed.
 - #5 Study approved units and record telemetry: `merged`; PR #11 merged; issue #5 closed.
-- #6 Expand CI with app-specific security tests and Cloudflare deployment: `needs-human`; blocked on Cloudflare target/secrets/rollback scope decisions.
+- #6 Add Cloudflare deployment after target and secrets policy: `needs-human`; blocked on Cloudflare target/secrets/rollback decisions.
+- #12 Add app-specific CI security tests: `ready-for-agent`; unblocked.
