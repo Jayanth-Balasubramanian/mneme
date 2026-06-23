@@ -1,6 +1,7 @@
 import type { Hono } from "hono";
 
 import type { LessonGenerator } from "../../domain/generation";
+import { extractSourceContextFromAnchors } from "../../domain/source";
 import type { ChapterSourceRepository } from "../db/chapterSources";
 import {
   ALLOWED_REVIEW_STATUSES,
@@ -68,6 +69,61 @@ function summarizeValidationIssues(issues: ValidationIssue[]): string {
   }
 
   return issues.map((issue) => `${issue.field}: ${issue.message}`).join("; ");
+}
+
+function buildRegenerationMarkdown(input: {
+  chapterMarkdown: string;
+  original: {
+    title: string;
+    learningObjective: string;
+    conceptKeys: string[];
+    sourceAnchors: Array<{
+      headingPath: string[];
+      paragraphStart: number;
+      paragraphEnd: number;
+      sourceUrl: string;
+    }>;
+    explanationMd: string;
+    intuitionMd: string;
+    notationMd?: string;
+    exampleMd?: string;
+    misconceptionMd?: string;
+  };
+}): string {
+  const snippets = extractSourceContextFromAnchors(
+    input.chapterMarkdown,
+    input.original.sourceAnchors,
+    {
+      contextRadius: 1,
+      maxParagraphs: 8,
+    },
+  );
+  const sourceContext = snippets.map((snippet) => {
+    const heading = snippet.headingPath.length > 0
+      ? snippet.headingPath.join(" > ")
+      : "Untitled section";
+
+    return `Paragraph ${snippet.paragraphIndex} (${heading})\n${snippet.text}`;
+  });
+
+  return [
+    `# Existing lesson unit: ${input.original.title}`,
+    `Learning objective: ${input.original.learningObjective}`,
+    `Concept keys: ${input.original.conceptKeys.join(", ")}`,
+    "## Existing explanation",
+    input.original.explanationMd,
+    "## Existing intuition",
+    input.original.intuitionMd,
+    input.original.notationMd ? `## Existing notation\n${input.original.notationMd}` : "",
+    input.original.exampleMd ? `## Existing example\n${input.original.exampleMd}` : "",
+    input.original.misconceptionMd
+      ? `## Existing misconception\n${input.original.misconceptionMd}`
+      : "",
+    "## Bounded source context",
+    ...sourceContext,
+  ]
+    .filter((section) => section.trim().length > 0)
+    .join("\n\n");
 }
 
 
@@ -271,12 +327,15 @@ export function registerLessonUnitRoutes(
       rawOutput = await generator.generate({
         chapterTitle: chapterContext.chapterTitle,
         bookTitle: chapterContext.bookTitle,
-        markdown: chapterContext.markdown,
+        markdown: buildRegenerationMarkdown({
+          chapterMarkdown: chapterContext.markdown,
+          original,
+        }),
         learnerProfile:
           parsed.value.reviewerNotes
             ? `Regenerate with reviewer notes: ${parsed.value.reviewerNotes}`
             : "Review-directed regeneration.",
-        sourceAnchors: chapterContext.anchors,
+        sourceAnchors: original.sourceAnchors,
       });
     } catch {
       const failedRun = await generationPersistence.createGenerationRun({
