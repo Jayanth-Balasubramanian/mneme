@@ -16,6 +16,12 @@ export type SourceCredit = {
   citationText: string;
 };
 
+export type SourceContextSnippet = {
+  paragraphIndex: number;
+  headingPath: string[];
+  text: string;
+};
+
 export type CreateChapterSourceRequest = {
   bookTitle: string;
   authors: string[];

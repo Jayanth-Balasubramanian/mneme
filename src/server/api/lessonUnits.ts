@@ -1,24 +1,29 @@
 import type { Hono } from "hono";
 
+import type { LessonGenerator } from "../../domain/generation";
 import type { ChapterSourceRepository } from "../db/chapterSources";
 import {
   ALLOWED_REVIEW_STATUSES,
   isReviewStatus,
+  parseLessonGenerationDraft,
   parseRegenerateLessonUnitRequest,
   parseUpdateLessonUnitRequest,
+  type ValidationIssue,
   type RegenerateLessonUnitResponse,
   type ReviewStatus,
   type StudyPathResponse,
 } from "../../shared/generation";
-import { buildMockRegeneratedLessonUnit } from "../ai/mockLessonGenerator";
 import type { GenerationPersistence } from "../db/generation";
+import { validateGeneratedAnchorsBelongToChapter } from "./generationValidation";
 
 type LessonUnitRouteDependencies = {
   getChapterSourceRepository: () => ChapterSourceRepository;
   getGenerationPersistence: () => GenerationPersistence;
+  getLessonGenerator: (provider: "mock" | "openai") => LessonGenerator;
 };
 
 const promptVersion = "mock-v1";
+const GENERATOR_FAILURE_REASON = "generation_provider_failed";
 
 function buildGenerationInputSummary(
   unitId: string,
@@ -55,6 +60,14 @@ function parseReviewStatusQuery(
   }
 
   return [queryValue];
+}
+
+function summarizeValidationIssues(issues: ValidationIssue[]): string {
+  if (issues.length === 0) {
+    return "validation_failed";
+  }
+
+  return issues.map((issue) => `${issue.field}: ${issue.message}`).join("; ");
 }
 
 
@@ -224,9 +237,8 @@ export function registerLessonUnitRoutes(
     }
 
     const unitId = context.req.param("id");
-    const original = await dependencies
-      .getGenerationPersistence()
-      .findLessonUnitById(unitId);
+    const generationPersistence = dependencies.getGenerationPersistence();
+    const original = await generationPersistence.findLessonUnitById(unitId);
 
     if (!original) {
       return context.json(
@@ -235,25 +247,141 @@ export function registerLessonUnitRoutes(
       );
     }
 
-    const regenerated = buildMockRegeneratedLessonUnit(
-      original,
+    const chapterContext =
+      await dependencies
+        .getChapterSourceRepository()
+        .findGenerationContextById(original.chapterSourceId);
+
+    if (!chapterContext) {
+      return context.json(
+        { error: "chapter_source_not_found" },
+        404,
+      );
+    }
+
+    const generator = dependencies.getLessonGenerator(parsed.value.provider);
+    let rawOutput: unknown;
+    const inputSummary = buildGenerationInputSummary(
+      original.id,
+      parsed.value.provider,
       parsed.value.reviewerNotes,
     );
-    const generationPersistence = dependencies.getGenerationPersistence();
+
+    try {
+      rawOutput = await generator.generate({
+        chapterTitle: chapterContext.chapterTitle,
+        bookTitle: chapterContext.bookTitle,
+        markdown: chapterContext.markdown,
+        learnerProfile:
+          parsed.value.reviewerNotes
+            ? `Regenerate with reviewer notes: ${parsed.value.reviewerNotes}`
+            : "Review-directed regeneration.",
+        sourceAnchors: chapterContext.anchors,
+      });
+    } catch {
+      const failedRun = await generationPersistence.createGenerationRun({
+        chapterSourceId: original.chapterSourceId,
+        provider: parsed.value.provider,
+        promptVersion,
+        status: "failed",
+        inputSummary,
+        rawOutputJson: JSON.stringify({ generatorError: GENERATOR_FAILURE_REASON }),
+        errorMessage: GENERATOR_FAILURE_REASON,
+      });
+
+      return context.json(
+        {
+          error: "generation_failed",
+          generationRunId: failedRun.id,
+          message: failedRun.errorMessage,
+          provider: failedRun.provider,
+        },
+        502,
+      );
+    }
+
+    const validatedDraft = parseLessonGenerationDraft(rawOutput);
+
+    if (!validatedDraft.ok) {
+      const failedRun = await generationPersistence.createGenerationRun({
+        chapterSourceId: original.chapterSourceId,
+        provider: parsed.value.provider,
+        promptVersion,
+        status: "failed",
+        inputSummary,
+        rawOutputJson: JSON.stringify(rawOutput),
+        errorMessage: summarizeValidationIssues(validatedDraft.issues),
+      });
+
+      return context.json(
+        {
+          error: "generation_validation_failed",
+          generationRunId: failedRun.id,
+          issues: validatedDraft.issues,
+        },
+        400,
+      );
+    }
+
+    if (validatedDraft.value.units.length !== 1) {
+      const failedRun = await generationPersistence.createGenerationRun({
+        chapterSourceId: original.chapterSourceId,
+        provider: parsed.value.provider,
+        promptVersion,
+        status: "failed",
+        inputSummary,
+        rawOutputJson: JSON.stringify(rawOutput),
+        errorMessage:
+          "Expected a single regenerated unit in the regeneration response.",
+      });
+
+      return context.json(
+        {
+          error: "generation_validation_failed",
+          generationRunId: failedRun.id,
+          message: failedRun.errorMessage,
+        },
+        400,
+      );
+    }
+
+    const sourceAnchorIssues = validateGeneratedAnchorsBelongToChapter(
+      validatedDraft.value.units,
+      {
+        sourceUrl: chapterContext.sourceUrl,
+        anchors: chapterContext.anchors,
+      },
+    );
+
+    if (sourceAnchorIssues.length > 0) {
+      const failedRun = await generationPersistence.createGenerationRun({
+        chapterSourceId: original.chapterSourceId,
+        provider: parsed.value.provider,
+        promptVersion,
+        status: "failed",
+        inputSummary,
+        rawOutputJson: JSON.stringify(rawOutput),
+        errorMessage: summarizeValidationIssues(sourceAnchorIssues),
+      });
+
+      return context.json(
+        {
+          error: "generation_validation_failed",
+          generationRunId: failedRun.id,
+          issues: sourceAnchorIssues,
+        },
+        400,
+      );
+    }
+
+    const regenerated = validatedDraft.value.units[0];
     const generationRun = await generationPersistence.createGenerationRun({
       chapterSourceId: original.chapterSourceId,
-      provider: "mock",
+      provider: parsed.value.provider,
       promptVersion,
       status: "succeeded",
-      inputSummary: buildGenerationInputSummary(
-        original.id,
-        parsed.value.provider,
-        parsed.value.reviewerNotes,
-      ),
-      rawOutputJson: JSON.stringify({
-        source: "mock_regenerated_unit",
-        unitId,
-      }),
+      inputSummary,
+      rawOutputJson: JSON.stringify(rawOutput),
     });
 
     const lessonUnit = await generationPersistence.replaceLessonUnitById(

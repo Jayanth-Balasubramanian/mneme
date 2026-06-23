@@ -2,6 +2,7 @@ import type {
   ChapterSourceResponse,
   CreateChapterSourceRequest,
   SourceAnchor,
+  SourceContextSnippet,
   SourceCredit,
 } from "../shared/source";
 
@@ -36,11 +37,18 @@ function updateHeadingPath(
   return nextPath;
 }
 
-export function deriveSourceAnchors(
+type ParsedParagraph = {
+  paragraphIndex: number;
+  headingPath: string[];
+  text: string;
+  sourceUrl: string;
+};
+
+function parseMarkdownParagraphs(
   markdown: string,
   sourceUrl: string,
-): SourceAnchor[] {
-  const anchors: SourceAnchor[] = [];
+): ParsedParagraph[] {
+  const paragraphs: ParsedParagraph[] = [];
   const lines = markdown.replace(/\r\n/g, "\n").split("\n");
   let headingPath: string[] = [];
   let paragraphBuffer: string[] = [];
@@ -56,10 +64,10 @@ export function deriveSourceAnchors(
     }
 
     paragraphNumber += 1;
-    anchors.push({
+    paragraphs.push({
+      paragraphIndex: paragraphNumber,
       headingPath: [...headingPath],
-      paragraphStart: paragraphNumber,
-      paragraphEnd: paragraphNumber,
+      text: paragraphText,
       sourceUrl,
     });
   }
@@ -103,7 +111,19 @@ export function deriveSourceAnchors(
 
   flushParagraph();
 
-  return anchors;
+  return paragraphs;
+}
+
+export function deriveSourceAnchors(
+  markdown: string,
+  sourceUrl: string,
+): SourceAnchor[] {
+  return parseMarkdownParagraphs(markdown, sourceUrl).map((paragraph) => ({
+    headingPath: paragraph.headingPath,
+    paragraphStart: paragraph.paragraphIndex,
+    paragraphEnd: paragraph.paragraphIndex,
+    sourceUrl,
+  }));
 }
 
 export function assertUsableSourceAnchors(anchors: SourceAnchor[]): void {
@@ -177,4 +197,66 @@ export async function prepareChapterSourceImport(
     anchors,
     sourceCredit: toSourceCredit(input),
   };
+}
+
+export function extractSourceContextFromAnchors(
+  markdown: string,
+  anchors: SourceAnchor[],
+  options?: {
+    contextRadius?: number;
+    maxParagraphs?: number;
+  },
+): SourceContextSnippet[] {
+  const contextRadius = options?.contextRadius ?? 1;
+  const maxParagraphs = options?.maxParagraphs ?? 6;
+
+  if (anchors.length === 0 || markdown.trim().length === 0) {
+    return [];
+  }
+
+  const paragraphs = parseMarkdownParagraphs(markdown, anchors[0]?.sourceUrl ?? "");
+  const paragraphByIndex = new Map<number, ParsedParagraph>(
+    paragraphs.map((paragraph) => [paragraph.paragraphIndex, paragraph]),
+  );
+
+  const contextIndices = new Set<number>();
+
+  for (const anchor of anchors) {
+    const sourceUrl = anchor.sourceUrl.trim();
+
+    if (sourceUrl.length === 0) {
+      continue;
+    }
+
+    const startIndex = Math.max(1, anchor.paragraphStart - contextRadius);
+    const endIndex = Math.min(
+      paragraphs.length,
+      anchor.paragraphEnd + contextRadius,
+    );
+
+    for (let index = startIndex; index <= endIndex; index += 1) {
+      if (paragraphByIndex.has(index)) {
+        contextIndices.add(index);
+      }
+    }
+  }
+
+  const orderedIndices = [...contextIndices].sort((a, b) => a - b);
+
+  return orderedIndices.slice(0, maxParagraphs).map((paragraphIndex) => {
+    const paragraph = paragraphByIndex.get(paragraphIndex);
+    if (!paragraph) {
+      return {
+        paragraphIndex,
+        headingPath: [],
+        text: "",
+      };
+    }
+
+    return {
+      paragraphIndex,
+      headingPath: paragraph.headingPath,
+      text: paragraph.text,
+    };
+  });
 }

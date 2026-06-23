@@ -1,9 +1,17 @@
 import type { Database, SQLQueryBindings } from "bun:sqlite";
 
-import type { SourceAnchor, SourceCredit } from "../../shared/source";
-import { toSourceCredit } from "../../domain/source";
+import type {
+  SourceAnchor,
+  SourceContextSnippet,
+  SourceCredit,
+} from "../../shared/source";
+import {
+  extractSourceContextFromAnchors,
+  toSourceCredit,
+} from "../../domain/source";
 import type {
   LessonGenerationCheckpoint,
+  UpdateCheckpointPatch,
   LessonGenerationUnit,
   LessonUnitListResponse,
   LessonUnitResponse,
@@ -62,6 +70,7 @@ type LessonUnitListRow = {
   prompt_md: string | null;
   expected_answer_md: string | null;
   rubric_json: string | null;
+  markdown: string;
 };
 
 type LessonUnitUpdatePatch = {
@@ -75,6 +84,8 @@ type LessonUnitUpdatePatch = {
   reviewerNotes?: string | null;
   reviewStatus?: ReviewStatus;
   generationRunId?: string;
+  checkpointPatches?: UpdateCheckpointPatch[];
+  checkpointReplacements?: LessonGenerationCheckpoint[];
 };
 
 type SourceCreditRow = {
@@ -147,6 +158,19 @@ function parseRubric(json: string): LessonGenerationCheckpoint["rubric"] {
     }));
 }
 
+function buildSourceContext(
+  markdown: string,
+  sourceAnchors: SourceAnchor[],
+): SourceContextSnippet[] {
+  return extractSourceContextFromAnchors(markdown, sourceAnchors, {
+    contextRadius: 1,
+    maxParagraphs: 8,
+  }).map((snippet) => ({
+    ...snippet,
+    headingPath: [...snippet.headingPath],
+  }));
+}
+
 function mapGenerationRunRow(row: GenerationRunRow): GenerationRun {
   return {
     id: row.id,
@@ -172,6 +196,8 @@ function mapLessonUnitRows(
     const existing = byUnit.get(row.lesson_unit_id);
 
     if (!existing) {
+      const sourceAnchors = parseSourceAnchors(row.source_anchors_json);
+
       byUnit.set(row.lesson_unit_id, {
         id: row.lesson_unit_id,
         chapterSourceId: row.chapter_source_id,
@@ -180,7 +206,7 @@ function mapLessonUnitRows(
         title: row.title,
         learningObjective: row.learning_objective,
         conceptKeys: parseStringArray(row.concept_keys_json),
-        sourceAnchors: parseSourceAnchors(row.source_anchors_json),
+        sourceAnchors,
         explanationMd: row.explanation_md,
         intuitionMd: row.intuition_md,
         notationMd: row.notation_md ?? undefined,
@@ -188,6 +214,7 @@ function mapLessonUnitRows(
         misconceptionMd: row.misconception_md ?? undefined,
         reviewStatus: row.review_status,
         reviewerNotes: row.reviewer_notes ?? undefined,
+        sourceContext: buildSourceContext(row.markdown, sourceAnchors),
         checkpoints: [],
         sourceCredit,
         createdAt: row.lesson_unit_created_at,
@@ -519,7 +546,8 @@ export class SQLiteGenerationPersistence implements GenerationPersistence {
           cs.chapter_title,
           cs.chapter_number,
           cs.source_url,
-          cs.citation_text
+          cs.citation_text,
+          cs.markdown
         FROM lesson_units lu
         LEFT JOIN checkpoints cp
           ON cp.lesson_unit_id = lu.id
@@ -584,7 +612,8 @@ export class SQLiteGenerationPersistence implements GenerationPersistence {
           cs.chapter_title,
           cs.chapter_number,
           cs.source_url,
-          cs.citation_text
+          cs.citation_text,
+          cs.markdown
         FROM lesson_units lu
         LEFT JOIN checkpoints cp
           ON cp.lesson_unit_id = lu.id
@@ -614,12 +643,61 @@ export class SQLiteGenerationPersistence implements GenerationPersistence {
     return mapLessonUnitRows(rows, sourceCredit)[0] ?? null;
   }
 
+  private replaceUnitCheckpoints(
+    lessonUnitId: string,
+    checkpoints: LessonGenerationCheckpoint[],
+    updatedAt: string,
+  ): void {
+    const checkpointDelete = this.database.query<undefined, [string]>(`
+      DELETE FROM checkpoints
+      WHERE lesson_unit_id = ?
+    `);
+
+    const checkpointInsert = this.database.query<
+      undefined,
+      [string, string, number, string, string, string, string, string]
+    >(
+      `
+      INSERT INTO checkpoints (
+        id,
+        lesson_unit_id,
+        order_index,
+        prompt_md,
+        expected_answer_md,
+        rubric_json,
+        created_at,
+        updated_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+    );
+
+    this.database.transaction(() => {
+      checkpointDelete.run(lessonUnitId);
+
+      for (const [index, checkpoint] of checkpoints.entries()) {
+        const checkpointId = crypto.randomUUID();
+        checkpointInsert.run(
+          checkpointId,
+          lessonUnitId,
+          index,
+          checkpoint.promptMd,
+          checkpoint.expectedAnswerMd,
+          JSON.stringify(checkpoint.rubric),
+          updatedAt,
+          updatedAt,
+        );
+      }
+    })();
+  }
+
   async updateLessonUnitById(
     lessonUnitId: string,
     patch: LessonUnitUpdatePatch,
   ): Promise<LessonUnitResponse | null> {
     const setSegments: string[] = [];
     const values: SQLQueryBindings[] = [];
+    const now = new Date().toISOString();
 
     if (patch.title !== undefined) {
       setSegments.push("title = ?");
@@ -671,29 +749,87 @@ export class SQLiteGenerationPersistence implements GenerationPersistence {
       values.push(patch.generationRunId);
     }
 
-    if (setSegments.length === 0) {
+    const hasCheckpointPatches = (patch.checkpointPatches?.length ?? 0) > 0;
+    const hasCheckpointReplacements = patch.checkpointReplacements !== undefined;
+
+    if (
+      setSegments.length === 0 &&
+      !hasCheckpointPatches &&
+      !hasCheckpointReplacements
+    ) {
       return this.findLessonUnitById(lessonUnitId);
     }
 
     setSegments.push("updated_at = ?");
-    values.push(new Date().toISOString());
-    values.push(lessonUnitId);
+    values.push(now);
 
-    const query = `
+    const updateLessonUnitQuery = `
       UPDATE lesson_units
       SET ${setSegments.join(", ")}
       WHERE id = ?
     `;
 
-    const updateResult = this.database.query<undefined, SQLQueryBindings[]>(query).run(
-      ...values,
-    );
+    const checkpointPatchQuery = this.database.query<
+      undefined,
+      SQLQueryBindings[]
+    >(`
+      UPDATE checkpoints
+      SET prompt_md = COALESCE(?, prompt_md),
+          expected_answer_md = COALESCE(?, expected_answer_md),
+          rubric_json = COALESCE(?, rubric_json),
+          updated_at = ?
+      WHERE id = ? AND lesson_unit_id = ?
+    `);
 
-    if (!updateResult?.changes) {
+    const updateLessonUnit = this.database.query<
+      undefined,
+      SQLQueryBindings[]
+    >(updateLessonUnitQuery);
+    const touchUpdatedAtOnly = this.database.query<undefined, [string, string]>(`
+      UPDATE lesson_units
+      SET updated_at = ?
+      WHERE id = ?
+    `);
+
+    this.database.transaction(() => {
+      if (setSegments.length > 0) {
+        values.push(lessonUnitId);
+        updateLessonUnit.run(...values);
+      } else {
+        touchUpdatedAtOnly.run(now, lessonUnitId);
+      }
+
+      if (hasCheckpointReplacements) {
+        this.replaceUnitCheckpoints(
+          lessonUnitId,
+          patch.checkpointReplacements ?? [],
+          now,
+        );
+      } else if (hasCheckpointPatches) {
+        for (const checkpointPatch of patch.checkpointPatches ?? []) {
+          const patchValues: SQLQueryBindings[] = [
+            checkpointPatch.promptMd ?? null,
+            checkpointPatch.expectedAnswerMd ?? null,
+            checkpointPatch.rubric
+              ? JSON.stringify(checkpointPatch.rubric)
+              : null,
+            now,
+            checkpointPatch.checkpointId,
+            lessonUnitId,
+          ];
+
+          checkpointPatchQuery.run(...patchValues);
+        }
+      }
+    })();
+
+    const updated = await this.findLessonUnitById(lessonUnitId);
+
+    if (!updated) {
       return null;
     }
 
-    return this.findLessonUnitById(lessonUnitId);
+    return updated;
   }
 
   async replaceLessonUnitById(
@@ -720,13 +856,6 @@ export class SQLiteGenerationPersistence implements GenerationPersistence {
       return null;
     }
 
-    const checkpointDelete = this.database.query<undefined, [string]>(
-      `
-        DELETE FROM checkpoints
-        WHERE lesson_unit_id = ?
-      `,
-    );
-
     const lessonUnitUpdate = this.database.query<undefined, SQLQueryBindings[]>(`
       UPDATE lesson_units
       SET
@@ -747,28 +876,9 @@ export class SQLiteGenerationPersistence implements GenerationPersistence {
     `,
     );
 
-    const checkpointInsert = this.database.query<
-      undefined,
-      [string, string, number, string, string, string, string, string]
-    >(`
-      INSERT INTO checkpoints (
-        id,
-        lesson_unit_id,
-        order_index,
-        prompt_md,
-        expected_answer_md,
-        rubric_json,
-        created_at,
-        updated_at
-      )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-
     const updatedAt = new Date().toISOString();
 
     this.database.transaction(() => {
-      checkpointDelete.run(lessonUnitId);
-
       lessonUnitUpdate.run(
         replacement.generationRunId,
         replacement.title,
@@ -786,19 +896,7 @@ export class SQLiteGenerationPersistence implements GenerationPersistence {
         lessonUnitId,
       );
 
-      for (const [index, checkpoint] of replacement.checkpoints.entries()) {
-        const checkpointId = crypto.randomUUID();
-        checkpointInsert.run(
-          checkpointId,
-          lessonUnitId,
-          index,
-          checkpoint.promptMd,
-          checkpoint.expectedAnswerMd,
-          JSON.stringify(checkpoint.rubric),
-          updatedAt,
-          updatedAt,
-        );
-      }
+      this.replaceUnitCheckpoints(lessonUnitId, replacement.checkpoints, updatedAt);
     })();
 
     return this.findLessonUnitById(lessonUnitId);

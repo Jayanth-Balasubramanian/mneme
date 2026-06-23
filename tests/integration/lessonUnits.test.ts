@@ -132,6 +132,155 @@ class TwoUnitLessonGenerator implements LessonGenerator {
   }
 }
 
+class InvalidRegenerationGenerator implements LessonGenerator {
+  async generate(): Promise<LessonGenerationDraft> {
+    return {
+      title: "Invalid regen draft",
+      summary: "Regeneration failed because no units were returned.",
+      units: [],
+    };
+  }
+}
+
+class ForeignAnchorRegenerationGenerator implements LessonGenerator {
+  async generate(): Promise<LessonGenerationDraft> {
+    return {
+      title: "Foreign anchors",
+      summary: "Regenerated unit references a foreign source URL.",
+      units: [
+        {
+          title: "Regenerated with foreign anchor",
+          learningObjective: "Validate provenance checks.",
+          conceptKeys: ["provenance"],
+          sourceAnchors: [
+            {
+              headingPath: ["Synthetic Monte Carlo Notes"],
+              paragraphStart: 1,
+              paragraphEnd: 1,
+              sourceUrl: "https://malicious.example.com/chapter",
+            },
+          ],
+          explanationMd: "This unit was generated from a bad source.",
+          intuitionMd: "It should fail source-url provenance.",
+          checkpoints: [
+            {
+              promptMd: "What is provenance?",
+              expectedAnswerMd: "Provenance links concepts to the chapter source.",
+              rubric: [
+                {
+                  rating: "wrong",
+                  description: "No source provenance.",
+                },
+                {
+                  rating: "partial",
+                  description: "Mentions provenance in general.",
+                },
+                {
+                  rating: "correct",
+                  description: "Matches source provenance requirements.",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+  }
+}
+
+class OutOfRangeAnchorRegenerationGenerator implements LessonGenerator {
+  async generate(): Promise<LessonGenerationDraft> {
+    return {
+      title: "Invalid regenerated range",
+      summary: "Regenerated unit has an out-of-range source paragraph.",
+      units: [
+        {
+          title: "Regenerated out-of-range",
+          learningObjective: "Validate paragraph range checks.",
+          conceptKeys: ["range-check"],
+          sourceAnchors: [
+            {
+              headingPath: ["Synthetic Monte Carlo Notes"],
+              paragraphStart: 99,
+              paragraphEnd: 101,
+              sourceUrl: requestBody.sourceUrl,
+            },
+          ],
+          explanationMd: "This unit should fail paragraph-range checks.",
+          intuitionMd: "It should map to an unavailable paragraph.",
+          checkpoints: [
+            {
+              promptMd: "What happens with impossible anchors?",
+              expectedAnswerMd:
+                "Validation should reject anchors outside imported paragraphs.",
+              rubric: [
+                {
+                  rating: "wrong",
+                  description: "No anchor validation.",
+                },
+                {
+                  rating: "partial",
+                  description: "Mentions anchor checks in passing.",
+                },
+                {
+                  rating: "correct",
+                  description: "Clearly fails invalid anchor validation.",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+  }
+}
+
+class SingleUnitRegenerationGenerator implements LessonGenerator {
+  async generate(): Promise<LessonGenerationDraft> {
+    return {
+      title: "Single unit regenerated draft",
+      summary: "Single regenerated output for workflow preservation.",
+      units: [
+        {
+          title: "Sampling intuition (Revised)",
+          learningObjective: "Revise the original explanation and preserve provenance.",
+          conceptKeys: ["sampling-intuition"],
+          sourceAnchors: [
+            {
+              headingPath: ["Synthetic Monte Carlo Notes"],
+              paragraphStart: 1,
+              paragraphEnd: 1,
+              sourceUrl: requestBody.sourceUrl,
+            },
+          ],
+          explanationMd: "Revised explanation with a narrower wording.",
+          intuitionMd: "Revised intuition emphasizing repeated sampling.",
+          checkpoints: [
+            {
+              promptMd: "What is the revised intuition for sampling?",
+              expectedAnswerMd: "Revised answer from regeneration.",
+              rubric: [
+                {
+                  rating: "wrong",
+                  description: "Missing the revised concept.",
+                },
+                {
+                  rating: "partial",
+                  description: "Mentions sampling briefly.",
+                },
+                {
+                  rating: "correct",
+                  description: "Reiterates sampling intuition clearly.",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+  }
+}
+
 describe("lesson-unit review workflow", () => {
   test("supports edit, approve, reject, and approved listing", async () => {
     const { database, chapterSources, generationRuns } = createRepositories();
@@ -272,13 +421,19 @@ describe("lesson-unit review workflow", () => {
     const source = await createSourceId(chapterSources);
 
     try {
-      const app = createServerApp({
+      const generationApp = createServerApp({
         chapterSourceRepository: chapterSources,
         generationRepository: generationRuns,
         lessonGenerator: new TwoUnitLessonGenerator(),
       });
 
-      const generationResponse = await app.request("/api/generation-runs", {
+      const regenerationApp = createServerApp({
+        chapterSourceRepository: chapterSources,
+        generationRepository: generationRuns,
+        lessonGenerator: new SingleUnitRegenerationGenerator(),
+      });
+
+      const generationResponse = await generationApp.request("/api/generation-runs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -296,7 +451,7 @@ describe("lesson-unit review workflow", () => {
 
       expect([firstUnitId, secondUnitId]).toHaveLength(2);
 
-      const initialListResponse = await app.request(
+      const initialListResponse = await generationApp.request(
         `/api/lesson-units?chapterSourceId=${source.id}`,
       );
       const initialList = (await initialListResponse.json()) as {
@@ -308,7 +463,7 @@ describe("lesson-unit review workflow", () => {
 
       expect(initialSecondUnit?.title).toBe("Variance control");
 
-      const regenerateResponse = await app.request(
+      const regenerateResponse = await regenerationApp.request(
         `/api/lesson-units/${firstUnitId}/regenerate`,
         {
           method: "POST",
@@ -329,7 +484,7 @@ describe("lesson-unit review workflow", () => {
       expect(regenerateBody.lessonUnit.title).toContain("Revised");
       expect(regenerateBody.lessonUnit.reviewStatus).toBe("draft");
 
-      const finalListResponse = await app.request(
+      const finalListResponse = await generationApp.request(
         `/api/lesson-units?chapterSourceId=${source.id}`,
       );
       const finalList = (await finalListResponse.json()) as {
@@ -347,6 +502,385 @@ describe("lesson-unit review workflow", () => {
 
       expect(finalSecondUnit).toEqual(initialSecondUnit);
       expect(finalFirstUnit?.title).toContain("Sampling intuition");
+    } finally {
+      database.close();
+    }
+  });
+
+  test("edits checkpoint content before approving and persists edits to study path", async () => {
+    const { database, chapterSources, generationRuns } = createRepositories();
+    const source = await createSourceId(chapterSources);
+
+    try {
+      const app = createServerApp({
+        chapterSourceRepository: chapterSources,
+        generationRepository: generationRuns,
+        lessonGenerator: new TwoUnitLessonGenerator(),
+      });
+
+      const generationResponse = await app.request("/api/generation-runs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chapterSourceId: source.id,
+          provider: "mock",
+          learnerProfile:
+            "CS undergraduate with applied ML background; prefer formal definitions.",
+        }),
+      });
+
+      const generationBody = (await generationResponse.json()) as {
+        lessonUnitIds: string[];
+      };
+      const firstUnitId = generationBody.lessonUnitIds[0];
+
+      const listResponse = await app.request(
+        `/api/lesson-units?chapterSourceId=${source.id}`,
+      );
+      const listBody = (await listResponse.json()) as {
+        units: Array<{ id: string; checkpoints: Array<{ id: string }> }>;
+      };
+
+      const firstUnit = listBody.units.find((unit) => unit.id === firstUnitId);
+      expect(firstUnit).toBeDefined();
+
+      const checkpointId = firstUnit!.checkpoints[0]?.id;
+      expect(checkpointId).toBeDefined();
+
+      const patchResponse = await app.request(`/api/lesson-units/${firstUnitId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reviewStatus: "approved",
+          checkpointPatches: [
+            {
+              checkpointId,
+              promptMd: "Why is Monte Carlo useful for estimation?",
+              expectedAnswerMd: "It estimates integrals with random samples.",
+              rubric: [
+                {
+                  rating: "wrong",
+                  description: "Doesn't mention samples or estimates.",
+                },
+                {
+                  rating: "partial",
+                  description: "Mentions Monte Carlo without averaging.",
+                },
+                {
+                  rating: "correct",
+                  description:
+                    "Explains random sampling and averaging for estimation.",
+                },
+              ],
+            },
+          ],
+        }),
+      });
+
+      expect(patchResponse.status).toBe(200);
+      const patched = (await patchResponse.json()) as {
+        id: string;
+        reviewStatus: string;
+        checkpoints: Array<{
+          promptMd: string;
+          expectedAnswerMd: string;
+          rubric: Array<{ rating: string; description: string }>;
+        }>;
+      };
+
+      expect(patched.reviewStatus).toBe("approved");
+      expect(patched.checkpoints[0].promptMd).toBe(
+        "Why is Monte Carlo useful for estimation?",
+      );
+      expect(patched.checkpoints[0].rubric).toContainEqual({
+        rating: "correct",
+        description: "Explains random sampling and averaging for estimation.",
+      });
+
+      const studyPathResponse = await app.request(
+        `/api/study-paths/${source.id}`,
+      );
+      const studyPathBody = (await studyPathResponse.json()) as {
+        units: Array<{
+          id: string;
+          reviewStatus: string;
+          checkpoints: Array<{
+            promptMd: string;
+            expectedAnswerMd: string;
+            rubric: Array<{ rating: string; description: string }>;
+          }>;
+        }>;
+      };
+
+      expect(studyPathResponse.status).toBe(200);
+      expect(studyPathBody.units).toHaveLength(1);
+
+      const approvedUnit = studyPathBody.units.find(
+        (unit) => unit.id === firstUnitId,
+      );
+      expect(approvedUnit).toBeDefined();
+      expect(approvedUnit?.reviewStatus).toBe("approved");
+      expect(approvedUnit?.checkpoints[0]).toMatchObject({
+        promptMd: "Why is Monte Carlo useful for estimation?",
+        expectedAnswerMd: "It estimates integrals with random samples.",
+      });
+      expect(approvedUnit?.checkpoints[0].rubric).toContainEqual({
+        rating: "correct",
+        description: "Explains random sampling and averaging for estimation.",
+      });
+    } finally {
+      database.close();
+    }
+  });
+
+  test("fails regeneration for invalid regenerated output and leaves the existing unit unchanged", async () => {
+    const { database, chapterSources, generationRuns } = createRepositories();
+    const source = await createSourceId(chapterSources);
+
+    try {
+      const app = createServerApp({
+        chapterSourceRepository: chapterSources,
+        generationRepository: generationRuns,
+        lessonGenerator: new TwoUnitLessonGenerator(),
+      });
+
+      const generationResponse = await app.request("/api/generation-runs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chapterSourceId: source.id,
+          provider: "mock",
+          learnerProfile:
+            "CS undergraduate with applied ML background; prefer formal definitions.",
+        }),
+      });
+
+      const generationBody = (await generationResponse.json()) as {
+        lessonUnitIds: string[];
+      };
+      const firstUnitId = generationBody.lessonUnitIds[0];
+
+      const beforeListResponse = await app.request(
+        `/api/lesson-units?chapterSourceId=${source.id}`,
+      );
+      const beforeList = (await beforeListResponse.json()) as {
+        units: Array<{ id: string; title: string }>;
+      };
+      const before = beforeList.units.find((unit) => unit.id === firstUnitId);
+      expect(before).toBeDefined();
+      expect(before?.title).toContain("Sampling intuition");
+
+      const regenApp = createServerApp({
+        chapterSourceRepository: chapterSources,
+        generationRepository: generationRuns,
+        lessonGenerator: new InvalidRegenerationGenerator(),
+      });
+
+      const response = await regenApp.request(
+        `/api/lesson-units/${firstUnitId}/regenerate`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            provider: "mock",
+            reviewerNotes: "Preserve original unit because output is invalid.",
+          }),
+        },
+      );
+
+      expect(response.status).toBe(400);
+      const regenBody = (await response.json()) as {
+        generationRunId: string;
+        error: string;
+      };
+
+      expect(regenBody.error).toBe("generation_validation_failed");
+      const generationRun = await generationRuns.findGenerationRunById(
+        regenBody.generationRunId,
+      );
+
+      expect(generationRun).toMatchObject({
+        status: "failed",
+        errorMessage: expect.stringContaining("Expected at least one lesson unit"),
+      });
+
+      const afterListResponse = await app.request(
+        `/api/lesson-units?chapterSourceId=${source.id}`,
+      );
+      const afterList = (await afterListResponse.json()) as {
+        units: Array<{ id: string; title: string }>;
+      };
+      const after = afterList.units.find((unit) => unit.id === firstUnitId);
+
+      expect(after?.title).toBe(before?.title);
+    } finally {
+      database.close();
+    }
+  });
+
+  test("fails regeneration for invalid regenerated anchors and keeps unit unchanged", async () => {
+    const { database, chapterSources, generationRuns } = createRepositories();
+    const source = await createSourceId(chapterSources);
+
+    try {
+      const generationApp = createServerApp({
+        chapterSourceRepository: chapterSources,
+        generationRepository: generationRuns,
+        lessonGenerator: new TwoUnitLessonGenerator(),
+      });
+
+      const generationResponse = await generationApp.request("/api/generation-runs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chapterSourceId: source.id,
+          provider: "mock",
+          learnerProfile:
+            "CS undergraduate with applied ML background; prefer formal definitions.",
+        }),
+      });
+
+      const generationBody = (await generationResponse.json()) as {
+        lessonUnitIds: string[];
+      };
+      const firstUnitId = generationBody.lessonUnitIds[0];
+
+      const beforeListResponse = await generationApp.request(
+        `/api/lesson-units?chapterSourceId=${source.id}`,
+      );
+      const beforeList = (await beforeListResponse.json()) as {
+        units: Array<{ id: string; sourceAnchors: unknown[] }>;
+      };
+      const before = beforeList.units.find((unit) => unit.id === firstUnitId);
+      expect(before).toBeDefined();
+
+      const regenApp = createServerApp({
+        chapterSourceRepository: chapterSources,
+        generationRepository: generationRuns,
+        lessonGenerator: new ForeignAnchorRegenerationGenerator(),
+      });
+
+      const response = await regenApp.request(
+        `/api/lesson-units/${firstUnitId}/regenerate`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            provider: "mock",
+            reviewerNotes: "Force source URL check.",
+          }),
+        },
+      );
+
+      expect(response.status).toBe(400);
+      const regenBody = (await response.json()) as {
+        error: string;
+        generationRunId: string;
+      };
+      expect(regenBody.error).toBe("generation_validation_failed");
+
+      const generationRun = await generationRuns.findGenerationRunById(
+        regenBody.generationRunId,
+      );
+      expect(generationRun).toMatchObject({
+        status: "failed",
+        errorMessage: expect.stringContaining("sourceUrl"),
+      });
+
+      const afterListResponse = await generationApp.request(
+        `/api/lesson-units?chapterSourceId=${source.id}`,
+      );
+      const afterList = (await afterListResponse.json()) as {
+        units: Array<{ id: string; sourceAnchors: unknown[] }>;
+      };
+      const after = afterList.units.find((unit) => unit.id === firstUnitId);
+      expect(after).toBeDefined();
+
+      expect(after!.sourceAnchors).toEqual(before!.sourceAnchors);
+    } finally {
+      database.close();
+    }
+  });
+
+  test("fails regeneration for out-of-range regenerated anchors and keeps unit unchanged", async () => {
+    const { database, chapterSources, generationRuns } = createRepositories();
+    const source = await createSourceId(chapterSources);
+
+    try {
+      const generationApp = createServerApp({
+        chapterSourceRepository: chapterSources,
+        generationRepository: generationRuns,
+        lessonGenerator: new TwoUnitLessonGenerator(),
+      });
+
+      const generationResponse = await generationApp.request("/api/generation-runs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chapterSourceId: source.id,
+          provider: "mock",
+          learnerProfile:
+            "CS undergraduate with applied ML background; prefer formal definitions.",
+        }),
+      });
+
+      const generationBody = (await generationResponse.json()) as {
+        lessonUnitIds: string[];
+      };
+      const firstUnitId = generationBody.lessonUnitIds[0];
+
+      const beforeListResponse = await generationApp.request(
+        `/api/lesson-units?chapterSourceId=${source.id}`,
+      );
+      const beforeList = (await beforeListResponse.json()) as {
+        units: Array<{ id: string; title: string }>;
+      };
+      const before = beforeList.units.find((unit) => unit.id === firstUnitId);
+      expect(before).toBeDefined();
+
+      const regenApp = createServerApp({
+        chapterSourceRepository: chapterSources,
+        generationRepository: generationRuns,
+        lessonGenerator: new OutOfRangeAnchorRegenerationGenerator(),
+      });
+
+      const response = await regenApp.request(
+        `/api/lesson-units/${firstUnitId}/regenerate`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            provider: "mock",
+            reviewerNotes: "Force paragraph validation.",
+          }),
+        },
+      );
+
+      expect(response.status).toBe(400);
+      const regenBody = (await response.json()) as {
+        error: string;
+        generationRunId: string;
+      };
+      expect(regenBody.error).toBe("generation_validation_failed");
+
+      const generationRun = await generationRuns.findGenerationRunById(
+        regenBody.generationRunId,
+      );
+      expect(generationRun).toMatchObject({
+        status: "failed",
+        errorMessage: expect.stringContaining("paragraph"),
+      });
+
+      const afterListResponse = await generationApp.request(
+        `/api/lesson-units?chapterSourceId=${source.id}`,
+      );
+      const afterList = (await afterListResponse.json()) as {
+        units: Array<{ id: string; title: string }>;
+      };
+      const after = afterList.units.find((unit) => unit.id === firstUnitId);
+      expect(after).toBeDefined();
+
+      expect(after!.title).toBe(before!.title);
     } finally {
       database.close();
     }

@@ -271,6 +271,18 @@ describe("generation run workflow", () => {
           sourceUrl: requestBody.sourceUrl,
         },
       ]);
+      expect(listBody.units[0].sourceContext).toEqual([
+        expect.objectContaining({
+          paragraphIndex: 1,
+          headingPath: ["Synthetic Monte Carlo Notes"],
+          text: "A short synthetic paragraph about estimating an expected value.",
+        }),
+        expect.objectContaining({
+          paragraphIndex: 2,
+          headingPath: ["Synthetic Monte Carlo Notes", "Practice focus"],
+          text: "A second synthetic paragraph for source anchoring.",
+        }),
+      ]);
 
       const generationRun = await generationRuns.findGenerationRunById(body.id);
       expect(generationRun).toMatchObject({ status: "succeeded" });

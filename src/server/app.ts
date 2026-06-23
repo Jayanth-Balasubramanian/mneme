@@ -61,6 +61,14 @@ export function createServerApp(options: ServerAppOptions = {}): Hono {
       generationRepository ??= createLocalGenerationRepository();
       return generationRepository;
     },
+    getLessonGenerator: (provider) => {
+      if (provider === "mock") {
+        lessonGenerator ??= new MockLessonGenerator();
+        return lessonGenerator;
+      }
+
+      throw new Error(`Provider '${provider}' is not configured in this deployment.`);
+    },
   });
 
   app.notFound((context) =>
