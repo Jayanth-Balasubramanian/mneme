@@ -369,7 +369,14 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
   - `bun run test:e2e`
 - `bun run test:e2e` required sandbox escalation because it starts localhost Hono/Vite servers and a headless Chrome/CDP browser session.
 - The `security:check` output included the in-memory synthetic secret-like dry-run proof before scanning repository files.
-- Next steps: commit, push, open the PR, move issue #12 to `state:ready-for-review`, and post the verification summary on the PR.
+
+### 2026-06-23T19:58Z
+
+- Committed issue #12 implementation as `d220aa4`, pushed branch `issue-12-security-ci`, and opened PR #13: <https://github.com/Jayanth-Balasubramanian/mneme/pull/13>.
+- PR #13 title: "Add app-specific CI security checks".
+- PR #13 body links `Closes #12`.
+- Moved issue #12 from `state:in-progress` to `state:ready-for-review`.
+- Posted the required implementation and verification summary comment on PR #13: <https://github.com/Jayanth-Balasubramanian/mneme/pull/13#issuecomment-4782956150>.
 
 ## Queue Snapshot
 
@@ -378,4 +385,4 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - #4 Review lesson units and regenerate a single unit: `merged`; PR #10 merged; issue #4 closed.
 - #5 Study approved units and record telemetry: `merged`; PR #11 merged; issue #5 closed.
 - #6 Add Cloudflare deployment after target and secrets policy: `needs-human`; blocked on Cloudflare target/secrets/rollback decisions.
-- #12 Add app-specific CI security tests: `in-progress`; branch `issue-12-security-ci`.
+- #12 Add app-specific CI security tests: `ready-for-review`; PR #13 open.
