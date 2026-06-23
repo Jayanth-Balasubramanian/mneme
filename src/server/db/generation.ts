@@ -1,4 +1,4 @@
-import type { Database } from "bun:sqlite";
+import type { Database, SQLQueryBindings } from "bun:sqlite";
 
 import type { SourceAnchor, SourceCredit } from "../../shared/source";
 import { toSourceCredit } from "../../domain/source";
@@ -62,6 +62,19 @@ type LessonUnitListRow = {
   prompt_md: string | null;
   expected_answer_md: string | null;
   rubric_json: string | null;
+};
+
+type LessonUnitUpdatePatch = {
+  title?: string;
+  learningObjective?: string;
+  explanationMd?: string;
+  intuitionMd?: string;
+  notationMd?: string | null;
+  exampleMd?: string | null;
+  misconceptionMd?: string | null;
+  reviewerNotes?: string | null;
+  reviewStatus?: ReviewStatus;
+  generationRunId?: string;
 };
 
 type SourceCreditRow = {
@@ -225,7 +238,34 @@ export interface GenerationPersistence {
 
   listUnitsByChapterSourceId(
     chapterSourceId: string,
+    reviewStatuses?: ReviewStatus[],
   ): Promise<LessonUnitListResponse["units"]>;
+
+  findLessonUnitById(id: string): Promise<LessonUnitResponse | null>;
+
+  updateLessonUnitById(
+    lessonUnitId: string,
+    patch: LessonUnitUpdatePatch,
+  ): Promise<LessonUnitResponse | null>;
+
+  replaceLessonUnitById(
+    lessonUnitId: string,
+    replacement: {
+      generationRunId: string;
+      title: string;
+      learningObjective: string;
+      conceptKeys: string[];
+      sourceAnchors: SourceAnchor[];
+      explanationMd: string;
+      intuitionMd: string;
+      notationMd?: string | null;
+      exampleMd?: string | null;
+      misconceptionMd?: string | null;
+      reviewerNotes?: string | null;
+      checkpoints: LessonGenerationCheckpoint[];
+      reviewStatus?: ReviewStatus;
+    },
+  ): Promise<LessonUnitResponse | null>;
 }
 
 export class SQLiteGenerationPersistence implements GenerationPersistence {
@@ -433,11 +473,21 @@ export class SQLiteGenerationPersistence implements GenerationPersistence {
 
   async listUnitsByChapterSourceId(
     chapterSourceId: string,
+    reviewStatuses?: ReviewStatus[],
   ): Promise<LessonUnitListResponse["units"]> {
+    const whereStatuses =
+      (reviewStatuses && reviewStatuses.length > 0)
+        ? `AND lu.review_status IN (${reviewStatuses.map(() => "?").join(",")})`
+        : "";
+    const queryParams: SQLQueryBindings[] = [
+      chapterSourceId,
+      ...(reviewStatuses ?? []),
+    ];
+
     const rows = this.database
       .query<
         LessonUnitListRow & SourceCreditRow,
-        [string]
+        [string, ...SQLQueryBindings[]]
       >(`
         SELECT
           lu.id AS lesson_unit_id,
@@ -475,10 +525,12 @@ export class SQLiteGenerationPersistence implements GenerationPersistence {
           ON cp.lesson_unit_id = lu.id
         LEFT JOIN chapter_sources cs
           ON cs.id = lu.chapter_source_id
-        WHERE lu.chapter_source_id = ?
+        WHERE lu.chapter_source_id = ? ${whereStatuses}
         ORDER BY lu.order_index ASC, cp.order_index ASC
       `)
-      .all(chapterSourceId) as Array<LessonUnitListRow & SourceCreditRow>;
+      .all(...(queryParams as [string, ...SQLQueryBindings[]])) as Array<
+      LessonUnitListRow & SourceCreditRow
+    >;
 
     if (rows.length === 0) {
       return [];
@@ -497,5 +549,258 @@ export class SQLiteGenerationPersistence implements GenerationPersistence {
     });
 
     return mapLessonUnitRows(rows, sourceCredit);
+  }
+
+  async findLessonUnitById(id: string): Promise<LessonUnitResponse | null> {
+    const rows = this.database
+      .query<LessonUnitListRow & SourceCreditRow, [string]>(`
+        SELECT
+          lu.id AS lesson_unit_id,
+          lu.chapter_source_id,
+          lu.generation_run_id,
+          lu.order_index,
+          lu.title,
+          lu.learning_objective,
+          lu.concept_keys_json,
+          lu.source_anchors_json,
+          lu.explanation_md,
+          lu.intuition_md,
+          lu.notation_md,
+          lu.example_md,
+          lu.misconception_md,
+          lu.review_status,
+          lu.reviewer_notes,
+          lu.created_at AS lesson_unit_created_at,
+          lu.updated_at AS lesson_unit_updated_at,
+          cp.id AS checkpoint_id,
+          cp.order_index AS checkpoint_order_index,
+          cp.prompt_md,
+          cp.expected_answer_md,
+          cp.rubric_json,
+          cs.book_title,
+          cs.authors_json,
+          cs.publisher,
+          cs.year,
+          cs.chapter_title,
+          cs.chapter_number,
+          cs.source_url,
+          cs.citation_text
+        FROM lesson_units lu
+        LEFT JOIN checkpoints cp
+          ON cp.lesson_unit_id = lu.id
+        LEFT JOIN chapter_sources cs
+          ON cs.id = lu.chapter_source_id
+        WHERE lu.id = ?
+        ORDER BY cp.order_index ASC
+      `)
+      .all(id) as Array<LessonUnitListRow & SourceCreditRow>;
+
+    if (rows.length === 0) {
+      return null;
+    }
+
+    const firstRow = rows[0];
+    const sourceCredit: SourceCredit = toSourceCredit({
+      bookTitle: firstRow.book_title,
+      authors: parseStringArray(firstRow.authors_json),
+      publisher: firstRow.publisher ?? undefined,
+      year: firstRow.year ?? undefined,
+      chapterTitle: firstRow.chapter_title,
+      chapterNumber: firstRow.chapter_number ?? undefined,
+      sourceUrl: firstRow.source_url,
+      citationText: firstRow.citation_text,
+    });
+
+    return mapLessonUnitRows(rows, sourceCredit)[0] ?? null;
+  }
+
+  async updateLessonUnitById(
+    lessonUnitId: string,
+    patch: LessonUnitUpdatePatch,
+  ): Promise<LessonUnitResponse | null> {
+    const setSegments: string[] = [];
+    const values: SQLQueryBindings[] = [];
+
+    if (patch.title !== undefined) {
+      setSegments.push("title = ?");
+      values.push(patch.title);
+    }
+
+    if (patch.learningObjective !== undefined) {
+      setSegments.push("learning_objective = ?");
+      values.push(patch.learningObjective);
+    }
+
+    if (patch.explanationMd !== undefined) {
+      setSegments.push("explanation_md = ?");
+      values.push(patch.explanationMd);
+    }
+
+    if (patch.intuitionMd !== undefined) {
+      setSegments.push("intuition_md = ?");
+      values.push(patch.intuitionMd);
+    }
+
+    if (patch.notationMd !== undefined) {
+      setSegments.push("notation_md = ?");
+      values.push(patch.notationMd);
+    }
+
+    if (patch.exampleMd !== undefined) {
+      setSegments.push("example_md = ?");
+      values.push(patch.exampleMd);
+    }
+
+    if (patch.misconceptionMd !== undefined) {
+      setSegments.push("misconception_md = ?");
+      values.push(patch.misconceptionMd);
+    }
+
+    if (patch.reviewerNotes !== undefined) {
+      setSegments.push("reviewer_notes = ?");
+      values.push(patch.reviewerNotes);
+    }
+
+    if (patch.reviewStatus !== undefined) {
+      setSegments.push("review_status = ?");
+      values.push(patch.reviewStatus);
+    }
+
+    if (patch.generationRunId !== undefined) {
+      setSegments.push("generation_run_id = ?");
+      values.push(patch.generationRunId);
+    }
+
+    if (setSegments.length === 0) {
+      return this.findLessonUnitById(lessonUnitId);
+    }
+
+    setSegments.push("updated_at = ?");
+    values.push(new Date().toISOString());
+    values.push(lessonUnitId);
+
+    const query = `
+      UPDATE lesson_units
+      SET ${setSegments.join(", ")}
+      WHERE id = ?
+    `;
+
+    const updateResult = this.database.query<undefined, SQLQueryBindings[]>(query).run(
+      ...values,
+    );
+
+    if (!updateResult?.changes) {
+      return null;
+    }
+
+    return this.findLessonUnitById(lessonUnitId);
+  }
+
+  async replaceLessonUnitById(
+    lessonUnitId: string,
+    replacement: {
+      generationRunId: string;
+      title: string;
+      learningObjective: string;
+      conceptKeys: string[];
+      sourceAnchors: SourceAnchor[];
+      explanationMd: string;
+      intuitionMd: string;
+      notationMd?: string | null;
+      exampleMd?: string | null;
+      misconceptionMd?: string | null;
+      reviewerNotes?: string | null;
+      checkpoints: LessonGenerationCheckpoint[];
+      reviewStatus?: ReviewStatus;
+    },
+  ): Promise<LessonUnitResponse | null> {
+    const existing = await this.findLessonUnitById(lessonUnitId);
+
+    if (!existing) {
+      return null;
+    }
+
+    const checkpointDelete = this.database.query<undefined, [string]>(
+      `
+        DELETE FROM checkpoints
+        WHERE lesson_unit_id = ?
+      `,
+    );
+
+    const lessonUnitUpdate = this.database.query<undefined, SQLQueryBindings[]>(`
+      UPDATE lesson_units
+      SET
+        generation_run_id = ?,
+        title = ?,
+        learning_objective = ?,
+        concept_keys_json = ?,
+        source_anchors_json = ?,
+        explanation_md = ?,
+        intuition_md = ?,
+        notation_md = ?,
+        example_md = ?,
+        misconception_md = ?,
+        review_status = ?,
+        reviewer_notes = ?,
+        updated_at = ?
+      WHERE id = ?
+    `,
+    );
+
+    const checkpointInsert = this.database.query<
+      undefined,
+      [string, string, number, string, string, string, string, string]
+    >(`
+      INSERT INTO checkpoints (
+        id,
+        lesson_unit_id,
+        order_index,
+        prompt_md,
+        expected_answer_md,
+        rubric_json,
+        created_at,
+        updated_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const updatedAt = new Date().toISOString();
+
+    this.database.transaction(() => {
+      checkpointDelete.run(lessonUnitId);
+
+      lessonUnitUpdate.run(
+        replacement.generationRunId,
+        replacement.title,
+        replacement.learningObjective,
+        JSON.stringify(replacement.conceptKeys),
+        JSON.stringify(replacement.sourceAnchors),
+        replacement.explanationMd,
+        replacement.intuitionMd,
+        replacement.notationMd ?? null,
+        replacement.exampleMd ?? null,
+        replacement.misconceptionMd ?? null,
+        replacement.reviewStatus ?? existing.reviewStatus,
+        replacement.reviewerNotes ?? existing.reviewerNotes ?? null,
+        updatedAt,
+        lessonUnitId,
+      );
+
+      for (const [index, checkpoint] of replacement.checkpoints.entries()) {
+        const checkpointId = crypto.randomUUID();
+        checkpointInsert.run(
+          checkpointId,
+          lessonUnitId,
+          index,
+          checkpoint.promptMd,
+          checkpoint.expectedAnswerMd,
+          JSON.stringify(checkpoint.rubric),
+          updatedAt,
+          updatedAt,
+        );
+      }
+    })();
+
+    return this.findLessonUnitById(lessonUnitId);
   }
 }

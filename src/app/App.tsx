@@ -1,14 +1,22 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 
 import type {
   ChapterSourceResponse,
   CreateChapterSourceRequest,
+  SourceCredit,
   ValidationIssue,
 } from "../shared/source";
+import type {
+  GenerationRunResponse,
+  LessonUnitResponse,
+  ReviewStatus,
+  UpdateLessonUnitRequest,
+} from "../shared/generation";
 
 type HealthState = "checking" | "online" | "offline";
 type ImportState = "idle" | "submitting" | "succeeded" | "failed";
+type GenerationState = "idle" | "submitting" | "succeeded" | "failed";
 
 type ImportFormState = {
   bookTitle: string;
@@ -21,6 +29,18 @@ type ImportFormState = {
   citationText: string;
   emphasisNotes: string;
   markdown: string;
+};
+
+type LessonUnitDraft = {
+  title: string;
+  learningObjective: string;
+  explanationMd: string;
+  intuitionMd: string;
+  notationMd: string;
+  exampleMd: string;
+  misconceptionMd: string;
+  reviewerNotes: string;
+  reviewStatus: ReviewStatus;
 };
 
 const deepLearningDefaults: ImportFormState = {
@@ -38,13 +58,53 @@ const deepLearningDefaults: ImportFormState = {
   markdown: "",
 };
 
-function buildWorkflowItems(source: ChapterSourceResponse | null) {
+const reviewStatusOptions: ReviewStatus[] = [
+  "draft",
+  "approved",
+  "rejected",
+  "needs_regeneration",
+];
+
+function buildWorkflowItems(
+  source: ChapterSourceResponse | null,
+  units: LessonUnitResponse[],
+) {
+  const approvedUnits = units.filter((unit) => unit.reviewStatus === "approved");
+
   return [
     { label: "Import", status: source ? "Imported" : "No excerpt" },
-    { label: "Generate", status: "Waiting" },
-    { label: "Review", status: "Waiting" },
-    { label: "Study", status: "Waiting" },
+    {
+      label: "Generate",
+      status: source
+        ? units.length > 0
+          ? "Generated"
+          : "Waiting"
+        : "Blocked",
+    },
+    {
+      label: "Review",
+      status: units.length > 0 ? `${units.length} unit(s)` : "Waiting",
+    },
+    {
+      label: "Study",
+      status:
+        approvedUnits.length > 0 ? `${approvedUnits.length} approved` : "Waiting",
+    },
   ] as const;
+}
+
+function toLessonUnitDraft(unit: LessonUnitResponse): LessonUnitDraft {
+  return {
+    title: unit.title,
+    learningObjective: unit.learningObjective,
+    explanationMd: unit.explanationMd,
+    intuitionMd: unit.intuitionMd,
+    notationMd: unit.notationMd ?? "",
+    exampleMd: unit.exampleMd ?? "",
+    misconceptionMd: unit.misconceptionMd ?? "",
+    reviewerNotes: unit.reviewerNotes ?? "",
+    reviewStatus: unit.reviewStatus,
+  };
 }
 
 function useHealthState(): HealthState {
@@ -100,6 +160,14 @@ function formatSourceCredit(source: ChapterSourceResponse): string {
   return `${source.bookTitle}, ${chapterLabel}${source.chapterTitle}`;
 }
 
+function formatSourceCreditForUnit(source: SourceCredit): string {
+  const chapterLabel = source.chapterNumber
+    ? `Chapter ${source.chapterNumber}: `
+    : "";
+
+  return `${source.title}, ${chapterLabel}${source.chapterTitle}`;
+}
+
 function buildImportPayload(
   formState: ImportFormState,
 ): CreateChapterSourceRequest {
@@ -123,15 +191,15 @@ function buildImportPayload(
   };
 }
 
-function formatImportError(body: unknown): string {
+function parseResponseMessage(body: unknown, fallback: string): string {
   if (typeof body !== "object" || body === null || !("issues" in body)) {
-    return "Import failed. Check the source metadata and excerpt.";
+    return fallback;
   }
 
   const issues = (body as { issues?: unknown }).issues;
 
   if (!Array.isArray(issues)) {
-    return "Import failed. Check the source metadata and excerpt.";
+    return fallback;
   }
 
   const message = issues
@@ -150,7 +218,33 @@ function formatImportError(body: unknown): string {
 
   return message.length > 0
     ? message
-    : "Import failed. Check the source metadata and excerpt.";
+    : fallback;
+}
+
+function formatSourceAnchors(units: LessonUnitResponse): string {
+  return units.sourceAnchors
+    .map((anchor) => {
+      const heading = anchor.headingPath.length > 0
+        ? anchor.headingPath.join(" » ")
+        : "Untitled section";
+
+      return `${heading} (paragraph ${anchor.paragraphStart}-${anchor.paragraphEnd})`;
+    })
+    .join("; ");
+}
+
+function buildUnitPayload(draft: LessonUnitDraft): UpdateLessonUnitRequest {
+  return {
+    title: draft.title,
+    learningObjective: draft.learningObjective,
+    explanationMd: draft.explanationMd,
+    intuitionMd: draft.intuitionMd,
+    notationMd: draft.notationMd,
+    exampleMd: draft.exampleMd,
+    misconceptionMd: draft.misconceptionMd,
+    reviewerNotes: draft.reviewerNotes,
+    reviewStatus: draft.reviewStatus,
+  };
 }
 
 export function App() {
@@ -158,13 +252,87 @@ export function App() {
   const [formState, setFormState] =
     useState<ImportFormState>(deepLearningDefaults);
   const [importState, setImportState] = useState<ImportState>("idle");
+  const [generationState, setGenerationState] = useState<GenerationState>(
+    "idle",
+  );
   const [importError, setImportError] = useState<string | null>(null);
+  const [generationError, setGenerationError] = useState<string | null>(null);
+  const [generationStatus, setGenerationStatus] = useState<string>(
+    "No draft yet",
+  );
+  const [approvedStudyUnits, setApprovedStudyUnits] = useState<LessonUnitResponse[]>(
+    [],
+  );
   const [chapterSource, setChapterSource] =
     useState<ChapterSourceResponse | null>(null);
-  const workflowItems = buildWorkflowItems(chapterSource);
+  const [lessonUnits, setLessonUnits] = useState<LessonUnitResponse[]>([]);
+  const [editDrafts, setEditDrafts] = useState<Record<string, LessonUnitDraft>>(
+    {},
+  );
+  const [reviewError, setReviewError] = useState<string | null>(null);
 
+  const workflowItems = useMemo(
+    () => buildWorkflowItems(chapterSource, lessonUnits),
+    [chapterSource, lessonUnits],
+  );
+
+  const approvedUnitCount = approvedStudyUnits.length;
   function updateField(field: keyof ImportFormState, value: string): void {
     setFormState((current) => ({ ...current, [field]: value }));
+  }
+
+  function setDraftField<Field extends keyof LessonUnitDraft>(
+    unitId: string,
+    field: Field,
+    value: LessonUnitDraft[Field],
+  ): void {
+    setEditDrafts((current) => ({
+      ...current,
+      [unitId]: {
+        ...current[unitId],
+        [field]: value,
+      },
+    }));
+  }
+
+  async function loadLessonUnits(sourceId: string): Promise<void> {
+    const response = await fetch(
+      `/api/lesson-units?chapterSourceId=${sourceId}`,
+    );
+    const body = await response.json();
+
+    if (!response.ok) {
+      setGenerationError(
+        parseResponseMessage(
+          body,
+          "Failed to load lesson units for the current chapter.",
+        ),
+      );
+      return;
+    }
+
+    const units = (body.units as LessonUnitResponse[]) ?? [];
+    setLessonUnits(units);
+
+    const nextDrafts: Record<string, LessonUnitDraft> = {};
+    for (const unit of units) {
+      nextDrafts[unit.id] = toLessonUnitDraft(unit);
+    }
+
+    setEditDrafts(nextDrafts);
+    await loadApprovedStudyUnits(sourceId);
+  }
+
+  async function loadApprovedStudyUnits(sourceId: string): Promise<void> {
+    const response = await fetch(`/api/study-paths/${sourceId}`);
+    const body = await response.json();
+
+    if (!response.ok) {
+      setApprovedStudyUnits([]);
+      return;
+    }
+
+    setApprovedStudyUnits((body.units as LessonUnitResponse[]) ?? []);
   }
 
   async function handleFileChange(
@@ -198,15 +366,219 @@ export function App() {
 
       if (!response.ok) {
         setImportState("failed");
-        setImportError(formatImportError(body));
+        setImportError(
+          parseResponseMessage(
+            body,
+            "Import failed. Check the source metadata and excerpt.",
+          ),
+        );
         return;
       }
 
-      setChapterSource(body as ChapterSourceResponse);
+      const created = body as ChapterSourceResponse;
+      setChapterSource(created);
+      setLessonUnits([]);
+      setEditDrafts({});
+      setApprovedStudyUnits([]);
       setImportState("succeeded");
+      await loadLessonUnits(created.id);
     } catch {
       setImportState("failed");
       setImportError("Import failed because the local API is unreachable.");
+    }
+  }
+
+  async function generateLessonDraft(): Promise<void> {
+    if (!chapterSource) {
+      return;
+    }
+
+    setGenerationState("submitting");
+    setGenerationError(null);
+    setGenerationStatus("Generating draft lesson units...");
+
+    try {
+      const request = {
+        chapterSourceId: chapterSource.id,
+        provider: "mock",
+        learnerProfile:
+          "CS undergraduate with applied ML background; prefer formal definitions with intuition.",
+      };
+      const response = await fetch("/api/generation-runs", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(request),
+      });
+      const body = await response.json();
+
+      const status = (body as GenerationRunResponse).status;
+      setGenerationStatus(
+        status === "failed"
+          ? "Generation failed. See response status."
+          : "Draft generation succeeded.",
+      );
+
+      if (!response.ok || status === "failed") {
+        setGenerationError(
+          parseResponseMessage(
+            body,
+            "Lesson draft generation failed.",
+          ),
+        );
+        setGenerationState("failed");
+        return;
+      }
+
+      await loadLessonUnits(chapterSource.id);
+      setGenerationState("succeeded");
+    } catch {
+      setGenerationState("failed");
+      setGenerationError("Generation failed because the local API is unreachable.");
+    }
+  }
+
+  async function patchLessonUnit(
+    unitId: string,
+    patch: UpdateLessonUnitRequest,
+  ): Promise<LessonUnitResponse | null> {
+    try {
+      const response = await fetch(`/api/lesson-units/${unitId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(patch),
+      });
+      const body = await response.json();
+
+      if (!response.ok) {
+        setReviewError(
+          parseResponseMessage(body, "Unable to save lesson unit changes."),
+        );
+        return null;
+      }
+
+      return body as LessonUnitResponse;
+    } catch {
+      setReviewError("Unable to save lesson unit changes.");
+      return null;
+    }
+  }
+
+  async function saveLessonUnit(unitId: string): Promise<void> {
+    const draft = editDrafts[unitId];
+    const current = lessonUnits.find((unit) => unit.id === unitId);
+
+    if (!draft || !current) {
+      return;
+    }
+
+    const payload = buildUnitPayload(draft);
+    const updated = await patchLessonUnit(unitId, payload);
+
+    if (!updated) {
+      return;
+    }
+
+    const nextUnits = lessonUnits.map((unit) =>
+      unit.id === unitId ? updated : unit,
+    );
+
+    setLessonUnits(nextUnits);
+    setEditDrafts((currentDrafts) => ({
+      ...currentDrafts,
+      [unitId]: toLessonUnitDraft(updated),
+    }));
+    setReviewError(null);
+
+    if (chapterSource) {
+      await loadApprovedStudyUnits(chapterSource.id);
+    }
+  }
+
+  async function setReviewStatus(
+    unitId: string,
+    reviewStatus: ReviewStatus,
+  ): Promise<void> {
+    const draft = editDrafts[unitId];
+    if (!draft) {
+      return;
+    }
+
+    const payload = {
+      ...buildUnitPayload(draft),
+      reviewStatus,
+    };
+
+    const updated = await patchLessonUnit(unitId, payload);
+    if (!updated) {
+      return;
+    }
+
+    setLessonUnits((units) =>
+      units.map((unit) => (unit.id === unitId ? updated : unit)),
+    );
+    setEditDrafts((drafts) => ({
+      ...drafts,
+      [unitId]: {
+        ...drafts[unitId],
+        reviewStatus,
+      },
+    }));
+    setReviewError(null);
+
+    if (chapterSource) {
+      await loadApprovedStudyUnits(chapterSource.id);
+    }
+  }
+
+  async function regenerateUnit(unitId: string): Promise<void> {
+    if (!chapterSource) {
+      return;
+    }
+
+    const draft = editDrafts[unitId];
+
+    try {
+      const request = {
+        provider: "mock",
+        ...(draft?.reviewerNotes ? { reviewerNotes: draft.reviewerNotes } : {}),
+      };
+      const response = await fetch(`/api/lesson-units/${unitId}/regenerate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(request),
+      });
+      const body = await response.json();
+
+      if (!response.ok) {
+        setReviewError(
+          parseResponseMessage(
+            body,
+            "Unable to regenerate lesson unit.",
+          ),
+        );
+        return;
+      }
+
+      const updated = body as { lessonUnit: LessonUnitResponse };
+      setLessonUnits((units) =>
+        units.map((unit) =>
+          unit.id === unitId ? updated.lessonUnit : unit,
+        ),
+      );
+      setEditDrafts((drafts) => ({
+        ...drafts,
+        [unitId]: toLessonUnitDraft(updated.lessonUnit),
+      }));
+      setReviewError(null);
+      await loadLessonUnits(chapterSource.id);
+    } catch {
+      setReviewError("Unable to regenerate lesson unit.");
     }
   }
 
@@ -250,6 +622,7 @@ export function App() {
                 : "No excerpt imported"}
             </h2>
           </div>
+          {chapterSource ? null : <a href="#import-heading">Import now</a>}
         </div>
 
         <ol className="workflow-list" aria-label="Study workflow state">
@@ -396,6 +769,31 @@ export function App() {
       </section>
 
       {chapterSource ? (
+        <section className="generation-section" aria-labelledby="generation-heading">
+          <div className="section-heading">
+            <p className="eyebrow">Generate lesson draft</p>
+            <h2 id="generation-heading">Draft generation</h2>
+          </div>
+
+          <div className="form-actions">
+            <button
+              disabled={generationState === "submitting"}
+              onClick={() => {
+                void generateLessonDraft();
+              }}
+            >
+              {generationState === "submitting"
+                ? "Generating"
+                : "Generate draft lesson units"}
+            </button>
+          </div>
+
+          <p>{generationStatus}</p>
+          {generationError ? <p role="alert">{generationError}</p> : null}
+        </section>
+      ) : null}
+
+      {chapterSource ? (
         <section
           className="import-result"
           aria-labelledby="import-result-heading"
@@ -409,8 +807,9 @@ export function App() {
             <div>
               <dt>Source credit</dt>
               <dd>
-                {formatSourceCredit(chapterSource)}, by{" "}
-                {formatAuthors(chapterSource.authors)}.{" "}
+                {formatSourceCredit(chapterSource)}, by
+                {" "}
+                {formatAuthors(chapterSource.authors)}. {" "}
                 {chapterSource.publisher ? `${chapterSource.publisher}. ` : ""}
                 {chapterSource.year ? `${chapterSource.year}. ` : ""}
                 <a
@@ -443,6 +842,272 @@ export function App() {
               </div>
             ) : null}
           </dl>
+        </section>
+      ) : null}
+
+      {lessonUnits.length > 0 ? (
+        <section
+          className="review-section"
+          aria-labelledby="review-heading"
+        >
+          <div className="section-heading">
+            <p className="eyebrow">Review generated units</p>
+            <h2 id="review-heading">Review and approve</h2>
+            <p>
+              {approvedUnitCount} approved, {lessonUnits.length} total units
+            </p>
+          </div>
+
+          {reviewError ? <p role="alert">{reviewError}</p> : null}
+
+          {lessonUnits.map((unit) => {
+            const draft = editDrafts[unit.id] ?? toLessonUnitDraft(unit);
+            return (
+              <article className="unit-card" key={unit.id}>
+                <div className="unit-card__header">
+                  <div>
+                    <h3>{draft.title}</h3>
+                    <p className="eyebrow">
+                      Source credit: {formatSourceCreditForUnit(unit.sourceCredit)}
+                    </p>
+                  </div>
+                  <strong className="unit-card__status">{unit.reviewStatus}</strong>
+                </div>
+
+                <p className="unit-card__anchors">
+                  Source context: {formatSourceAnchors(unit)}
+                </p>
+
+                <div className="checkpoint-list" aria-label="Generated checkpoints">
+                  {unit.checkpoints.map((checkpoint) => (
+                    <section key={checkpoint.id}>
+                      <h4>Checkpoint {checkpoint.orderIndex + 1}</h4>
+                      <p>{checkpoint.promptMd}</p>
+                      <details>
+                        <summary>Expected answer and self-check rubric</summary>
+                        <p>{checkpoint.expectedAnswerMd}</p>
+                        <ul>
+                          {checkpoint.rubric.map((rubricItem) => (
+                            <li key={rubricItem.rating}>
+                              <strong>{rubricItem.rating}:</strong>{" "}
+                              {rubricItem.description}
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
+                    </section>
+                  ))}
+                </div>
+
+                <label>
+                  <span>Title</span>
+                  <input
+                    value={draft.title}
+                    onChange={(event) =>
+                      setDraftField(unit.id, "title", event.target.value)
+                    }
+                  />
+                </label>
+
+                <label>
+                  <span>Learning objective</span>
+                  <textarea
+                    rows={3}
+                    value={draft.learningObjective}
+                    onChange={(event) =>
+                      setDraftField(
+                        unit.id,
+                        "learningObjective",
+                        event.target.value,
+                      )
+                    }
+                  />
+                </label>
+
+                <label>
+                  <span>Explanation</span>
+                  <textarea
+                    rows={4}
+                    value={draft.explanationMd}
+                    onChange={(event) =>
+                      setDraftField(
+                        unit.id,
+                        "explanationMd",
+                        event.target.value,
+                      )
+                    }
+                  />
+                </label>
+
+                <label>
+                  <span>Intuition</span>
+                  <textarea
+                    rows={4}
+                    value={draft.intuitionMd}
+                    onChange={(event) =>
+                      setDraftField(
+                        unit.id,
+                        "intuitionMd",
+                        event.target.value,
+                      )
+                    }
+                  />
+                </label>
+
+                <label>
+                  <span>Notation</span>
+                  <textarea
+                    rows={3}
+                    value={draft.notationMd}
+                    onChange={(event) =>
+                      setDraftField(
+                        unit.id,
+                        "notationMd",
+                        event.target.value,
+                      )
+                    }
+                  />
+                </label>
+
+                <label>
+                  <span>Example</span>
+                  <textarea
+                    rows={3}
+                    value={draft.exampleMd}
+                    onChange={(event) =>
+                      setDraftField(
+                        unit.id,
+                        "exampleMd",
+                        event.target.value,
+                      )
+                    }
+                  />
+                </label>
+
+                <label>
+                  <span>Misconception notes</span>
+                  <textarea
+                    rows={3}
+                    value={draft.misconceptionMd}
+                    onChange={(event) =>
+                      setDraftField(
+                        unit.id,
+                        "misconceptionMd",
+                        event.target.value,
+                      )
+                    }
+                  />
+                </label>
+
+                <label>
+                  <span>Reviewer notes</span>
+                  <textarea
+                    rows={2}
+                    value={draft.reviewerNotes}
+                    onChange={(event) =>
+                      setDraftField(
+                        unit.id,
+                        "reviewerNotes",
+                        event.target.value,
+                      )
+                    }
+                  />
+                </label>
+
+                <label>
+                  <span>Review status</span>
+                  <select
+                    value={draft.reviewStatus}
+                    onChange={(event) =>
+                      setDraftField(
+                        unit.id,
+                        "reviewStatus",
+                        event.target.value as ReviewStatus,
+                      )
+                    }
+                  >
+                    {reviewStatusOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <div className="form-actions">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void saveLessonUnit(unit.id);
+                    }}
+                  >
+                    Save edits
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void setReviewStatus(unit.id, "approved");
+                    }}
+                  >
+                    Approve
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void setReviewStatus(unit.id, "rejected");
+                    }}
+                  >
+                    Reject
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void setReviewStatus(unit.id, "needs_regeneration");
+                    }}
+                  >
+                    Mark for regeneration
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void regenerateUnit(unit.id);
+                    }}
+                  >
+                    Regenerate unit
+                  </button>
+                </div>
+              </article>
+            );
+          })}
+        </section>
+      ) : null}
+
+      {chapterSource && approvedStudyUnits.length > 0 ? (
+        <section
+          className="review-section"
+          aria-labelledby="study-heading"
+        >
+          <div className="section-heading">
+            <p className="eyebrow">Ready for study</p>
+            <h2 id="study-heading">Approved units are study-ready</h2>
+          </div>
+
+          <p>
+            {approvedStudyUnits.length} unit(s) available from
+            {" "}
+            {formatSourceCreditForUnit(approvedStudyUnits[0].sourceCredit)}.
+          </p>
+
+          <ol className="study-units-preview" aria-label="Approved study units">
+            {approvedStudyUnits.map((unit) => (
+              <li key={unit.id}>
+                <strong>{unit.title}</strong>
+                {unit.checkpoints[0] ? (
+                  <span>{unit.checkpoints[0].promptMd}</span>
+                ) : null}
+              </li>
+            ))}
+          </ol>
         </section>
       ) : null}
     </main>

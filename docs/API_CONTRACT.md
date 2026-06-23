@@ -214,6 +214,15 @@ Verification:
 
 List lesson units for a chapter source.
 
+Optional query params:
+
+```ts
+type LessonUnitListQuery = {
+  chapterSourceId: string;
+  reviewStatus?: "draft" | "approved" | "rejected" | "needs_regeneration";
+};
+```
+
 Response:
 
 ```ts
@@ -265,6 +274,11 @@ type LessonUnitResponse = {
   sourceCredit: SourceCredit;
 };
 ```
+
+Validation:
+
+- Reject missing `chapterSourceId`.
+- Reject unsupported `reviewStatus` values with `validation_failed`.
 
 Verification:
 

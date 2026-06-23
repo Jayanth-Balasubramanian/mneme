@@ -47,6 +47,13 @@ export type ReviewStatus =
   | "rejected"
   | "needs_regeneration";
 
+export const ALLOWED_REVIEW_STATUSES: ReviewStatus[] = [
+  "draft",
+  "approved",
+  "rejected",
+  "needs_regeneration",
+];
+
 export type CreateGenerationRunRequest = {
   chapterSourceId: string;
   provider: "mock" | "openai";
@@ -99,6 +106,84 @@ export type LessonUnitResponse = {
 export type LessonUnitListResponse = {
   units: LessonUnitResponse[];
 };
+
+export type UpdateLessonUnitRequest = {
+  title?: string;
+  learningObjective?: string;
+  explanationMd?: string;
+  intuitionMd?: string;
+  notationMd?: string;
+  exampleMd?: string;
+  misconceptionMd?: string;
+  reviewerNotes?: string;
+  reviewStatus?: ReviewStatus;
+};
+
+export type RegenerateLessonUnitRequest = {
+  reviewerNotes?: string;
+  provider: "mock" | "openai";
+};
+
+export type RegenerateLessonUnitResponse = {
+  replacedUnitId: string;
+  lessonUnit: LessonUnitResponse;
+  generationRunId: string;
+};
+
+export type StudyPathResponse = {
+  chapterSourceId: string;
+  sourceCredit: SourceCredit;
+  units: LessonUnitResponse[];
+};
+
+export function isReviewStatus(value: unknown): value is ReviewStatus {
+  return (
+    typeof value === "string" &&
+    ALLOWED_REVIEW_STATUSES.includes(value as ReviewStatus)
+  );
+}
+
+function readOptionalUpdatableString(
+  input: Record<string, unknown>,
+  field: string,
+  issues: ValidationIssue[],
+): string | undefined {
+  const value = input[field];
+
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  if (typeof value !== "string") {
+    issues.push({ field, message: "Expected a string." });
+    return undefined;
+  }
+
+  return value;
+}
+
+function readRequiredReviewStatus(
+  input: Record<string, unknown>,
+  field: string,
+  issues: ValidationIssue[],
+): ReviewStatus | undefined {
+  const value = input[field];
+
+  if (typeof value !== "string") {
+    issues.push({ field, message: "Expected review status string." });
+    return undefined;
+  }
+
+  if (!isReviewStatus(value)) {
+    issues.push({
+      field,
+      message: `Expected one of: ${ALLOWED_REVIEW_STATUSES.join(", ")}.`,
+    });
+    return undefined;
+  }
+
+  return value;
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -572,6 +657,134 @@ export function parseLessonGenerationDraft(
       title,
       summary,
       units,
+    },
+  };
+}
+
+export function parseUpdateLessonUnitRequest(
+  payload: unknown,
+): ValidationResult<UpdateLessonUnitRequest> {
+  const issues: ValidationIssue[] = [];
+
+  if (!isRecord(payload)) {
+    return {
+      ok: false,
+      issues: [{ field: "body", message: "Expected a JSON object." }],
+    };
+  }
+
+  const title = readOptionalUpdatableString(payload, "title", issues);
+  const learningObjective = readOptionalUpdatableString(
+    payload,
+    "learningObjective",
+    issues,
+  );
+  const explanationMd = readOptionalUpdatableString(
+    payload,
+    "explanationMd",
+    issues,
+  );
+  const intuitionMd = readOptionalUpdatableString(
+    payload,
+    "intuitionMd",
+    issues,
+  );
+  const notationMd = readOptionalUpdatableString(payload, "notationMd", issues);
+  const exampleMd = readOptionalUpdatableString(payload, "exampleMd", issues);
+  const misconceptionMd = readOptionalUpdatableString(
+    payload,
+    "misconceptionMd",
+    issues,
+  );
+  const reviewerNotes = readOptionalUpdatableString(
+    payload,
+    "reviewerNotes",
+    issues,
+  );
+
+  const hasReviewStatus = payload.reviewStatus !== undefined;
+  const reviewStatus = !hasReviewStatus
+    ? undefined
+    : readRequiredReviewStatus(payload, "reviewStatus", issues);
+
+  if (
+    title === undefined &&
+    learningObjective === undefined &&
+    explanationMd === undefined &&
+    intuitionMd === undefined &&
+    notationMd === undefined &&
+    exampleMd === undefined &&
+    misconceptionMd === undefined &&
+    reviewerNotes === undefined &&
+    !hasReviewStatus
+  ) {
+    issues.push({
+      field: "body",
+      message: "Expected at least one updatable field.",
+    });
+  }
+
+  if (issues.length > 0) {
+    return { ok: false, issues };
+  }
+
+  return {
+    ok: true,
+    value: {
+      ...(title === undefined ? {} : { title }),
+      ...(learningObjective === undefined
+        ? {}
+        : { learningObjective }),
+      ...(explanationMd === undefined ? {} : { explanationMd }),
+      ...(intuitionMd === undefined ? {} : { intuitionMd }),
+      ...(notationMd === undefined ? {} : { notationMd }),
+      ...(exampleMd === undefined ? {} : { exampleMd }),
+      ...(misconceptionMd === undefined ? {} : { misconceptionMd }),
+      ...(reviewerNotes === undefined ? {} : { reviewerNotes }),
+      ...(reviewStatus === undefined ? {} : { reviewStatus }),
+    },
+  };
+}
+
+export function parseRegenerateLessonUnitRequest(
+  payload: unknown,
+): ValidationResult<RegenerateLessonUnitRequest> {
+  const issues: ValidationIssue[] = [];
+
+  if (!isRecord(payload)) {
+    return {
+      ok: false,
+      issues: [{ field: "body", message: "Expected a JSON object." }],
+    };
+  }
+
+  const provider = readRequiredString(payload, "provider", issues);
+  const reviewerNotes = readOptionalUpdatableString(
+    payload,
+    "reviewerNotes",
+    issues,
+  );
+
+  if (
+    provider.length > 0 &&
+    provider !== "mock" &&
+    provider !== "openai"
+  ) {
+    issues.push({
+      field: "provider",
+      message: 'Expected "mock" or "openai".',
+    });
+  }
+
+  if (issues.length > 0) {
+    return { ok: false, issues };
+  }
+
+  return {
+    ok: true,
+    value: {
+      provider: provider as "mock" | "openai",
+      ...(reviewerNotes === undefined ? {} : { reviewerNotes }),
     },
   };
 }

@@ -1,10 +1,66 @@
 import type { Hono } from "hono";
 
+import type { ChapterSourceRepository } from "../db/chapterSources";
+import {
+  ALLOWED_REVIEW_STATUSES,
+  isReviewStatus,
+  parseRegenerateLessonUnitRequest,
+  parseUpdateLessonUnitRequest,
+  type RegenerateLessonUnitResponse,
+  type ReviewStatus,
+  type StudyPathResponse,
+} from "../../shared/generation";
+import { buildMockRegeneratedLessonUnit } from "../ai/mockLessonGenerator";
 import type { GenerationPersistence } from "../db/generation";
+
+type LessonUnitRouteDependencies = {
+  getChapterSourceRepository: () => ChapterSourceRepository;
+  getGenerationPersistence: () => GenerationPersistence;
+};
+
+const promptVersion = "mock-v1";
+
+function buildGenerationInputSummary(
+  unitId: string,
+  provider: "mock" | "openai",
+  notes?: string,
+): string {
+  const reviewed = notes?.trim();
+
+  return reviewed
+    ? `regenerate:${unitId};provider=${provider};reviewerNotes=${reviewed}`
+    : `regenerate:${unitId};provider=${provider}`;
+}
+
+function buildLessonUnitErrorResponse(
+  unitId: string,
+  message: string,
+): { error: string; lessonUnitId: string; issues: { field: string; message: string }[] } {
+  return {
+    error: "lesson_unit_not_found",
+    lessonUnitId: unitId,
+    issues: [{ field: "id", message }],
+  };
+}
+
+function parseReviewStatusQuery(
+  queryValue: string | undefined,
+): ReviewStatus[] | null {
+  if (!queryValue) {
+    return null;
+  }
+
+  if (!isReviewStatus(queryValue)) {
+    return [];
+  }
+
+  return [queryValue];
+}
+
 
 export function registerLessonUnitRoutes(
   app: Hono,
-  getGenerationPersistence: () => GenerationPersistence,
+  dependencies: LessonUnitRouteDependencies,
 ): void {
   app.get("/api/lesson-units", async (context) => {
     const chapterSourceId = context.req.query("chapterSourceId");
@@ -24,11 +80,215 @@ export function registerLessonUnitRoutes(
       );
     }
 
-    const units = await getGenerationPersistence().listUnitsByChapterSourceId(
+    const statusParam = context.req.query("reviewStatus");
+    const reviewStatuses = parseReviewStatusQuery(statusParam);
+
+    if (reviewStatuses !== null && reviewStatuses.length === 0) {
+      return context.json(
+        {
+          error: "validation_failed",
+          issues: [
+            {
+              field: "reviewStatus",
+              message: `Expected one of: ${ALLOWED_REVIEW_STATUSES.join(", ")}.`,
+            },
+          ],
+        },
+        400,
+      );
+    }
+
+    const response = await dependencies
+      .getGenerationPersistence()
+      .listUnitsByChapterSourceId(chapterSourceId, reviewStatuses ?? undefined);
+
+    return context.json({ units: response }, 200);
+  });
+
+  app.get("/api/study-paths/:chapterSourceId", async (context) => {
+    const chapterSourceId = context.req.param("chapterSourceId");
+
+    if (!chapterSourceId || chapterSourceId.trim().length === 0) {
+      return context.json(
+        {
+          error: "validation_failed",
+          issues: [
+            {
+              field: "chapterSourceId",
+              message: "Expected a chapterSourceId path parameter.",
+            },
+          ],
+        },
+        400,
+      );
+    }
+
+    const chapterSource = await dependencies
+      .getChapterSourceRepository()
+      .findById(chapterSourceId);
+
+    if (!chapterSource) {
+      return context.json({ error: "chapter_source_not_found" }, 404);
+    }
+
+    const units = await dependencies
+      .getGenerationPersistence()
+      .listUnitsByChapterSourceId(chapterSourceId, ["approved"]);
+
+    const response: StudyPathResponse = {
       chapterSourceId,
+      sourceCredit: chapterSource.sourceCredit,
+      units,
+    };
+
+    return context.json(response, 200);
+  });
+
+  app.patch("/api/lesson-units/:id", async (context) => {
+    let payload: unknown;
+
+    try {
+      payload = await context.req.json();
+    } catch {
+      return context.json(
+        {
+          error: "invalid_json",
+          issues: [{ field: "body", message: "Expected valid JSON." }],
+        },
+        400,
+      );
+    }
+
+    const parsed = parseUpdateLessonUnitRequest(payload);
+
+    if (!parsed.ok) {
+      return context.json(
+        {
+          error: "validation_failed",
+          issues: parsed.issues,
+        },
+        400,
+      );
+    }
+
+    const unitId = context.req.param("id");
+    const lessonUnit = await dependencies
+      .getGenerationPersistence()
+      .updateLessonUnitById(unitId, parsed.value);
+
+    if (!lessonUnit) {
+      return context.json(
+        buildLessonUnitErrorResponse(unitId, "Lesson unit not found."),
+        404,
+      );
+    }
+
+    return context.json(lessonUnit, 200);
+  });
+
+  app.post("/api/lesson-units/:id/regenerate", async (context) => {
+    let payload: unknown;
+
+    try {
+      payload = await context.req.json();
+    } catch {
+      return context.json(
+        {
+          error: "invalid_json",
+          issues: [{ field: "body", message: "Expected valid JSON." }],
+        },
+        400,
+      );
+    }
+
+    const parsed = parseRegenerateLessonUnitRequest(payload);
+
+    if (!parsed.ok) {
+      return context.json(
+        {
+          error: "validation_failed",
+          issues: parsed.issues,
+        },
+        400,
+      );
+    }
+
+    if (parsed.value.provider === "openai") {
+      return context.json(
+        {
+          error: "provider_not_supported",
+          reason: "provider_not_implemented",
+        },
+        400,
+      );
+    }
+
+    const unitId = context.req.param("id");
+    const original = await dependencies
+      .getGenerationPersistence()
+      .findLessonUnitById(unitId);
+
+    if (!original) {
+      return context.json(
+        buildLessonUnitErrorResponse(unitId, "Lesson unit not found."),
+        404,
+      );
+    }
+
+    const regenerated = buildMockRegeneratedLessonUnit(
+      original,
+      parsed.value.reviewerNotes,
+    );
+    const generationPersistence = dependencies.getGenerationPersistence();
+    const generationRun = await generationPersistence.createGenerationRun({
+      chapterSourceId: original.chapterSourceId,
+      provider: "mock",
+      promptVersion,
+      status: "succeeded",
+      inputSummary: buildGenerationInputSummary(
+        original.id,
+        parsed.value.provider,
+        parsed.value.reviewerNotes,
+      ),
+      rawOutputJson: JSON.stringify({
+        source: "mock_regenerated_unit",
+        unitId,
+      }),
+    });
+
+    const lessonUnit = await generationPersistence.replaceLessonUnitById(
+      unitId,
+      {
+        generationRunId: generationRun.id,
+        title: regenerated.title,
+        learningObjective: regenerated.learningObjective,
+        conceptKeys: regenerated.conceptKeys,
+        sourceAnchors: regenerated.sourceAnchors,
+        explanationMd: regenerated.explanationMd,
+        intuitionMd: regenerated.intuitionMd,
+        notationMd: regenerated.notationMd,
+        exampleMd: regenerated.exampleMd,
+        misconceptionMd: regenerated.misconceptionMd,
+        reviewerNotes:
+          parsed.value.reviewerNotes ?? original.reviewerNotes ?? null,
+        checkpoints: regenerated.checkpoints,
+        reviewStatus: "draft",
+      },
     );
 
-    return context.json({ units });
+    if (!lessonUnit) {
+      return context.json(
+        buildLessonUnitErrorResponse(unitId, "Unit update failed."),
+        500,
+      );
+    }
+
+    const response: RegenerateLessonUnitResponse = {
+      replacedUnitId: lessonUnit.id,
+      lessonUnit,
+      generationRunId: generationRun.id,
+    };
+
+    return context.json(response, 200);
   });
 }
-
