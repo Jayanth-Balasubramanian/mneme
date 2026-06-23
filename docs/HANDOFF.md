@@ -2,7 +2,7 @@
 
 ## Current State
 
-This repository is initialized and contains planning/contract documentation plus implementation slices for a local-first AI-assisted study app. PR #7 merged issue #1 with a Bun/Vite/Hono runtime scaffold, minimal Mneme app shell, health route, and unit smoke test. PR #8 implements issue #2 with Markdown excerpt import, source attribution, local SQLite persistence, and import-result UI.
+This repository is initialized and contains planning/contract documentation plus implementation slices for a local-first AI-assisted study app. PR #7 merged issue #1 with a Bun/Vite/Hono runtime scaffold, minimal Mneme app shell, health route, and unit smoke test. PR #8 implements issue #2 with Markdown excerpt import, source attribution, local SQLite persistence, and import-result UI. PR #9 is open for issue #3 with validated mocked lesson generation.
 
 Git:
 
@@ -89,13 +89,17 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Owns: source metadata, source anchors, import flow, attribution display
 
 3. [#3 Generate validated lesson drafts with a mocked provider](https://github.com/Jayanth-Balasubramanian/mneme/issues/3)
-   - State: `state:ready-for-review`
+   - State: `state:lgtm`
    - Branch/worktree: `issue-3-mocked-generation` at `/private/tmp/mneme-issue-3`
    - PR: [#9 Generate validated lesson drafts with a mocked provider](https://github.com/Jayanth-Balasubramanian/mneme/pull/9)
    - Verification reported by coding subagent: `bun run typecheck`, `bun test`, `bun run lint`, `bun run build`, and `MNEME_DB_PATH=/private/tmp/mneme-issue-3-verification.sqlite bun run db:migrate`.
    - Review-fix commit: `cac3deb5078aa9d66212a9eb1acdddaa08d68128`; CI passing after the fix.
-   - Review gates: follow-up code hygiene and security pending.
-   - Blocked by: follow-up review gates
+   - Code hygiene follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/9#issuecomment-4781796028>.
+   - Security follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/9#issuecomment-4781795098>.
+   - Documentation cleanup: scoped docs update for the mocked generation API/contract is being applied after the passed review gates; this is not a repeated review gate.
+   - Implemented contract: mocked generation validates provider output, records failed runs without studyable units, validates generated source anchors against imported chapter provenance, rejects unsupported `provider: "openai"` requests until the live adapter exists, and sanitizes provider exception details.
+   - Next gate: merge readiness after documentation cleanup is committed, pushed, and summarized on PR #9.
+   - Blocked by: merge readiness only
    - Priority note: after this lands, continue toward a working guided lesson UI with checkpoint MCQs, accepting manually seeded lesson content from the credited public Chapter 17 source if needed.
    - Owns: `LessonGenerator` contract, output validation, generation runs
 
@@ -147,9 +151,31 @@ Final PR #8 state:
 - Issue #2 is closed with `state:merged`.
 - Main-branch CI passed after the merge.
 
-Todos:
+## Latest Loop Run: Issue #3 Mocked Lesson Generation
 
-- Schedule issue #3 after checking for shared-schema/API conflicts with the merged import slice.
+Deliverables:
+
+- Added a mocked `LessonGenerator` path behind the provider contract.
+- Added `POST /api/generation-runs` behavior for draft lesson generation from an imported chapter source.
+- Added schema validation for generated lesson units and checkpoints before persistence.
+- Added failed-run recording for invalid provider output and provider failures, without creating lesson units or checkpoints.
+- Added source-anchor provenance validation against the imported chapter source URL and server-derived anchors.
+- Added unsupported-provider behavior so `provider: "openai"` does not silently succeed through the mock generator.
+- Sanitized provider exception details in public API responses and persisted failure output.
+
+Completed:
+
+- Code hygiene follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/9#issuecomment-4781778242>.
+- Security follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/9#issuecomment-4781781475>.
+- CI is green at PR head `a4bcb070f9d4c7f69f1533bea96381c5a79d7288`.
+- Issue #3 is labeled `state:lgtm`.
+- Documentation cleanup is now a scoped updater pass after code hygiene/security, not a review gate.
+
+Next:
+
+- Finish the scoped documentation update commit, push it to PR #9, and post the documentation summary comment.
+- The next gate after documentation cleanup is PR #9 merge readiness.
+- After issue #3 lands, prioritize a working guided lesson UI with MCQ checkpoints over broad backend expansion. The fastest acceptable path may use manually seeded credited Chapter 17 lesson content while preserving source attribution.
 
 Issues:
 

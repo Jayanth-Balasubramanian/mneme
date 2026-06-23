@@ -126,6 +126,14 @@ type CreateGenerationRunRequest = {
 };
 ```
 
+Implemented provider behavior for PR #9:
+
+- `provider: "mock"` is the only supported successful provider path.
+- `provider: "openai"` is accepted by the request schema but returns `400 provider_not_supported` until the live adapter is implemented; it must not silently fall through to the mock generator.
+- Unknown provider names return `400 validation_failed`.
+- A missing chapter source returns `404 chapter_source_not_found`.
+- Generator exceptions are stored as failed generation runs with the sanitized `generation_provider_failed` message. Raw exception details, secrets, or provider stack traces must not be returned or persisted as generation output.
+
 Response:
 
 ```ts
@@ -142,11 +150,65 @@ type GenerationRunResponse = {
 };
 ```
 
+Success and failure statuses:
+
+- `201 Created` with `status: "succeeded"` when validated mock output is saved.
+- `201 Created` with `status: "failed"` when the provider returns invalid output, invalid provenance anchors, or throws; failed runs must have `lessonUnitIds: []`.
+- `400 invalid_json` when the request body is not valid JSON.
+- `400 validation_failed` when the request shape is invalid.
+- `400 provider_not_supported` when `provider: "openai"` is requested before the adapter exists.
+- `404 chapter_source_not_found` when `chapterSourceId` does not exist.
+
+Generated draft contract:
+
+```ts
+type LessonGenerationDraft = {
+  title: string;
+  summary: string;
+  units: LessonGenerationUnit[];
+};
+
+type LessonGenerationUnit = {
+  title: string;
+  learningObjective: string;
+  conceptKeys: string[];
+  sourceAnchors: SourceAnchor[];
+  explanationMd: string;
+  intuitionMd: string;
+  notationMd?: string;
+  exampleMd?: string;
+  misconceptionMd?: string;
+  checkpoints: LessonGenerationCheckpoint[];
+};
+
+type LessonGenerationCheckpoint = {
+  promptMd: string;
+  expectedAnswerMd: string;
+  rubric: Array<{
+    rating: "wrong" | "partial" | "correct";
+    description: string;
+  }>;
+};
+```
+
+Persistence contract:
+
+- Successful generation stores one `generation_runs` row with raw provider output for debugging, then stores each generated unit as `reviewStatus: "draft"`.
+- Each generated unit stores ordered checkpoints with prompt, expected answer, and self-assessment rubric.
+- Every unit must have at least one non-empty concept key, at least one checkpoint, and at least one source anchor.
+- `conceptKeys` and `sourceAnchors[].headingPath` arrays are strict: mixed valid/invalid entries fail the whole generated draft instead of being silently filtered.
+- Generated source anchors must match the imported chapter source URL and server-derived paragraph/heading anchors before persistence.
+- Failed generation runs do not create lesson units or checkpoints.
+
 Verification:
 
 - Validate generated lesson output before saving lesson units.
 - Save failed generation runs without creating studyable units.
 - Store source anchors for every generated lesson unit.
+- Reject malformed concept key arrays and malformed heading path arrays.
+- Reject generated anchors with a foreign source URL or paragraph range/heading path outside the imported chapter anchors.
+- Reject `provider: "openai"` until the live adapter is implemented.
+- Sanitize provider exception details in API responses and persisted generation failure output.
 
 ## `GET /api/lesson-units?chapterSourceId=:id`
 
