@@ -247,10 +247,22 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - Remaining PR #10 gates after documentation cleanup: feature video and final merge readiness.
 - After issue #4 lands, the overnight priority remains issue #5: complete the guided study and telemetry slice, centered on a working guided lesson UI with MCQ checkpoint attempts.
 
+### 2026-06-23T18:40Z
+
+- Recorded the PR #10 review-workflow feature video using an isolated Chrome instance and direct Chrome DevTools Protocol capture.
+- Video artifact: `docs/artifacts/issue-4-review-flow.mp4`.
+- Video evidence:
+  - Mobile viewport: 390 x 844.
+  - Duration: 8 seconds.
+  - Size: 261 KiB.
+  - Flow shown: synthetic Markdown import, mock lesson generation, review cards with bounded source-context snippets, editable checkpoint prompt, approval, workflow state showing one approved unit, and study-ready preview showing the edited checkpoint.
+- The excerpt used for capture is synthetic and does not include copied chapter text.
+- Final merge readiness now depends on green GitHub checks on the current PR head.
+
 ## Queue Snapshot
 
 - #2 Import chapter excerpt with source attribution: `merged`; PR #8 merged; issue #2 closed.
 - #3 Generate validated lesson drafts with a mocked provider: `merged`; PR #9 merged; issue #3 closed.
-- #4 Review lesson units and regenerate a single unit: PR #10 open; issue #4 is `state:lgtm`; code hygiene/security follow-ups passed; scoped documentation update complete; next gates are feature video, green checks on current head, and merge readiness.
+- #4 Review lesson units and regenerate a single unit: PR #10 open; issue #4 is `state:lgtm`; code hygiene/security follow-ups passed; scoped documentation update complete; feature video recorded; final gate is green GitHub checks on current head before merge.
 - #5 Study approved units and record telemetry: blocked by #4 landing; next product priority is completing study and telemetry with a working guided lesson UI and MCQ checkpoint attempts.
 - #6 Expand CI with app-specific security tests and Cloudflare deployment: `needs-spec`.
