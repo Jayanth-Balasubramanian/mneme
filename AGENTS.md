@@ -22,6 +22,8 @@ This file is the working contract for agents building the AI-assisted technical 
 - Update `CONTEXT.md` when a domain term is resolved or renamed.
 - Add a short ADR under `docs/adr/` only when a decision is hard to reverse, surprising without context, and the result of a real trade-off.
 - Update this file when an agent operating rule, boundary, or verification contract changes.
+- Use GitHub issues as the only issue queue. Do not create or maintain issue files under `docs/`.
+- Use GitHub pull requests for implementation review and merge flow.
 - Put learner-facing UI in `src/app/`.
 - Use a single Bun package with a Vite React SPA and Hono/Web Fetch API unless the user revisits the architecture.
 - Put HTTP route handlers and runtime wiring in `src/server/`.
@@ -89,6 +91,14 @@ When using subagents:
 - Prefer read-only grill/review agents for ambiguous workflow or architecture questions.
 - Do not ask multiple agents to edit the same file unless one is explicitly read-only.
 - Integrate subagent output deliberately; check it against `docs/SPEC.md`, `CONTEXT.md`, and this contract before keeping it.
+
+## GitHub Workflow
+
+- Use `gh` for repository setup, issue creation, labels, pull requests, and issue state updates.
+- Keep handoff/status documentation in `docs/`, but keep actionable issue state in GitHub.
+- If `gh` is unavailable or unauthenticated, mark GitHub sync as `needs-human` in the handoff rather than creating a docs issue queue.
+- Implementation subagents should open pull requests, not local-only merge requests.
+- Review subagents should leave findings on the pull request or linked GitHub issues.
 
 ## Open Questions For User
 

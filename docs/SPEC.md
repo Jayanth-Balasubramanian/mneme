@@ -60,6 +60,10 @@ bun run db:studio
 
 The implementation should keep these commands stable even if tools change under the hood.
 
+## API Contract
+
+The implementation must follow `docs/API_CONTRACT.md` for request/response shape, source attribution, validation, and study telemetry behavior.
+
 ## Source Attribution
 
 Always credit source material in generated lessons, study screens, exports, fixtures, examples, and documentation. The first source is recorded in `docs/SOURCES.md`.
