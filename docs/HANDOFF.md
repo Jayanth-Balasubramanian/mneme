@@ -17,6 +17,8 @@ GitHub:
 - GitHub CLI is installed.
 - GitHub CLI authentication is not complete.
 - Repository creation, issue creation, and pull request workflow are blocked until `gh auth login --git-protocol ssh --web --skip-ssh-key` succeeds.
+- Intended repository name: `mneme`.
+- Intended visibility: public, to use GitHub Actions CI credits.
 
 ## Product Decision
 
@@ -53,6 +55,13 @@ Workflow:
 - No issue files should live under `docs/`.
 - Use rebase-only integration.
 - At most two implementation agents should run in parallel.
+- GitHub Actions owns CI, initially for policy/security checks and tests; later for continuous deployment.
+
+Security posture:
+
+- The repository is public, so agents must treat committed files, fixtures, logs, screenshots, and CI artifacts as public.
+- Secret scanning and public-repo policy checks belong in CI.
+- Full copyrighted chapter text must not be committed without explicit reuse rights.
 
 ## GitHub Issues To Create
 
@@ -86,7 +95,6 @@ Create these as GitHub issues after repository setup. Each should include accept
 ## Remaining Human Inputs
 
 1. Complete GitHub CLI auth.
-2. Confirm repository owner/name/visibility if not using default private repo named after this directory.
-3. Decide whether self-assessment remains the only PoC grading mode, or whether optional post-answer AI feedback is allowed.
-4. Decide whether deployed Cloudflare storage may retain full source Markdown, or whether full source text remains local-only.
-5. Choose the initial OpenAI model for the live adapter.
+2. Decide whether self-assessment remains the only PoC grading mode, or whether optional post-answer AI feedback is allowed.
+3. Decide whether deployed Cloudflare storage may retain full source Markdown, or whether full source text remains local-only.
+4. Choose the initial OpenAI model for the live adapter.

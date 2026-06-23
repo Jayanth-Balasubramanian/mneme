@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  security-events: write
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  policy:
+    name: Repository policy checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reject tracked env files
+        run: |
+          tracked_env_files="$(git ls-files '.env' '.env.*' '.dev.vars' || true)"
+          if [ -n "$tracked_env_files" ]; then
+            echo "Tracked environment/secret files are not allowed:"
+            echo "$tracked_env_files"
+            exit 1
+          fi
+
+      - name: Scan for obvious token formats
+        run: |
+          if git grep -n -E 'sk-[A-Za-z0-9_-]{20,}|ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{20,}' -- .; then
+            echo "Potential token-like value found in tracked files."
+            exit 1
+          fi
+
+      - name: Guard against committed full chapter text
+        run: |
+          if git grep -n -F 'Randomized algorithms fall in to t w o rough categories' -- .; then
+            echo "Deep Learning chapter body text appears to be committed. Keep full source text out of the public repo."
+            exit 1
+          fi
+
+  secrets:
+    name: Gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  project:
+    name: Project checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Run Bun project checks when scaffold exists
+        run: |
+          if [ ! -f package.json ]; then
+            echo "No package.json yet; skipping app checks during planning bootstrap."
+            exit 0
+          fi
+
+          bun install --frozen-lockfile
+          bun run lint
+          bun run typecheck
+          bun test
+          bun run build
+
+  deployment-placeholder:
+    name: Deployment placeholder
+    runs-on: ubuntu-latest
+    needs: [policy, secrets, project]
+    steps:
+      - name: Deployment deferred
+        run: |
+          echo "Continuous deployment will be added after the Cloudflare Workers target is implemented."

@@ -13,6 +13,7 @@ This file is the working contract for agents building the AI-assisted technical 
 - Use shadcn/ui components selectively, copying only components needed by current screens.
 - Build mobile-first and keep the frontend dependency set small.
 - Always credit book/source material in generated lessons, study screens, docs, fixtures, and exports.
+- Treat this as a public repository named `mneme`; assume every committed file and CI artifact is public.
 - Never commit API keys or copyrighted book source files. Ask before sending a full copyrighted chapter to an external model.
 
 ## Routing
@@ -63,6 +64,8 @@ bun test
 bun run test:e2e
 bun run db:migrate
 ```
+- GitHub Actions must run policy/security checks and project checks on pushes to `main` and pull requests.
+- Security checks belong in CI and should expand over time; do not rely on manual review alone for secrets/public-repo policy.
 
 ## Workflow Rules
 
@@ -99,6 +102,7 @@ When using subagents:
 - If `gh` is unavailable or unauthenticated, mark GitHub sync as `needs-human` in the handoff rather than creating a docs issue queue.
 - Implementation subagents should open pull requests, not local-only merge requests.
 - Review subagents should leave findings on the pull request or linked GitHub issues.
+- The GitHub repository should be public for CI credit usage; this is an intentional security-audit constraint.
 
 ## Open Questions For User
 
