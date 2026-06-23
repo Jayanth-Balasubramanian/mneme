@@ -168,8 +168,8 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 
 ### 2026-06-24 Documentation update for PR #9
 
-- PR #9 code hygiene follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/9#issuecomment-4781778242>.
-- PR #9 security follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/9#issuecomment-4781781475>.
+- PR #9 code hygiene follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/9#issuecomment-4781796028>.
+- PR #9 security follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/9#issuecomment-4781795098>.
 - CI is green at PR head `a4bcb070f9d4c7f69f1533bea96381c5a79d7288`.
 - Issue #3 is labeled `state:lgtm`.
 - Scoped documentation update is applying after those gates, under the current workflow where documentation agents update contracts and handoff notes directly rather than acting as a repeated review gate.
