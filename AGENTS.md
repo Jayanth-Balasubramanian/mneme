@@ -55,6 +55,7 @@ This file is the working contract for agents building the AI-assisted technical 
 - For AI generation changes, validate provider output against a schema before saving and test invalid-output handling.
 - Before merging implementation pull requests, run a documentation-agent pass that checks frontend docs, backend/API docs, test contracts, and handoff notes are current.
 - If a required check cannot run, report the command, failure reason, and residual risk.
+- Before merging a working feature PR, record a short feature video showing the implemented workflow. Use browser-harness or the Chrome/computer-use tool. If video capture is blocked, record the exact blocker in `docs/LOOP_LOG.md` and the PR.
 - Expected project commands, once scaffolded, are:
 
 ```bash
@@ -90,6 +91,7 @@ bun run db:studio
 - Prefer native controls, route state, local component state, and shared schemas before adding editor, form, or state-management libraries.
 - Keep public commands stable. If a tool changes underneath, preserve the command contract or update this file and `docs/SPEC.md`.
 - When unsure whether a change belongs in PoC scope, default to the smallest version that proves the guided study workflow.
+- Keep `docs/LOOP_LOG.md` current as the running proof-of-work log. Update it when issues are assigned, PRs open, review gates pass/fail, feature videos are recorded, merges happen, or the loop becomes blocked.
 
 When using subagents:
 
@@ -98,6 +100,9 @@ When using subagents:
 - Prefer read-only grill/review agents for ambiguous workflow or architecture questions.
 - Do not ask multiple agents to edit the same file unless one is explicitly read-only.
 - Integrate subagent output deliberately; check it against `docs/SPEC.md`, `CONTEXT.md`, and this contract before keeping it.
+- Use `gpt-5.3-codex-spark` with xhigh reasoning for coding subagents unless the user changes the routing.
+- Use `gpt-5.5` with xhigh reasoning for code hygiene and security review subagents.
+- Use `gpt-5.5` with high reasoning for documentation-agent review subagents.
 
 ## GitHub Workflow
 
@@ -105,7 +110,7 @@ When using subagents:
 - Keep handoff/status documentation in `docs/`, but keep actionable issue state in GitHub.
 - If `gh` is unavailable or unauthenticated, mark GitHub sync as `needs-human` in the handoff rather than creating a docs issue queue.
 - Implementation subagents should open pull requests, not local-only merge requests.
-- Review subagents should leave findings on the pull request or linked GitHub issues.
+- Review subagents should leave findings as pull request comments. Use linked GitHub issues only for separable follow-up work that should outlive the PR.
 - Documentation subagents should review implementation pull requests before merge and verify `README.md`, `docs/API_CONTRACT.md`, `docs/TEST_CONTRACT.md`, `docs/SPEC.md`, and `docs/HANDOFF.md` remain accurate.
 - The GitHub repository should be public for CI credit usage; this is an intentional security-audit constraint.
 

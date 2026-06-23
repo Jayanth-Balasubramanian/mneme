@@ -54,8 +54,12 @@ Workflow:
 - No issue files should live under `docs/`.
 - Use rebase-only integration.
 - At most two implementation agents should run in parallel.
+- Coding subagents use `gpt-5.3-codex-spark` with xhigh reasoning.
+- Code hygiene and security review subagents use `gpt-5.5` with xhigh reasoning and post findings as PR comments.
+- Documentation-agent review subagents use `gpt-5.5` with high reasoning and post findings as PR comments.
 - GitHub Actions owns CI, initially for policy/security checks and tests; later for continuous deployment.
-- Before merge, each implementation PR needs code hygiene review, security review, and a documentation-agent pass for frontend/backend/API docs.
+- Before merge, each implementation PR needs code hygiene review, security review, documentation-agent review, and a short feature video recorded with browser-harness or Chrome tooling.
+- `docs/LOOP_LOG.md` is the running proof-of-work log and should be monitored for live progress.
 
 Security posture:
 
