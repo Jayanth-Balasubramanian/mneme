@@ -2,7 +2,7 @@
 
 ## Current State
 
-This repository is initialized and contains planning/contract documentation plus implementation slices for a local-first AI-assisted study app. PR #7 merged issue #1 with a Bun/Vite/Hono runtime scaffold, minimal Mneme app shell, health route, and unit smoke test. PR #8 implements issue #2 with Markdown excerpt import, source attribution, local SQLite persistence, and import-result UI. PR #9 is open for issue #3 with validated mocked lesson generation.
+This repository is initialized and contains planning/contract documentation plus implementation slices for a local-first AI-assisted study app. PR #7 merged issue #1 with a Bun/Vite/Hono runtime scaffold, minimal Mneme app shell, health route, and unit smoke test. PR #8 implemented issue #2 with Markdown excerpt import, source attribution, local SQLite persistence, and import-result UI. PR #9 implemented issue #3 with validated mocked lesson generation.
 
 Git:
 
@@ -89,23 +89,23 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Owns: source metadata, source anchors, import flow, attribution display
 
 3. [#3 Generate validated lesson drafts with a mocked provider](https://github.com/Jayanth-Balasubramanian/mneme/issues/3)
-   - State: `state:lgtm`
+   - State: `state:merged`, closed
    - Branch/worktree: `issue-3-mocked-generation` at `/private/tmp/mneme-issue-3`
    - PR: [#9 Generate validated lesson drafts with a mocked provider](https://github.com/Jayanth-Balasubramanian/mneme/pull/9)
    - Verification reported by coding subagent: `bun run typecheck`, `bun test`, `bun run lint`, `bun run build`, and `MNEME_DB_PATH=/private/tmp/mneme-issue-3-verification.sqlite bun run db:migrate`.
    - Review-fix commit: `cac3deb5078aa9d66212a9eb1acdddaa08d68128`; CI passing after the fix.
    - Code hygiene follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/9#issuecomment-4781796028>.
    - Security follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/9#issuecomment-4781795098>.
-   - Documentation cleanup: scoped docs update for the mocked generation API/contract is being applied after the passed review gates; this is not a repeated review gate.
+   - Documentation cleanup: scoped docs update for the mocked generation API/contract is complete after the passed review gates; this is not a repeated review gate.
    - Implemented contract: mocked generation validates provider output, records failed runs without studyable units, validates generated source anchors against imported chapter provenance, rejects unsupported `provider: "openai"` requests until the live adapter exists, and sanitizes provider exception details.
-   - Next gate: merge readiness after documentation cleanup is committed, pushed, and summarized on PR #9.
-   - Blocked by: merge readiness only
+   - Merge: rebase-merged into `main` at `9dd96715b22dc3862593e9a376d4dd28d0d1003c`; main CI passed after merge.
+   - Blocked by: none
    - Priority note: after this lands, continue toward a working guided lesson UI with checkpoint MCQs, accepting manually seeded lesson content from the credited public Chapter 17 source if needed.
    - Owns: `LessonGenerator` contract, output validation, generation runs
 
 4. [#4 Review lesson units and regenerate a single unit](https://github.com/Jayanth-Balasubramanian/mneme/issues/4)
    - State: `ready-for-agent`
-   - Blocked by: issue 3
+   - Blocked by: none; issues 1-3 are merged
    - Owns: review states, editing, approving/rejecting, single-unit regeneration
 
 5. [#5 Study approved units and record telemetry](https://github.com/Jayanth-Balasubramanian/mneme/issues/5)
@@ -168,14 +168,15 @@ Completed:
 - Code hygiene follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/9#issuecomment-4781796028>.
 - Security follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/9#issuecomment-4781795098>.
 - CI is green at PR head `a4bcb070f9d4c7f69f1533bea96381c5a79d7288`.
-- Issue #3 is labeled `state:lgtm`.
+- Issue #3 reached `state:lgtm` before merge.
 - Documentation cleanup is now a scoped updater pass after code hygiene/security, not a review gate.
+- PR #9 was rebase-merged into `main` at `9dd96715b22dc3862593e9a376d4dd28d0d1003c`.
+- Issue #3 is closed with `state:merged`.
+- Main-branch CI passed after the merge.
 
 Next:
 
-- Finish the scoped documentation update commit, push it to PR #9, and post the documentation summary comment.
-- The next gate after documentation cleanup is PR #9 merge readiness.
-- After issue #3 lands, prioritize a working guided lesson UI with MCQ checkpoints over broad backend expansion. The fastest acceptable path may use manually seeded credited Chapter 17 lesson content while preserving source attribution.
+- Schedule issue #4 next, prioritizing a working guided lesson UI with MCQ checkpoints over broad backend expansion. The fastest acceptable path may use manually seeded credited Chapter 17 lesson content while preserving source attribution.
 
 Issues:
 
