@@ -217,10 +217,23 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - Moved issue #4 to `state:changes-requested`.
 - Scheduling a focused fix agent on `issue-4-review-workflow`.
 
+### 2026-06-23T18:25Z
+
+- PR #10 fix agent pushed commit `2bedad2fa74f559a32b0a8510d8eb7df7f5ac0bc`.
+- Fix summary:
+  - Added editable checkpoint prompt, expected answer, and rubric handling.
+  - Added bounded source-context snippets derived from stored chapter Markdown and source anchors.
+  - Routed single-unit regeneration through shared output/provenance validation before replacement.
+  - Rebased onto current `origin/main`; merge state is now clean.
+- Fix comment: <https://github.com/Jayanth-Balasubramanian/mneme/pull/10#issuecomment-4782219087>.
+- CI passed on PR #10 after the fix commit.
+- Issue #4 returned to `state:ready-for-review`.
+- Next gates: follow-up code hygiene and security review comments.
+
 ## Queue Snapshot
 
 - #2 Import chapter excerpt with source attribution: `merged`; PR #8 merged; issue #2 closed.
 - #3 Generate validated lesson drafts with a mocked provider: `merged`; PR #9 merged; issue #3 closed.
-- #4 Review lesson units and regenerate a single unit: `changes-requested`; PR #10 open; review fixes in progress.
+- #4 Review lesson units and regenerate a single unit: `ready-for-review`; PR #10 open; merge state clean and CI green; follow-up review gates pending.
 - #5 Study approved units and record telemetry: blocked by #4; next product priority is a working guided lesson UI with MCQ checkpoints.
 - #6 Expand CI with app-specific security tests and Cloudflare deployment: `needs-spec`.

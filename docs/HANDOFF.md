@@ -104,13 +104,14 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Owns: `LessonGenerator` contract, output validation, generation runs
 
 4. [#4 Review lesson units and regenerate a single unit](https://github.com/Jayanth-Balasubramanian/mneme/issues/4)
-   - State: `state:changes-requested`
+   - State: `state:ready-for-review`
    - Branch/worktree: `issue-4-review-workflow` at `/private/tmp/mneme-issue-4`
    - PR: [#10 Review generated lesson units](https://github.com/Jayanth-Balasubramanian/mneme/pull/10)
    - Blocked by: none; issues 1-3 are merged
    - Assignment: coding subagent continuing existing WIP with `gpt-5.5` xhigh because the slice is UI-heavy and already had substantial local edits.
-   - Review gates: code hygiene and security requested fixes. Required themes: editable checkpoint prompt/expected answer/rubric; real source-context snippets; regeneration output/provenance validation before replacement.
-   - Current caveat: PR #10 merge state is `DIRTY`. It needs review fixes, rebase/conflict resolution, follow-up review gates, and green checks before merge.
+   - Review-fix commit: `2bedad2fa74f559a32b0a8510d8eb7df7f5ac0bc`; CI passing after the fix.
+   - Review gates: follow-up code hygiene and security pending.
+   - Current caveat: e2e remains a deferred placeholder until the full review -> study path is covered.
    - Owns: review states, editing, approving/rejecting, single-unit regeneration
 
 5. [#5 Study approved units and record telemetry](https://github.com/Jayanth-Balasubramanian/mneme/issues/5)
