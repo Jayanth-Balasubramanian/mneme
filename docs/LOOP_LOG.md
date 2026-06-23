@@ -199,10 +199,18 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - Coding model: `gpt-5.5` with xhigh reasoning, using the user-approved fallback because this is a large UI-heavy WIP that needs cleanup as well as completion.
 - Issue #5 remains unscheduled because it overlaps the same UI/API/study path and depends on approved-unit review behavior from issue #4.
 
+### 2026-06-23T17:59Z
+
+- Coding subagent opened PR #10 for issue #4: <https://github.com/Jayanth-Balasubramanian/mneme/pull/10>.
+- Head commit: `2ed2d2dd3ca4643d2ba7159b18bab9f04eb6ed4b`.
+- Issue #4 moved to `state:ready-for-review`.
+- Reported verification passed: `bun run typecheck`, `bun test`, `bun run lint`, `bun run build`, `MNEME_DB_PATH=/private/tmp/mneme-issue-4-verification.sqlite bun run db:migrate`, and `bun run test:e2e` as a deferred placeholder.
+- Current caveat: GitHub reports PR #10 merge state as `DIRTY`, and no PR checks have reported yet. Review gates can proceed, but merge readiness will require a rebase/conflict pass and green checks.
+
 ## Queue Snapshot
 
 - #2 Import chapter excerpt with source attribution: `merged`; PR #8 merged; issue #2 closed.
 - #3 Generate validated lesson drafts with a mocked provider: `merged`; PR #9 merged; issue #3 closed.
-- #4 Review lesson units and regenerate a single unit: `in-progress`; coding subagent active on `issue-4-review-workflow`.
+- #4 Review lesson units and regenerate a single unit: `ready-for-review`; PR #10 open; merge state dirty, review gates pending.
 - #5 Study approved units and record telemetry: blocked by #4; next product priority is a working guided lesson UI with MCQ checkpoints.
 - #6 Expand CI with app-specific security tests and Cloudflare deployment: `needs-spec`.
