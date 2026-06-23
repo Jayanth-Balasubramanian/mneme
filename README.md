@@ -63,6 +63,13 @@ Current runtime endpoints:
 
 - `GET /api/health`
 - `POST /api/chapter-sources`
+- `POST /api/generation-runs`
+- `GET /api/lesson-units?chapterSourceId=:id`
+- `PATCH /api/lesson-units/:id`
+- `POST /api/lesson-units/:id/regenerate`
+- `GET /api/study-paths/:chapterSourceId`
+- `POST /api/study-attempts`
+- `GET /api/weak-concepts?chapterSourceId=:id`
 
 `bun run db:migrate` applies the local SQLite schema. `bun run test:e2e` runs the mobile import -> mock generation -> approval -> checkpoint attempt browser flow with an isolated temporary SQLite database. `db:studio` remains a stable command placeholder until database inspection tooling lands.
 

@@ -296,6 +296,14 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - `bun run test:e2e` required escalation in the Codex sandbox because the test starts localhost listeners for Hono, Vite, and Chrome DevTools Protocol.
 - Next gates: code hygiene review, security review, documentation updater pass after review approval, feature video, and merge readiness.
 
+### 2026-06-24 Documentation update for PR #11
+
+- PR #11 code hygiene passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/11#issuecomment-4782709208>.
+- PR #11 security passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/11#issuecomment-4782704698>.
+- Issue #5 is `state:lgtm` with the scoped documentation updater pass running after the passed review gates.
+- Documentation cleanup is limited to README endpoint inventory, study telemetry API behavior, handoff state, and this loop log. It is not a repeated review or nitpick gate.
+- Remaining PR #11 gates after documentation cleanup: feature video, green checks at the final PR head, and merge readiness.
+
 ## Queue Snapshot
 
 - #2 Import chapter excerpt with source attribution: `merged`; PR #8 merged; issue #2 closed.

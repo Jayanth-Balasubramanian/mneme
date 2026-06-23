@@ -2,7 +2,7 @@
 
 ## Current State
 
-This repository is initialized and contains planning/contract documentation plus implementation slices for a local-first AI-assisted study app. PR #7 merged issue #1 with a Bun/Vite/Hono runtime scaffold, minimal Mneme app shell, health route, and unit smoke test. PR #8 implemented issue #2 with Markdown excerpt import, source attribution, local SQLite persistence, and import-result UI. PR #9 implemented issue #3 with validated mocked lesson generation. PR #10 implemented issue #4 with lesson review, edit, approval, source-context snippets, and single-unit regeneration.
+This repository is initialized and contains planning/contract documentation plus implementation slices for a local-first AI-assisted study app. PR #7 merged issue #1 with a Bun/Vite/Hono runtime scaffold, minimal Mneme app shell, health route, and unit smoke test. PR #8 implemented issue #2 with Markdown excerpt import, source attribution, local SQLite persistence, and import-result UI. PR #9 implemented issue #3 with validated mocked lesson generation. PR #10 implemented issue #4 with lesson review, edit, approval, source-context snippets, and single-unit regeneration. PR #11 implements issue #5 with guided study, checkpoint attempts, weak-concept telemetry, and real browser e2e coverage; code hygiene and security gates have passed and the scoped documentation update is in progress.
 
 Git:
 
@@ -118,12 +118,16 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Owns: review states, editing, approving/rejecting, single-unit regeneration
 
 5. [#5 Study approved units and record telemetry](https://github.com/Jayanth-Balasubramanian/mneme/issues/5)
-   - State: `state:in-progress`
+   - State: `state:lgtm`
    - Branch/worktree: `issue-5-study-telemetry` at `/private/tmp/mneme-issue-5`
+   - PR: [#11 Study approved units and record telemetry](https://github.com/Jayanth-Balasubramanian/mneme/pull/11)
    - Blocked by: none; issue 4 is merged
-   - Current priority: complete the guided study and telemetry slice, with emphasis on a working guided lesson UI and MCQ checkpoint attempts.
-   - Implementation note: an existing #5 worktree contains early untracked study schema/domain seeds; keep useful pieces, but fix them before committing.
    - Agent note: the initial `gpt-5.3-codex-spark` worker hit its usage limit; work continued with a `gpt-5.5` xhigh fallback worker on the same worktree.
+   - Code hygiene passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/11#issuecomment-4782709208>.
+   - Security passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/11#issuecomment-4782704698>.
+   - Verification reported by coding subagent: `bun run typecheck`, `bun test`, `bun run lint`, `bun run build`, `bun run test:e2e`, and `MNEME_DB_PATH=/private/tmp/mneme-issue-5-verification.sqlite bun run db:migrate`.
+   - Implemented contract: approved units render in a mobile guided study UI; checkpoint choices, answer/rubric reveal, self-rating, confidence, local attempt feedback, and weak-concept feedback are available; `POST /api/study-attempts` records approved-checkpoint attempts; `GET /api/weak-concepts?chapterSourceId=:id` aggregates wrong/partial concept events; `study_attempts` and `concept_events` are SQLite/D1-compatible; `bun run test:e2e` is now a real headless Chrome DOM flow for import -> mock generation -> approve -> study checkpoint attempt.
+   - Remaining gates: scoped documentation update completion, feature video, green checks at final PR head, and merge readiness.
    - Owns: study path, attempts, weak-concept query
 
 6. [#6 Expand CI with app-specific security tests and Cloudflare deployment](https://github.com/Jayanth-Balasubramanian/mneme/issues/6)
@@ -193,7 +197,6 @@ Next:
 
 Issues:
 
-- Browser e2e remains deferred until the complete import -> generation -> review -> study path exists.
 - The local SQLite adapter is Bun-specific behind `src/server/db/`; Cloudflare D1 support should be added as a separate adapter later.
 
 ## Latest Loop Run: Issue #4 Review Workflow
@@ -220,3 +223,23 @@ Completed:
 Next:
 
 - Start issue #5: complete study and telemetry with a working guided lesson UI and MCQ checkpoint attempts. The fastest acceptable path may use manually seeded, credited Chapter 17 lesson content while preserving source attribution and avoiding full chapter text in git.
+
+## Latest Loop Run: Issue #5 Study Telemetry
+
+Deliverables:
+
+- Added a mobile guided study UI for approved units, checkpoint choices, expected-answer/rubric reveal, self-rating, confidence, local attempt feedback, and weak-concept feedback.
+- Added `POST /api/study-attempts` and `GET /api/weak-concepts?chapterSourceId=:id`.
+- Added SQLite/D1-compatible `study_attempts` and `concept_events` persistence.
+- Activated `bun run test:e2e` as a real headless Chrome browser DOM flow for import -> mock generation -> approve -> study checkpoint attempt.
+
+Completed:
+
+- PR #11 opened for issue #5: <https://github.com/Jayanth-Balasubramanian/mneme/pull/11>.
+- Coding verification passed: `bun run typecheck`, `bun test`, `bun run lint`, `bun run build`, `bun run test:e2e`, and `MNEME_DB_PATH=/private/tmp/mneme-issue-5-verification.sqlite bun run db:migrate`.
+- Code hygiene passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/11#issuecomment-4782709208>.
+- Security passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/11#issuecomment-4782704698>.
+
+Next:
+
+- Complete this scoped documentation update, record a feature video, confirm green checks at the final PR head, then move PR #11 to merge readiness.

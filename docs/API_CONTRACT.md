@@ -402,10 +402,20 @@ type StudyAttemptResponse = {
 };
 ```
 
+Success and error statuses:
+
+- `201 Created` when the checkpoint belongs to an approved lesson unit and the attempt is recorded.
+- `400 invalid_json` when the request body is not valid JSON.
+- `400 validation_failed` when `checkpointId`, `answerMd`, `selfRating`, or `confidence` is missing or invalid.
+- `404 checkpoint_not_found` when the checkpoint does not exist or belongs to a lesson unit that is not approved for study.
+- `500 study_attempt_failed` when the repository cannot persist the attempt.
+
 Verification:
 
+- Only approved-unit checkpoints can receive attempts.
 - Store enough data to query weak concepts.
 - Wrong and partial ratings emit weak-concept events.
+- Correct ratings are stored as attempts without weak-concept events.
 
 ## `GET /api/weak-concepts?chapterSourceId=:id`
 
@@ -424,6 +434,20 @@ type WeakConceptsResponse = {
   }>;
 };
 ```
+
+Success and error statuses:
+
+- `200 OK` with `concepts: []` when the chapter source exists but has no wrong or partial attempts.
+- `400 validation_failed` when `chapterSourceId` is omitted or blank.
+- `404 chapter_source_not_found` when the chapter source does not exist.
+- `500 weak_concepts_query_failed` when weak-concept events cannot be queried.
+
+Behavior:
+
+- Aggregates weak-concept events by `conceptKey`.
+- Counts wrong and partial attempt events only.
+- Includes linked lesson unit IDs and source anchors so remediation can trace back to the approved unit and credited source.
+- Sorts concepts by latest weak attempt descending, then concept key.
 
 ## Shared Types
 
