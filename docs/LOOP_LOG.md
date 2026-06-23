@@ -267,10 +267,19 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - Main-branch CI for the PR #10 merge completed successfully: <https://github.com/Jayanth-Balasubramanian/mneme/actions/runs/28048909049>.
 - Issue #5 is now the next unblocked implementation slice. The loop priority is a working guided lesson UI with checkpoint MCQs and telemetry; manually seeded, credited Chapter 17 lesson content is acceptable if it avoids committing full chapter text.
 
+### 2026-06-23T18:48Z
+
+- Started issue #5, "Study approved units and record telemetry".
+- Branch/worktree: `issue-5-study-telemetry` at `/private/tmp/mneme-issue-5`.
+- Issue #5 is `state:in-progress`.
+- Found two early untracked study files in the #5 worktree: `src/domain/study.ts` and `src/shared/study.ts`. They are seed material only; the worker must inspect, fix, and commit only correct code.
+- Scheduling a single coding subagent because #5 spans the study API, persistence, shared schemas, guided UI, and tests. No parallel coding agent is scheduled to avoid conflicts across the same files.
+- Source grounding for the manual lesson path: *Deep Learning*, Chapter 17, "Monte Carlo Methods", by Ian Goodfellow, Yoshua Bengio, and Aaron Courville, <https://www.deeplearningbook.org/contents/monte_carlo.html>. Do not commit full chapter text.
+
 ## Queue Snapshot
 
 - #2 Import chapter excerpt with source attribution: `merged`; PR #8 merged; issue #2 closed.
 - #3 Generate validated lesson drafts with a mocked provider: `merged`; PR #9 merged; issue #3 closed.
 - #4 Review lesson units and regenerate a single unit: `merged`; PR #10 merged; issue #4 closed.
-- #5 Study approved units and record telemetry: `ready-for-agent`; unblocked; next product priority is completing study and telemetry with a working guided lesson UI and MCQ checkpoint attempts.
+- #5 Study approved units and record telemetry: `in-progress`; branch/worktree `issue-5-study-telemetry` at `/private/tmp/mneme-issue-5`; next product priority is completing study and telemetry with a working guided lesson UI and MCQ checkpoint attempts.
 - #6 Expand CI with app-specific security tests and Cloudflare deployment: `needs-spec`.

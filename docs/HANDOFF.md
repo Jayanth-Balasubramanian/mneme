@@ -118,9 +118,11 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Owns: review states, editing, approving/rejecting, single-unit regeneration
 
 5. [#5 Study approved units and record telemetry](https://github.com/Jayanth-Balasubramanian/mneme/issues/5)
-   - State: `ready-for-agent`
+   - State: `state:in-progress`
+   - Branch/worktree: `issue-5-study-telemetry` at `/private/tmp/mneme-issue-5`
    - Blocked by: none; issue 4 is merged
-   - Next priority after issue #4 lands: complete the guided study and telemetry slice, with emphasis on a working guided lesson UI and MCQ checkpoint attempts.
+   - Current priority: complete the guided study and telemetry slice, with emphasis on a working guided lesson UI and MCQ checkpoint attempts.
+   - Implementation note: an existing #5 worktree contains early untracked study schema/domain seeds; keep useful pieces, but fix them before committing.
    - Owns: study path, attempts, weak-concept query
 
 6. [#6 Expand CI with app-specific security tests and Cloudflare deployment](https://github.com/Jayanth-Balasubramanian/mneme/issues/6)
