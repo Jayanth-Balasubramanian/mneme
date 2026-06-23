@@ -5,6 +5,7 @@ import type {
   ChapterSourceResponse,
   CreateChapterSourceRequest,
   SourceCredit,
+  SourceAnchor,
   ValidationIssue,
 } from "../shared/source";
 import type {
@@ -16,6 +17,13 @@ import type {
   ReviewStatus,
   UpdateLessonUnitRequest,
 } from "../shared/generation";
+import type {
+  Confidence,
+  SelfRating,
+  WeakConcept,
+  WeakConceptsResponse,
+  StudyAttemptResponse,
+} from "../shared/study";
 
 type HealthState = "checking" | "online" | "offline";
 type ImportState = "idle" | "submitting" | "succeeded" | "failed";
@@ -53,6 +61,59 @@ type CheckpointDraft = {
   expectedAnswerMd: string;
   rubric: LessonGenerationRubricItem[];
 };
+
+type StudyAttemptSubmissionState = "idle" | "submitting" | "success" | "error";
+
+type StudyAttemptStepKey = string;
+
+type LocalAttemptSignal = {
+  lessonUnitId: string;
+  conceptKeys: string[];
+  sourceAnchors: SourceAnchor[];
+  attemptedAt: string;
+  selfRating: SelfRating;
+  confidence: Confidence;
+};
+
+type StudyAttemptStepState = {
+  selectedOptionIndex: number | null;
+  answerText: string;
+  revealRubric: boolean;
+  selfRating: SelfRating | "";
+  confidence: Confidence | "";
+  submissionState: StudyAttemptSubmissionState;
+  message: string | null;
+  lastAttempt?: LocalAttemptSignal;
+};
+
+type StudyQueueItem = {
+  unit: LessonUnitResponse;
+  checkpoint: LessonUnitResponse["checkpoints"][number];
+  unitIndex: number;
+  checkpointIndex: number;
+};
+
+const FALLBACK_RUBRIC: LessonGenerationRubricItem[] = [
+  {
+    rating: "wrong",
+    description: "The selected response is incorrect.",
+  },
+  {
+    rating: "partial",
+    description: "The selected response is partially correct.",
+  },
+  {
+    rating: "correct",
+    description: "The selected response is correct.",
+  },
+];
+
+const confidenceOptions: Confidence[] = ["low", "medium", "high"];
+const FALLBACK_MCQ_OPTIONS: string[] = [
+  "No clear answer was provided.",
+  "I need to review this concept first.",
+  "I do not know the correct response.",
+];
 
 const deepLearningDefaults: ImportFormState = {
   bookTitle: "Deep Learning",
@@ -262,6 +323,136 @@ function formatSourceContext(unit: LessonUnitResponse): string[] {
   }) ?? [];
 }
 
+function formatAnchorList(anchors: SourceAnchor[]): string {
+  return anchors.length === 0
+    ? "No source anchors recorded."
+    : anchors
+        .map((anchor) => {
+          const heading = anchor.headingPath.length > 0
+            ? anchor.headingPath.join(" » ")
+            : "Untitled section";
+
+          return `${heading} (paragraph ${anchor.paragraphStart}-${anchor.paragraphEnd})`;
+        })
+        .join("; ");
+}
+
+function buildStudyStepStateKey(
+  unitId: string,
+  checkpointId: string,
+): StudyAttemptStepKey {
+  return `${unitId}:${checkpointId}`;
+}
+
+function getStepRubric(
+  checkpoint: LessonUnitResponse["checkpoints"][number],
+): LessonGenerationRubricItem[] {
+  return checkpoint.rubric.length > 0 ? checkpoint.rubric : FALLBACK_RUBRIC;
+}
+
+function buildStudyQueue(units: LessonUnitResponse[]): StudyQueueItem[] {
+  return units.flatMap((unit, unitIndex) =>
+    unit.checkpoints.map((checkpoint, checkpointIndex) => ({
+      unit,
+      checkpoint,
+      unitIndex,
+      checkpointIndex,
+    })),
+  );
+}
+
+function buildCheckpointOptions(
+  checkpoint: LessonUnitResponse["checkpoints"][number],
+): string[] {
+  const candidateOptions = [
+    checkpoint.expectedAnswerMd,
+    ...checkpoint.rubric.map((rubricItem) => rubricItem.description),
+    ...FALLBACK_MCQ_OPTIONS,
+  ]
+    .map((option) => option.trim())
+    .filter((option) => option.length > 0);
+
+  const uniqueOptions = Array.from(new Set(candidateOptions));
+
+  if (uniqueOptions.length >= 3) {
+    return uniqueOptions.slice(0, 3);
+  }
+
+  const fallback = [...uniqueOptions];
+
+  for (const option of FALLBACK_MCQ_OPTIONS) {
+    if (fallback.length >= 3) {
+      break;
+    }
+
+    if (!fallback.includes(option)) {
+      fallback.push(option);
+    }
+  }
+
+  return fallback.slice(0, 3);
+}
+
+function formatWeakConceptsSummary(concepts: WeakConcept[]): string {
+  if (concepts.length === 0) {
+    return "No weak concepts yet.";
+  }
+
+  return concepts
+    .map(
+      (concept) =>
+        `${concept.conceptKey}: ${concept.attempts} attempt(s), units ${
+          concept.lessonUnitIds.length
+        }`,
+    )
+    .join(" • ");
+}
+
+function buildAttemptAnswer(
+  step: StudyAttemptStepState,
+  options: string[],
+): string | null {
+  const typedAnswer = step.answerText.trim();
+
+  if (typedAnswer.length > 0) {
+    return typedAnswer;
+  }
+
+  if (step.selectedOptionIndex === null) {
+    return null;
+  }
+
+  return options[step.selectedOptionIndex] ?? null;
+}
+
+function buildLocalAttemptSummary(signal?: LocalAttemptSignal): string {
+  if (!signal) {
+    return "No attempt recorded in this step yet.";
+  }
+
+  if (signal.selfRating === "correct") {
+    return "No weak-concept signal this attempt (rated correct).";
+  }
+
+  const conceptSummary = signal.conceptKeys.length > 0
+    ? `${signal.conceptKeys.length} concept(s)`
+    : "No concept keys were captured";
+
+  return `${signal.selfRating.toUpperCase()} (${signal.confidence}), unit ${signal.lessonUnitId}: ${conceptSummary}.`;
+}
+
+function createDefaultStudyAttemptStepState(): StudyAttemptStepState {
+  return {
+    selectedOptionIndex: null,
+    answerText: "",
+    revealRubric: false,
+    selfRating: "",
+    confidence: "",
+    submissionState: "idle",
+    message: null,
+  };
+}
+
 function buildUnitPayload(draft: LessonUnitDraft): UpdateLessonUnitRequest {
   return {
     title: draft.title,
@@ -365,6 +556,11 @@ export function App() {
   const [approvedStudyUnits, setApprovedStudyUnits] = useState<LessonUnitResponse[]>(
     [],
   );
+  const [weakConcepts, setWeakConcepts] = useState<WeakConcept[]>([]);
+  const [weakConceptsError, setWeakConceptsError] = useState<string | null>(
+    null,
+  );
+  const [weakConceptsLoading, setWeakConceptsLoading] = useState<boolean>(false);
   const [chapterSource, setChapterSource] =
     useState<ChapterSourceResponse | null>(null);
   const [lessonUnits, setLessonUnits] = useState<LessonUnitResponse[]>([]);
@@ -372,13 +568,69 @@ export function App() {
     {},
   );
   const [reviewError, setReviewError] = useState<string | null>(null);
+  const [studyStepIndex, setStudyStepIndex] = useState<number>(0);
+  const [studyAttemptStates, setStudyAttemptStates] = useState<
+    Record<StudyAttemptStepKey, StudyAttemptStepState>
+  >({});
 
   const workflowItems = useMemo(
     () => buildWorkflowItems(chapterSource, lessonUnits),
     [chapterSource, lessonUnits],
   );
+  const studyQueue = useMemo(
+    () => buildStudyQueue(approvedStudyUnits),
+    [approvedStudyUnits],
+  );
+  const activeStudyStepIndex = studyQueue.length > 0
+    ? Math.min(studyStepIndex, studyQueue.length - 1)
+    : 0;
+  const activeStep = studyQueue[activeStudyStepIndex];
+  const activeStepKey = activeStep
+    ? buildStudyStepStateKey(activeStep.unit.id, activeStep.checkpoint.id)
+    : null;
+
+  useEffect(() => {
+    if (studyQueue.length === 0) {
+      setStudyStepIndex(0);
+      return;
+    }
+
+    setStudyStepIndex((current) => Math.min(current, studyQueue.length - 1));
+  }, [studyQueue]);
 
   const approvedUnitCount = approvedStudyUnits.length;
+  const activeStepState = activeStepKey
+    ? buildStepDefaults(activeStepKey)
+    : null;
+  const activeStepOptions = activeStep
+    ? buildCheckpointOptions(activeStep.checkpoint)
+    : [];
+  const activeStepRubric = activeStep
+    ? getStepRubric(activeStep.checkpoint)
+    : FALLBACK_RUBRIC;
+  const studyProgressLabel = studyQueue.length > 0
+    ? `Checkpoint ${activeStudyStepIndex + 1} of ${studyQueue.length}`
+    : "No study checkpoints available";
+
+  function updateStudyAttemptState(
+    stepKey: StudyAttemptStepKey,
+    updater: (state: StudyAttemptStepState) => StudyAttemptStepState,
+  ): void {
+    setStudyAttemptStates((current) => {
+      const previous = current[stepKey];
+      const next = updater(previous ?? createDefaultStudyAttemptStepState());
+
+      return {
+        ...current,
+        [stepKey]: next,
+      };
+    });
+  }
+
+  function buildStepDefaults(stepKey: StudyAttemptStepKey): StudyAttemptStepState {
+    return studyAttemptStates[stepKey] ?? createDefaultStudyAttemptStepState();
+  }
+
   function updateField(field: keyof ImportFormState, value: string): void {
     setFormState((current) => ({ ...current, [field]: value }));
   }
@@ -498,16 +750,164 @@ export function App() {
     await loadApprovedStudyUnits(sourceId);
   }
 
+  async function loadWeakConcepts(sourceId: string): Promise<void> {
+    setWeakConceptsLoading(true);
+    setWeakConceptsError(null);
+
+    try {
+      const response = await fetch(`/api/weak-concepts?chapterSourceId=${sourceId}`);
+      const body: unknown = await response.json();
+
+      if (!response.ok) {
+        setWeakConceptsError(
+          parseResponseMessage(
+            body,
+            "Unable to load weak concept signals.",
+          ),
+        );
+        setWeakConcepts([]);
+        return;
+      }
+
+      const payload = body as WeakConceptsResponse;
+      setWeakConcepts(payload.concepts ?? []);
+    } finally {
+      setWeakConceptsLoading(false);
+    }
+  }
+
   async function loadApprovedStudyUnits(sourceId: string): Promise<void> {
     const response = await fetch(`/api/study-paths/${sourceId}`);
     const body = await response.json();
 
     if (!response.ok) {
       setApprovedStudyUnits([]);
+      setWeakConcepts([]);
       return;
     }
 
     setApprovedStudyUnits((body.units as LessonUnitResponse[]) ?? []);
+    void loadWeakConcepts(sourceId);
+  }
+
+  function nextStudyStep(): void {
+    if (activeStudyStepIndex < studyQueue.length - 1) {
+      setStudyStepIndex((current) =>
+        Math.min(current + 1, studyQueue.length - 1),
+      );
+    }
+  }
+
+  function previousStudyStep(): void {
+    if (activeStudyStepIndex > 0) {
+      setStudyStepIndex((current) => Math.max(current - 1, 0));
+    }
+  }
+
+  function shouldDisableSubmit(step: StudyAttemptStepState): boolean {
+    const answer = buildAttemptAnswer(step, activeStepOptions);
+    const hasAnswer = answer !== null && answer.trim().length > 0;
+
+    return (
+      step.submissionState === "submitting" ||
+      !hasAnswer ||
+      step.selfRating === "" ||
+      step.confidence === ""
+    );
+  }
+
+  async function submitStudyAttempt(): Promise<void> {
+    if (!activeStep || !activeStepKey || !chapterSource) {
+      return;
+    }
+
+    const step = buildStepDefaults(activeStepKey);
+    const options = buildCheckpointOptions(activeStep.checkpoint);
+    const answerMd = buildAttemptAnswer(step, options);
+
+    if (!answerMd) {
+      setStudyAttemptStateError(
+        activeStepKey,
+        "Choose an option or type a text answer.",
+      );
+      return;
+    }
+
+    if (step.selfRating === "" || step.confidence === "") {
+      setStudyAttemptStateError(
+        activeStepKey,
+        "Choose a self-rating and confidence value.",
+      );
+      return;
+    }
+
+    updateStudyAttemptState(activeStepKey, (state) => ({
+      ...state,
+      submissionState: "submitting",
+      message: null,
+    }));
+
+    try {
+      const response = await fetch("/api/study-attempts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          checkpointId: activeStep.checkpoint.id,
+          answerMd,
+          selfRating: step.selfRating,
+          confidence: step.confidence,
+        }),
+      });
+      const body: unknown = await response.json();
+
+      if (!response.ok) {
+        updateStudyAttemptState(activeStepKey, (state) => ({
+          ...state,
+          submissionState: "error",
+          message: parseResponseMessage(
+            body,
+            "Unable to record checkpoint attempt.",
+          ),
+        }));
+        return;
+      }
+
+      await loadWeakConcepts(chapterSource.id);
+      const attempt = body as StudyAttemptResponse;
+      updateStudyAttemptState(activeStepKey, (state) => ({
+        ...state,
+        submissionState: "success",
+        message:
+          "Checkpoint attempt recorded. Review the feedback, then continue when ready.",
+        lastAttempt: {
+          lessonUnitId: activeStep.unit.id,
+          conceptKeys: attempt.conceptKeys,
+          sourceAnchors: attempt.sourceAnchors,
+          attemptedAt: attempt.attemptedAt,
+          selfRating: attempt.selfRating,
+          confidence: attempt.confidence,
+        },
+      }));
+    } catch {
+      updateStudyAttemptState(activeStepKey, (state) => ({
+        ...state,
+        submissionState: "error",
+        message: "Unable to record checkpoint attempt right now.",
+      }));
+    }
+  }
+
+  function setStudyAttemptStateError(
+    stepKey: StudyAttemptStepKey,
+    message: string,
+  ): void {
+    updateStudyAttemptState(stepKey, (state) => ({
+      ...state,
+      submissionState: "error",
+      message,
+    }));
   }
 
   async function handleFileChange(
@@ -821,7 +1221,7 @@ export function App() {
           <h2 id="import-heading">Chapter excerpt</h2>
         </div>
 
-        <form className="import-form" onSubmit={handleSubmit}>
+        <form className="import-form" data-testid="import-form" onSubmit={handleSubmit}>
           <label>
             <span>Book title</span>
             <input
@@ -931,6 +1331,7 @@ export function App() {
           <label>
             <span>Markdown excerpt</span>
             <textarea
+              data-testid="markdown-input"
               required
               rows={12}
               value={formState.markdown}
@@ -940,7 +1341,11 @@ export function App() {
           </label>
 
           <div className="form-actions">
-            <button type="submit" disabled={importState === "submitting"}>
+            <button
+              data-testid="import-submit"
+              type="submit"
+              disabled={importState === "submitting"}
+            >
               {importState === "submitting" ? "Importing" : "Import excerpt"}
             </button>
             {importError ? <p role="alert">{importError}</p> : null}
@@ -957,6 +1362,7 @@ export function App() {
 
           <div className="form-actions">
             <button
+              data-testid="generate-draft"
               disabled={generationState === "submitting"}
               onClick={() => {
                 void generateLessonDraft();
@@ -1309,6 +1715,7 @@ export function App() {
                     Save edits
                   </button>
                   <button
+                    data-testid="approve-unit"
                     type="button"
                     onClick={() => {
                       void setReviewStatus(unit.id, "approved");
@@ -1347,32 +1754,253 @@ export function App() {
         </section>
       ) : null}
 
-      {chapterSource && approvedStudyUnits.length > 0 ? (
+      {chapterSource ? (
         <section
           className="review-section"
           aria-labelledby="study-heading"
         >
           <div className="section-heading">
             <p className="eyebrow">Ready for study</p>
-            <h2 id="study-heading">Approved units are study-ready</h2>
+            <h2 id="study-heading">Guided checkpoint study</h2>
           </div>
 
           <p>
-            {approvedStudyUnits.length} unit(s) available from
-            {" "}
-            {formatSourceCreditForUnit(approvedStudyUnits[0].sourceCredit)}.
+            {approvedStudyUnits.length} approved unit(s) available from
+            {approvedStudyUnits.length > 0
+              ? ` ${formatSourceCreditForUnit(approvedStudyUnits[0].sourceCredit)}.`
+              : "."}
+            {approvedStudyUnits.length > 0 ? ` ${studyProgressLabel}.` : ""}
           </p>
 
-          <ol className="study-units-preview" aria-label="Approved study units">
-            {approvedStudyUnits.map((unit) => (
-              <li key={unit.id}>
-                <strong>{unit.title}</strong>
-                {unit.checkpoints[0] ? (
-                  <span>{unit.checkpoints[0].promptMd}</span>
+          <div className="weak-concepts-panel">
+            <h3>Weak concepts from prior attempts</h3>
+            {weakConceptsLoading ? (
+              <p>Loading weak concept signals...</p>
+            ) : (
+              <p data-testid="weak-concepts">
+                {formatWeakConceptsSummary(weakConcepts)}
+              </p>
+            )}
+            {weakConceptsError ? <p role="alert">{weakConceptsError}</p> : null}
+          </div>
+
+          {studyQueue.length === 0 ? (
+            <p>
+              No approved checkpoint is available yet. Approve a lesson unit to
+              begin study.
+            </p>
+          ) : (
+            <article className="study-step" data-testid="study-step">
+              <h3>{activeStep.unit.title}</h3>
+              <p className="eyebrow">
+                Unit {activeStep.unitIndex + 1}, checkpoint
+                {` ${activeStep.checkpointIndex + 1}`}
+              </p>
+              <p>
+                <strong>Source:</strong>{" "}
+                {formatSourceCreditForUnit(activeStep.unit.sourceCredit)}
+              </p>
+              <p>
+                <strong>Concept keys:</strong>{" "}
+                {activeStep.unit.conceptKeys.join(", ")}
+              </p>
+              <p>
+                <strong>Source anchors:</strong>{" "}
+                {formatAnchorList(activeStep.unit.sourceAnchors)}
+              </p>
+              {activeStep.unit.sourceContext &&
+              activeStep.unit.sourceContext.length > 0 ? (
+                <details className="unit-card__source-context">
+                  <summary>Source excerpts</summary>
+                  <ol>
+                    {activeStep.unit.sourceContext.map((snippet) => (
+                      <li key={`${activeStep.unit.id}-${snippet.paragraphIndex}`}>
+                        [{snippet.paragraphIndex}] {snippet.text}
+                      </li>
+                    ))}
+                  </ol>
+                </details>
+              ) : null}
+
+              <div className="study-step__section">
+                <p>
+                  <strong>Learning objective:</strong>{" "}
+                  {activeStep.unit.learningObjective}
+                </p>
+                <p>
+                  <strong>Explanation:</strong>{" "}
+                  {activeStep.unit.explanationMd}
+                </p>
+                <p>
+                  <strong>Intuition:</strong> {activeStep.unit.intuitionMd}
+                </p>
+              </div>
+
+              <div className="study-step__section">
+                <h4>Checkpoint prompt</h4>
+                <p data-testid="study-prompt">{activeStep.checkpoint.promptMd}</p>
+              </div>
+
+              <fieldset className="study-step__options">
+                <legend>Choose one response</legend>
+                {activeStepOptions.map((option, optionIndex) => (
+                  <label key={`${activeStep.checkpoint.id}-option-${optionIndex}`}>
+                    <input
+                      data-testid={`study-option-${optionIndex}`}
+                      type="radio"
+                      name={`checkpoint-${activeStep.checkpoint.id}`}
+                      checked={
+                        activeStepState?.selectedOptionIndex === optionIndex
+                      }
+                      disabled={activeStepState?.submissionState === "submitting"}
+                      onChange={() => {
+                        updateStudyAttemptState(activeStepKey!, (state) => ({
+                          ...state,
+                          selectedOptionIndex: optionIndex,
+                        }));
+                      }}
+                    />
+                    <span>{option}</span>
+                  </label>
+                ))}
+                {activeStepOptions.length === 0 ? (
+                  <p>No generated MCQ options were available for this checkpoint.</p>
                 ) : null}
-              </li>
-            ))}
-          </ol>
+              </fieldset>
+
+              <label className="study-step__answer-text">
+                <span>Or type your own response</span>
+                <textarea
+                  rows={3}
+                  disabled={activeStepState?.submissionState === "submitting"}
+                  value={activeStepState?.answerText ?? ""}
+                  placeholder="Write a concise answer before submitting."
+                  onChange={(event) => {
+                    updateStudyAttemptState(activeStepKey!, (state) => ({
+                      ...state,
+                      answerText: event.target.value,
+                    }));
+                  }}
+                />
+              </label>
+
+              <div className="study-step__section study-step__reveal">
+                <button
+                  data-testid="reveal-answer"
+                  type="button"
+                  onClick={() => {
+                    updateStudyAttemptState(activeStepKey!, (state) => ({
+                      ...state,
+                      revealRubric: !state.revealRubric,
+                    }));
+                  }}
+                >
+                  {activeStepState?.revealRubric
+                    ? "Hide expected answer"
+                    : "Reveal expected answer and rubric"}
+                </button>
+                {activeStepState?.revealRubric ? (
+                  <details className="unit-card__source-context">
+                    <summary>Expected answer and rubric</summary>
+                    <p>{activeStep.checkpoint.expectedAnswerMd}</p>
+                    <ul>
+                      {activeStepRubric.map((rubricItem, index) => (
+                        <li key={`${rubricItem.rating}-${index}`}>
+                          <strong>{rubricItem.rating}</strong>:{" "}
+                          {rubricItem.description}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                ) : null}
+              </div>
+
+              <div className="form-row">
+                <label>
+                  <span>Self-rating</span>
+                  <select
+                    data-testid="self-rating"
+                    value={activeStepState?.selfRating ?? ""}
+                    onChange={(event) => {
+                      updateStudyAttemptState(activeStepKey!, (state) => ({
+                        ...state,
+                        selfRating: event.target.value as SelfRating,
+                      }));
+                    }}
+                  >
+                    <option value="">Pick a rating</option>
+                    <option value="wrong">wrong</option>
+                    <option value="partial">partial</option>
+                    <option value="correct">correct</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Confidence</span>
+                  <select
+                    data-testid="confidence"
+                    value={activeStepState?.confidence ?? ""}
+                    onChange={(event) => {
+                      updateStudyAttemptState(activeStepKey!, (state) => ({
+                        ...state,
+                        confidence: event.target.value as Confidence,
+                      }));
+                    }}
+                  >
+                    <option value="">Pick confidence</option>
+                    {confidenceOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              {activeStepState?.message ? (
+                <p role="alert">{activeStepState.message}</p>
+              ) : null}
+
+              <p className="study-step__local-signals" data-testid="local-attempt-signal">
+                <strong>Latest local weak-signal:</strong>{" "}
+                {buildLocalAttemptSummary(activeStepState?.lastAttempt)}
+              </p>
+
+              <div className="form-actions">
+                <button
+                  type="button"
+                  onClick={() => {
+                    previousStudyStep();
+                  }}
+                  disabled={activeStudyStepIndex === 0}
+                >
+                  Previous
+                </button>
+                <button
+                  data-testid="submit-attempt"
+                  type="button"
+                  onClick={() => {
+                    void submitStudyAttempt();
+                  }}
+                  disabled={shouldDisableSubmit(
+                    activeStepState ?? createDefaultStudyAttemptStepState(),
+                  )}
+                >
+                  {activeStepState?.submissionState === "submitting"
+                    ? "Submitting"
+                    : "Submit attempt"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    nextStudyStep();
+                  }}
+                  disabled={activeStudyStepIndex >= studyQueue.length - 1}
+                >
+                  Next
+                </button>
+              </div>
+            </article>
+          )}
         </section>
       ) : null}
     </main>

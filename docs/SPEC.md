@@ -58,7 +58,7 @@ bun run db:migrate
 bun run db:studio
 ```
 
-The implementation should keep these commands stable even if tools change under the hood. `db:migrate` is active once the source import persistence slice lands. `test:e2e` and `db:studio` may remain explicit deferred placeholders until the browser flow and inspection tooling are introduced.
+The implementation should keep these commands stable even if tools change under the hood. `db:migrate` is active for local SQLite migrations. `test:e2e` is active for the mobile import -> review -> study browser flow. `db:studio` may remain an explicit deferred placeholder until database inspection tooling is introduced.
 
 ## API Contract
 
