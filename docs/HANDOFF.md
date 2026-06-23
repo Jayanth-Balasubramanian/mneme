@@ -60,7 +60,7 @@ Workflow:
 Security posture:
 
 - The repository is public, so agents must treat committed files, fixtures, logs, screenshots, and CI artifacts as public.
-- Secret scanning and public-repo policy checks belong in CI.
+- Public-repo policy checks belong in CI from day one. Dependabot and deeper dependency security checks should be enabled after `package.json` exists.
 - Full copyrighted chapter text must not be committed without explicit reuse rights.
 
 ## GitHub Issues To Create

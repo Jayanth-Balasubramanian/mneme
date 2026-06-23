@@ -40,3 +40,5 @@ Agents and reviewers must audit for:
 ## CI
 
 GitHub Actions runs on pushes to `main` and pull requests. Initial CI is docs/security aware and will run Bun-based project commands once the app is scaffolded.
+
+Dependabot and deeper dependency security checks should be enabled after `package.json` exists.

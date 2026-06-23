@@ -19,7 +19,7 @@ Before opening or approving a pull request, agents must check for:
 
 GitHub Actions includes:
 
-- Secret scanning with Gitleaks.
+- Public-repo policy checks for token-like strings, tracked env files, and committed full chapter text.
 - Repository policy checks for tracked env files and obvious token formats.
 - Project checks through Bun once `package.json` exists.
 

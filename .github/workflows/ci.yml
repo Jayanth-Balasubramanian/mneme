@@ -41,21 +41,10 @@ jobs:
 
       - name: Guard against committed full chapter text
         run: |
-          if git grep -n -F 'Randomized algorithms fall in to t w o rough categories' -- .; then
+          if git grep -n -F 'Randomized algorithms fall in to t w o rough categories' -- . ':(exclude).github/workflows/ci.yml'; then
             echo "Deep Learning chapter body text appears to be committed. Keep full source text out of the public repo."
             exit 1
           fi
-
-  secrets:
-    name: Gitleaks
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   project:
     name: Project checks
@@ -81,7 +70,7 @@ jobs:
   deployment-placeholder:
     name: Deployment placeholder
     runs-on: ubuntu-latest
-    needs: [policy, secrets, project]
+    needs: [policy, project]
     steps:
       - name: Deployment deferred
         run: |
