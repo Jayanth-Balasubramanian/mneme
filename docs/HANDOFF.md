@@ -10,15 +10,19 @@ Git:
 - Commits:
   - `1b365db docs: initialize study app planning loop`
   - `18d77a6 docs: move issue queue to GitHub workflow`
-- Remote: not configured
+  - `6780915 docs: refresh handoff status`
+  - `f1fd049 docs: add public repo CI security baseline`
+  - `a99d9d6 ci: keep planning bootstrap checks green`
+- Remote: `git@github.com:Jayanth-Balasubramanian/mneme.git`
 
 GitHub:
 
 - GitHub CLI is installed.
-- GitHub CLI authentication is not complete.
-- Repository creation, issue creation, and pull request workflow are blocked until `gh auth login --git-protocol ssh --web --skip-ssh-key` succeeds.
+- GitHub CLI authentication is complete as `Jayanth-Balasubramanian`.
 - Intended repository name: `mneme`.
 - Intended visibility: public, to use GitHub Actions CI credits.
+- Repository URL: <https://github.com/Jayanth-Balasubramanian/mneme>
+- Latest CI status: passing on run `28035059510`.
 
 ## Product Decision
 
@@ -63,38 +67,42 @@ Security posture:
 - Public-repo policy checks belong in CI from day one. Dependabot and deeper dependency security checks should be enabled after `package.json` exists.
 - Full copyrighted chapter text must not be committed without explicit reuse rights.
 
-## GitHub Issues To Create
+## GitHub Issues
 
-Create these as GitHub issues after repository setup. Each should include acceptance criteria and verification commands from `docs/TEST_CONTRACT.md` and `docs/API_CONTRACT.md`.
+GitHub is the source of truth for issue state. These issues have been created:
 
-1. Scaffold local Bun/Vite/Hono app
+1. [#1 Scaffold local Bun/Vite/Hono app](https://github.com/Jayanth-Balasubramanian/mneme/issues/1)
    - State: `ready-for-agent`
    - Blocked by: none
    - Owns: package/config, initial app/server folders, smoke tests
 
-2. Import chapter excerpt with source attribution
+2. [#2 Import chapter excerpt with source attribution](https://github.com/Jayanth-Balasubramanian/mneme/issues/2)
    - State: `ready-for-agent`
    - Blocked by: issue 1
    - Owns: source metadata, source anchors, import flow, attribution display
 
-3. Generate validated lesson drafts with a mocked provider
+3. [#3 Generate validated lesson drafts with a mocked provider](https://github.com/Jayanth-Balasubramanian/mneme/issues/3)
    - State: `ready-for-agent`
    - Blocked by: issue 1
    - Owns: `LessonGenerator` contract, output validation, generation runs
 
-4. Review lesson units and regenerate a single unit
+4. [#4 Review lesson units and regenerate a single unit](https://github.com/Jayanth-Balasubramanian/mneme/issues/4)
    - State: `ready-for-agent`
    - Blocked by: issues 2 and 3
    - Owns: review states, editing, approving/rejecting, single-unit regeneration
 
-5. Study approved units and record telemetry
+5. [#5 Study approved units and record telemetry](https://github.com/Jayanth-Balasubramanian/mneme/issues/5)
    - State: `ready-for-agent`
    - Blocked by: issue 4
    - Owns: study path, attempts, weak-concept query
 
+6. [#6 Expand CI with app-specific security tests and Cloudflare deployment](https://github.com/Jayanth-Balasubramanian/mneme/issues/6)
+   - State: `needs-spec`
+   - Blocked by: issue 1 and Cloudflare deployment spec/secrets policy
+   - Owns: app-specific security tests and future continuous deployment
+
 ## Remaining Human Inputs
 
-1. Complete GitHub CLI auth.
-2. Decide whether self-assessment remains the only PoC grading mode, or whether optional post-answer AI feedback is allowed.
-3. Decide whether deployed Cloudflare storage may retain full source Markdown, or whether full source text remains local-only.
-4. Choose the initial OpenAI model for the live adapter.
+1. Decide whether self-assessment remains the only PoC grading mode, or whether optional post-answer AI feedback is allowed.
+2. Decide whether deployed Cloudflare storage may retain full source Markdown, or whether full source text remains local-only.
+3. Choose the initial OpenAI model for the live adapter.

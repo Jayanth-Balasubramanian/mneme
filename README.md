@@ -4,6 +4,8 @@ Mneme is a local-first study app for turning technical book chapters into AI-ass
 
 The name comes from Mneme, the Greek personification of memory and, in one tradition, one of the original Muses alongside Melete and Aoide. That lore fits the product: memory as the foundation for study, recall, and learning.
 
+Repository: <https://github.com/Jayanth-Balasubramanian/mneme>
+
 ## Proof Of Concept
 
 The PoC studies Chapter 17, "Monte Carlo Methods", from *Deep Learning* by Ian Goodfellow, Yoshua Bengio, and Aaron Courville.
