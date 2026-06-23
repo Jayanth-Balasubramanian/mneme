@@ -34,7 +34,11 @@ function validateSourceAnchorAgainstChapter(
     return issues;
   }
 
-  for (let paragraph = sourceAnchor.paragraphStart; paragraph <= sourceAnchor.paragraphEnd; paragraph += 1) {
+  for (
+    let paragraph = sourceAnchor.paragraphStart;
+    paragraph <= sourceAnchor.paragraphEnd;
+    paragraph += 1
+  ) {
     const chapterAnchor = chapterAnchorsByParagraph.get(paragraph);
 
     if (!chapterAnchor) {
@@ -98,4 +102,3 @@ export function validateGeneratedAnchorsBelongToChapter(
 
   return issues;
 }
-

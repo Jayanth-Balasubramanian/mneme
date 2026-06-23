@@ -231,13 +231,25 @@ type LessonUnitListResponse = {
 };
 ```
 
+Lesson-unit responses include bounded `sourceContext` snippets derived from the stored chapter Markdown and the unit's `sourceAnchors`. The API must not return the full chapter Markdown as review context.
+
 ## `PATCH /api/lesson-units/:id`
 
-Edit generated lesson unit content and review state.
+Edit generated lesson unit content, checkpoint content, and review state.
 
 Request:
 
 ```ts
+type UpdateCheckpointPatch = {
+  checkpointId: string;
+  promptMd?: string;
+  expectedAnswerMd?: string;
+  rubric?: Array<{
+    rating: "wrong" | "partial" | "correct";
+    description: string;
+  }>;
+};
+
 type UpdateLessonUnitRequest = {
   title?: string;
   learningObjective?: string;
@@ -246,6 +258,8 @@ type UpdateLessonUnitRequest = {
   notationMd?: string;
   exampleMd?: string;
   misconceptionMd?: string;
+  checkpointPatches?: UpdateCheckpointPatch[];
+  checkpointReplacements?: LessonGenerationCheckpoint[];
   reviewerNotes?: string;
   reviewStatus?: "draft" | "approved" | "rejected" | "needs_regeneration";
 };
@@ -271,7 +285,14 @@ type LessonUnitResponse = {
   reviewStatus: "draft" | "approved" | "rejected" | "needs_regeneration";
   reviewerNotes?: string;
   checkpoints: CheckpointResponse[];
+  sourceContext?: SourceContextSnippet[];
   sourceCredit: SourceCredit;
+};
+
+type SourceContextSnippet = {
+  paragraphIndex: number;
+  headingPath: string[];
+  text: string;
 };
 ```
 
@@ -279,11 +300,15 @@ Validation:
 
 - Reject missing `chapterSourceId`.
 - Reject unsupported `reviewStatus` values with `validation_failed`.
+- Reject PATCH bodies that provide both `checkpointPatches` and `checkpointReplacements`.
+- Reject empty checkpoint patch/replacement arrays and malformed rubric ratings.
 
 Verification:
 
 - Only approved units are returned to study endpoints.
 - Review state transitions are tested.
+- Edited checkpoint prompt, expected answer, and rubric content persist into approved study paths.
+- Lesson-unit list responses include bounded source-context snippets for review.
 
 ## `POST /api/lesson-units/:id/regenerate`
 
@@ -312,6 +337,8 @@ Verification:
 
 - Preserve all other lesson units in the draft.
 - Use the original unit's concept keys, source anchors, source context, and reviewer notes.
+- Validate regenerated provider output with the same generated-output and provenance checks as initial generation before saving a successful generation run or replacing the unit.
+- Save invalid regenerated output, invalid regenerated anchors, and provider exceptions as failed generation runs with sanitized error text, leaving the existing unit unchanged.
 
 ## `GET /api/study-paths/:chapterSourceId`
 
