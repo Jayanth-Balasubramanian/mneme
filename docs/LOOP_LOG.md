@@ -361,13 +361,12 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - Added scanner unit coverage for synthetic token-like values, the in-memory dry-run detector path, tracked env paths, executable Markdown rendering paths, Chapter 17 body markers, and LLM validation coverage markers.
 - Local verification passed:
   - `bun run security:check`
+  - `bun run security:check --self-test`
   - `bun run typecheck`
   - `bun test`
   - `bun run lint`
   - `bun run build`
-  - `env MNEME_DB_PATH=/tmp/mneme-security-ci.sqlite bun run db:migrate`
-  - `bun run test:e2e`
-- `bun run test:e2e` required sandbox escalation because it starts localhost Hono/Vite servers and a headless Chrome/CDP browser session.
+  - `MNEME_DB_PATH=/tmp/mneme-security-ci.sqlite bun run db:migrate`
 - The `security:check` output included the in-memory synthetic secret-like dry-run proof before scanning repository files.
 
 ### 2026-06-23T19:58Z
@@ -377,6 +376,14 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - PR #13 body links `Closes #12`.
 - Moved issue #12 from `state:in-progress` to `state:ready-for-review`.
 - Posted the required implementation and verification summary comment on PR #13: <https://github.com/Jayanth-Balasubramanian/mneme/pull/13#issuecomment-4782956150>.
+
+### 2026-06-23T20:00Z
+
+- Added `--self-test` as an alias for the security check dry-run mode, preserving `--self-test-only`.
+- Re-ran local verification after the alias change: `bun run security:check --self-test`, `bun run security:check`, `bun run typecheck`, `bun test`, `bun run lint`, `bun run build`, and `MNEME_DB_PATH=/tmp/mneme-security-ci.sqlite bun run db:migrate`.
+- Pushed follow-up commit `4eebf83` to PR #13.
+- GitHub Actions passed on PR #13 after the follow-up push.
+- Posted the required PR verification and dry-run proof comment: <https://github.com/Jayanth-Balasubramanian/mneme/pull/13#issuecomment-4782964403>.
 
 ## Queue Snapshot
 
