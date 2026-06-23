@@ -232,21 +232,25 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 
 ### 2026-06-24 Documentation update for PR #10
 
-- PR #10 code hygiene follow-up passed after the review workflow fixes: <https://github.com/Jayanth-Balasubramanian/mneme/pull/10#issuecomment-4782236781>.
-- PR #10 security follow-up passed after the regeneration validation fixes: <https://github.com/Jayanth-Balasubramanian/mneme/pull/10#issuecomment-4782247099>.
-- PR #10 is rebased onto current `main`; merge state is clean and CI was green at head `2bedad2` before this scoped documentation update.
+- PR #10 code hygiene follow-up passed after the review workflow fixes: <https://github.com/Jayanth-Balasubramanian/mneme/pull/10#issuecomment-4782257229>.
+- PR #10 security follow-up passed after the regeneration validation fixes: <https://github.com/Jayanth-Balasubramanian/mneme/pull/10#issuecomment-4782262804>.
+- PR #10 is rebased onto current `main`; merge state is clean and CI is green after review fixes.
+- Issue #4 is `state:lgtm`; documentation cleanup is being applied as a scoped updater pass.
 - The issue #4 implementation now covers the required follow-up themes:
   - checkpoint prompt, expected answer, and rubric are editable before approval;
+  - review statuses are `draft`, `approved`, `rejected`, and `needs_regeneration`, and only approved units are exposed through the study path;
   - review API/UI expose bounded source-context snippets derived from stored Markdown and source anchors, not full chapter dumps;
   - single-unit regeneration reuses generated-output schema validation and source-anchor provenance checks before replacement;
+  - successful regeneration replaces only the selected unit and returns it to `draft`;
   - failed regeneration records a failed generation run and leaves existing lesson units unchanged.
 - This documentation pass is a scoped updater step after passed code hygiene/security gates. It is not a repeated documentation review gate or nitpick pass.
-- After issue #4 lands, the next product priority remains issue #5: a working guided lesson UI with MCQ checkpoint attempts and telemetry.
+- Remaining PR #10 gates after documentation cleanup: feature video and final merge readiness.
+- After issue #4 lands, the overnight priority remains issue #5: complete the guided study and telemetry slice, centered on a working guided lesson UI with MCQ checkpoint attempts.
 
 ## Queue Snapshot
 
 - #2 Import chapter excerpt with source attribution: `merged`; PR #8 merged; issue #2 closed.
 - #3 Generate validated lesson drafts with a mocked provider: `merged`; PR #9 merged; issue #3 closed.
-- #4 Review lesson units and regenerate a single unit: `lgtm`; PR #10 open; code hygiene/security follow-ups passed; scoped documentation update complete; next gates are feature video, green checks on current head, and merge readiness.
-- #5 Study approved units and record telemetry: blocked by #4 landing; next product priority is a working guided lesson UI with MCQ checkpoint attempts and telemetry.
+- #4 Review lesson units and regenerate a single unit: PR #10 open; issue #4 is `state:lgtm`; code hygiene/security follow-ups passed; scoped documentation update in progress after green CI.
+- #5 Study approved units and record telemetry: blocked by #4 landing; next product priority is completing study and telemetry with a working guided lesson UI and MCQ checkpoint attempts.
 - #6 Expand CI with app-specific security tests and Cloudflare deployment: `needs-spec`.
