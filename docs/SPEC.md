@@ -77,7 +77,13 @@ For the Goodfellow/Bengio/Courville chapter, store source metadata and source an
 The user creates a study source by pasting Markdown or uploading a `.md` file. Required metadata:
 
 - Book title.
+- Authors.
 - Chapter title.
+- Source URL.
+- Citation text.
+
+Optional metadata:
+
 - Optional chapter number.
 - Optional notes about intended emphasis.
 
@@ -162,6 +168,7 @@ Initial SQLite tables:
 - `chapter_number`
 - `source_url`
 - `citation_text`
+- `emphasis_notes`
 - `markdown`
 - `content_hash`
 - `anchors_json`

@@ -18,6 +18,7 @@ type ChapterSourceRow = {
   chapter_number: string | null;
   source_url: string;
   citation_text: string;
+  emphasis_notes: string | null;
   content_hash: string;
   anchors_json: string;
   created_at: string;
@@ -70,6 +71,7 @@ function mapChapterSourceRow(row: ChapterSourceRow): ChapterSourceResponse {
     chapterNumber: row.chapter_number ?? undefined,
     sourceUrl: row.source_url,
     citationText: row.citation_text,
+    emphasisNotes: row.emphasis_notes ?? undefined,
     contentHash: row.content_hash,
     anchors: parseSourceAnchors(row.anchors_json),
     createdAt: row.created_at,
@@ -102,6 +104,7 @@ export class SQLiteChapterSourceRepository implements ChapterSourceRepository {
           string | null,
           string,
           string,
+          string | null,
           string,
           string,
           string,
@@ -120,12 +123,13 @@ export class SQLiteChapterSourceRepository implements ChapterSourceRepository {
             chapter_number,
             source_url,
             citation_text,
+            emphasis_notes,
             markdown,
             content_hash,
             anchors_json,
             created_at,
             updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
       )
       .run(
@@ -138,6 +142,7 @@ export class SQLiteChapterSourceRepository implements ChapterSourceRepository {
         source.chapterNumber ?? null,
         source.sourceUrl,
         source.citationText,
+        source.emphasisNotes ?? null,
         source.markdown,
         source.contentHash,
         JSON.stringify(source.anchors),
@@ -168,6 +173,7 @@ export class SQLiteChapterSourceRepository implements ChapterSourceRepository {
             chapter_number,
             source_url,
             citation_text,
+            emphasis_notes,
             content_hash,
             anchors_json,
             created_at,

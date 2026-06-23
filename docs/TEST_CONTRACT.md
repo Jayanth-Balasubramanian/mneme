@@ -35,9 +35,9 @@ Behavior:
 Tests:
 
 - Unit: source metadata schema requires title, authors, chapter title, chapter URL, and citation.
-- Unit: source anchor parser rejects generated units with missing anchors.
+- Unit: source anchor parser rejects imported Markdown that cannot produce usable anchors.
 - Integration: importing a Markdown excerpt stores source metadata and content hash.
-- UI/import: the import result displays source credit for the saved excerpt.
+- UI/import: the import result displays source credit for the saved excerpt. This is manually covered by build/runtime review until browser automation is added.
 - Browser, after review/study lands: review/study flow displays source credit for an approved unit.
 
 Verification:

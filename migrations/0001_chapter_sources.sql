@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS chapter_sources (
   chapter_number TEXT,
   source_url TEXT NOT NULL,
   citation_text TEXT NOT NULL,
+  emphasis_notes TEXT,
   markdown TEXT NOT NULL,
   content_hash TEXT NOT NULL,
   anchors_json TEXT NOT NULL,

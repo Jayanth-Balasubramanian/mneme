@@ -43,7 +43,7 @@ Stack:
 - TypeScript
 - Vite React SPA
 - Hono/Web Fetch API
-- Drizzle over local SQLite with D1-compatible schema direction
+- Repository interfaces over local SQLite, with D1-compatible SQL migration direction; Drizzle is deferred until the query surface earns the dependency
 - shadcn/ui components, copied selectively when a concrete screen needs them
 - OpenAI behind a provider interface, mocked provider first
 
@@ -80,11 +80,11 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Owns: package/config, initial app/server folders, smoke tests
 
 2. [#2 Import chapter excerpt with source attribution](https://github.com/Jayanth-Balasubramanian/mneme/issues/2)
-   - State: `state:ready-for-review`
+   - State: `state:changes-requested`
    - PR: [#8 Import chapter excerpts with source attribution](https://github.com/Jayanth-Balasubramanian/mneme/pull/8)
-   - Review gates: pending code hygiene, security, and documentation-agent review.
+   - Review gates: security passed; code hygiene and documentation-agent requested fixes.
    - CI: passing on PR #8 after the import slice checks.
-   - Blocked by: review gates
+   - Blocked by: review fixes and follow-up gates
    - Owns: source metadata, source anchors, import flow, attribution display
 
 3. [#3 Generate validated lesson drafts with a mocked provider](https://github.com/Jayanth-Balasubramanian/mneme/issues/3)

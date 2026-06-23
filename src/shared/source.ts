@@ -39,6 +39,7 @@ export type ChapterSourceResponse = {
   chapterNumber?: string;
   sourceUrl: string;
   citationText: string;
+  emphasisNotes?: string;
   contentHash: string;
   anchors: SourceAnchor[];
   sourceCredit: SourceCredit;
