@@ -235,7 +235,7 @@ Lesson-unit responses include bounded `sourceContext` snippets derived from the 
 
 ## `PATCH /api/lesson-units/:id`
 
-Edit generated lesson unit content, checkpoint content, and review state.
+Edit generated lesson unit content, checkpoint content, and review state. Generated units start as `draft`; the review workflow may set any stored unit to `draft`, `approved`, `rejected`, or `needs_regeneration`. The study path consumes only `approved` units.
 
 Request:
 
@@ -306,13 +306,14 @@ Validation:
 Verification:
 
 - Only approved units are returned to study endpoints.
-- Review state transitions are tested.
+- Review status updates support `draft`, `approved`, `rejected`, and `needs_regeneration`; unsupported statuses return `validation_failed`.
+- `draft`, `rejected`, and `needs_regeneration` units remain reviewable but are excluded from study endpoints.
 - Edited checkpoint prompt, expected answer, and rubric content persist into approved study paths.
 - Lesson-unit list responses include bounded source-context snippets for review.
 
 ## `POST /api/lesson-units/:id/regenerate`
 
-Regenerate exactly one lesson unit.
+Regenerate exactly one lesson unit. The regeneration request uses the selected unit's existing concept keys, source anchors, reviewer notes, and bounded source context. A successful response replaces only the selected unit, stores a succeeded generation run, and returns the replacement as `reviewStatus: "draft"` so it must still be reviewed before study.
 
 Request:
 
@@ -333,11 +334,23 @@ type RegenerateLessonUnitResponse = {
 };
 ```
 
+Status and error responses:
+
+- `200 OK` when the selected unit is replaced by one validated regenerated unit.
+- `400 invalid_json` when the request body is not valid JSON.
+- `400 validation_failed` when the request shape is invalid.
+- `400 provider_not_supported` when `provider: "openai"` is requested before the adapter exists.
+- `400 generation_validation_failed` when regenerated output is malformed, returns anything other than one unit, or has invalid source-anchor provenance.
+- `404 lesson_unit_not_found` when the selected unit does not exist.
+- `404 chapter_source_not_found` when the original unit's source no longer exists.
+- `502 generation_failed` when the provider throws; provider exception details must be sanitized.
+
 Verification:
 
 - Preserve all other lesson units in the draft.
 - Use the original unit's concept keys, source anchors, source context, and reviewer notes.
 - Validate regenerated provider output with the same generated-output and provenance checks as initial generation before saving a successful generation run or replacing the unit.
+- Require exactly one regenerated unit before replacement.
 - Save invalid regenerated output, invalid regenerated anchors, and provider exceptions as failed generation runs with sanitized error text, leaving the existing unit and every other unit unchanged.
 
 ## `GET /api/study-paths/:chapterSourceId`

@@ -110,17 +110,19 @@ The PR #9 PoC path supports `provider: "mock"` for validated local draft generat
 
 ### 3. Review And Edit
 
-The review screen shows each generated lesson unit next to its source context. The user can:
+Generated lesson units start as `draft`. The review screen shows each generated lesson unit next to bounded source-context snippets derived from the stored Markdown and the unit's source anchors; it must not expose the full chapter Markdown as review context. The user can:
 
-- Edit explanation, intuition, notation, checkpoint, expected answer, and rubric.
-- Approve a unit.
-- Reject a unit.
-- Mark a unit as needing regeneration.
+- Edit title, learning objective, explanation, intuition, notation, example, misconception notes, checkpoint prompt, expected answer, and rubric.
+- Save reviewer notes.
+- Set review status to `draft`, `approved`, `rejected`, or `needs_regeneration`.
+- Approve a unit by setting `review_status` to `approved`.
+- Reject a unit by setting `review_status` to `rejected`.
+- Mark a unit as needing regeneration by setting `review_status` to `needs_regeneration`.
 - Add reviewer notes.
 
-Regeneration in v1 targets a single lesson unit. Regenerating a unit should preserve the rest of the lesson draft and send only the unit, its concept keys, reviewer notes, and source anchors/source context back through the lesson-generation provider.
+Regeneration in v1 targets a single lesson unit. Regenerating a unit preserves the rest of the lesson draft and sends only the selected unit, its concept keys, reviewer notes, source anchors, and bounded source context back through the lesson-generation provider. A successful regeneration must return exactly one replacement unit, validate it with the same generated-output schema and source-anchor provenance checks as initial generation, replace only the selected unit, and reset the replacement to `draft`. Invalid regenerated output, invalid regenerated provenance, or provider errors create a failed generation run and leave every existing lesson unit unchanged.
 
-Only approved units appear in the study flow.
+Only `approved` units appear in the study flow. `draft`, `rejected`, and `needs_regeneration` units remain available for review but are excluded from study.
 
 ### 4. Study
 
@@ -557,8 +559,10 @@ Verify:
 Acceptance:
 
 - Draft units are visible with source context.
-- User can edit generated fields.
-- User can approve, reject, or mark units for regeneration.
+- Source context is bounded to review-sized snippets and does not expose full chapter Markdown.
+- User can edit generated lesson fields and checkpoint prompt, expected answer, and rubric.
+- User can approve, reject, or mark units for regeneration through `draft`, `approved`, `rejected`, and `needs_regeneration` statuses.
+- Single-unit regeneration replaces only the selected unit after schema and provenance validation; failed regeneration leaves existing units unchanged.
 - Only approved units are eligible for study.
 
 Verify:
