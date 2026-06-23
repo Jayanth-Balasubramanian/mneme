@@ -1,9 +1,10 @@
+import { existsSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-const chromeBinary = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+const chromeBinary = resolveChromeBinary();
 const syntheticMarkdown = [
   "# Sampling",
   "",
@@ -39,6 +40,30 @@ type RuntimeEvaluationResult = {
 
 function sleep(milliseconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+function resolveChromeBinary(): string {
+  const candidates = [
+    Bun.env.CHROME_BIN,
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "/Applications/Chromium.app/Contents/MacOS/Chromium",
+    "/usr/bin/google-chrome",
+    "/usr/bin/google-chrome-stable",
+    "/usr/bin/chromium",
+    "/usr/bin/chromium-browser",
+  ];
+  const found = candidates.find(
+    (candidate): candidate is string =>
+      typeof candidate === "string" && candidate.length > 0 && existsSync(candidate),
+  );
+
+  if (!found) {
+    throw new Error(
+      "Unable to find Chrome or Chromium for e2e. Set CHROME_BIN to a local browser binary.",
+    );
+  }
+
+  return found;
 }
 
 async function findAvailablePortForTest(
