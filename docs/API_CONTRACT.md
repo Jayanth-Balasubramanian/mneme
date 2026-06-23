@@ -70,6 +70,7 @@ type ChapterSourceResponse = {
   chapterNumber?: string;
   sourceUrl: string;
   citationText: string;
+  emphasisNotes?: string;
   contentHash: string;
   anchors: SourceAnchor[];
   sourceCredit: SourceCredit;
@@ -78,11 +79,37 @@ type ChapterSourceResponse = {
 };
 ```
 
+Success status: `201 Created`.
+
+Error responses:
+
+```ts
+type InvalidJsonResponse = {
+  error: "invalid_json";
+  issues: ValidationIssue[];
+};
+
+type ValidationFailedResponse = {
+  error: "validation_failed";
+  issues: ValidationIssue[];
+};
+
+type ChapterSourceCreateFailedResponse = {
+  error: "chapter_source_create_failed";
+};
+```
+
+Error status codes:
+
+- `400 invalid_json` when the request body is not valid JSON.
+- `400 validation_failed` when required source metadata, source URL, Markdown, or usable source anchors are missing/invalid.
+- `500 chapter_source_create_failed` when the repository cannot persist the source.
+
 Verification:
 
 - Reject empty Markdown.
 - Reject missing title, authors, source URL, or citation.
-- Persist content hash and anchors.
+- Persist emphasis notes, content hash, and anchors.
 - Do not require committing source text to the repository.
 
 ## `POST /api/generation-runs`

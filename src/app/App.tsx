@@ -86,6 +86,20 @@ function formatAuthors(authors: string[]): string {
   }).format(authors);
 }
 
+function formatChapterHeading(source: ChapterSourceResponse): string {
+  return source.chapterNumber
+    ? `${source.bookTitle}, Chapter ${source.chapterNumber}`
+    : `${source.bookTitle}: ${source.chapterTitle}`;
+}
+
+function formatSourceCredit(source: ChapterSourceResponse): string {
+  const chapterLabel = source.chapterNumber
+    ? `Chapter ${source.chapterNumber}: `
+    : "";
+
+  return `${source.bookTitle}, ${chapterLabel}${source.chapterTitle}`;
+}
+
 function buildImportPayload(
   formState: ImportFormState,
 ): CreateChapterSourceRequest {
@@ -232,7 +246,7 @@ export function App() {
             <p className="eyebrow">Current chapter</p>
             <h2 id="workspace-heading">
               {chapterSource
-                ? `${chapterSource.bookTitle}, Chapter ${chapterSource.chapterNumber}`
+                ? formatChapterHeading(chapterSource)
                 : "No excerpt imported"}
             </h2>
           </div>
@@ -395,9 +409,7 @@ export function App() {
             <div>
               <dt>Source credit</dt>
               <dd>
-                {chapterSource.bookTitle}, Chapter{" "}
-                {chapterSource.chapterNumber ?? "?"}:{" "}
-                {chapterSource.chapterTitle}, by{" "}
+                {formatSourceCredit(chapterSource)}, by{" "}
                 {formatAuthors(chapterSource.authors)}.{" "}
                 {chapterSource.publisher ? `${chapterSource.publisher}. ` : ""}
                 {chapterSource.year ? `${chapterSource.year}. ` : ""}
@@ -424,6 +436,12 @@ export function App() {
               <dt>Citation</dt>
               <dd>{chapterSource.citationText}</dd>
             </div>
+            {chapterSource.emphasisNotes ? (
+              <div>
+                <dt>Study emphasis</dt>
+                <dd>{chapterSource.emphasisNotes}</dd>
+              </div>
+            ) : null}
           </dl>
         </section>
       ) : null}

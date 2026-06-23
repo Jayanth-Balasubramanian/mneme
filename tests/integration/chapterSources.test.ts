@@ -16,6 +16,7 @@ const requestBody = {
   sourceUrl: "https://www.deeplearningbook.org/contents/monte_carlo.html",
   citationText:
     "Ian Goodfellow, Yoshua Bengio, and Aaron Courville, Deep Learning, MIT Press, 2016. http://www.deeplearningbook.org",
+  emphasisNotes: "Pair formal definitions with intuitive ML examples.",
   markdown:
     "# Synthetic Monte Carlo Notes\n\nA short synthetic paragraph about estimating an expected value.\n\n## Practice focus\n\nA second synthetic paragraph for source anchoring.",
 };
@@ -51,6 +52,7 @@ describe("chapter source import persistence", () => {
         chapterNumber: "17",
         sourceUrl: requestBody.sourceUrl,
         citationText: requestBody.citationText,
+        emphasisNotes: requestBody.emphasisNotes,
         sourceCredit: {
           title: "Deep Learning",
           authors: ["Ian Goodfellow", "Yoshua Bengio", "Aaron Courville"],
@@ -90,6 +92,7 @@ describe("chapter source import persistence", () => {
         bookTitle: "Deep Learning",
         chapterTitle: "Monte Carlo Methods",
         sourceUrl: requestBody.sourceUrl,
+        emphasisNotes: requestBody.emphasisNotes,
         sourceCredit: {
           title: "Deep Learning",
           year: 2016,

@@ -57,9 +57,18 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
   - Documentation-agent review comment by `gpt-5.5` high.
   - Feature video before merge if review gates pass.
 
+### 2026-06-23T16:08Z
+
+- PR #8 review comments posted:
+  - Documentation-agent: changes requested. Required docs fixes: stale Drizzle references, ADR 0001/0002 conflict, missing required import metadata in SPEC, incomplete `POST /api/chapter-sources` error/status docs, stale source-attribution test language.
+  - Code hygiene: changes requested. Required code fixes: persist/return `emphasisNotes`; avoid rendering `Chapter undefined` when chapter number is omitted.
+  - Security: pass.
+- Moved issue #2 to `state:changes-requested`.
+- Applying code and docs fixes in the PR #8 worktree.
+
 ## Queue Snapshot
 
-- #2 Import chapter excerpt with source attribution: `ready-for-review`; PR #8 open and CI green; review gates pending.
+- #2 Import chapter excerpt with source attribution: `changes-requested`; PR #8 open and CI green; fixes in progress.
 - #3 Generate validated lesson drafts with a mocked provider: `ready-for-agent`, intentionally waiting on #2 because of overlap.
 - #4 Review lesson units and regenerate a single unit: blocked by #2 and #3.
 - #5 Study approved units and record telemetry: blocked by #4.
