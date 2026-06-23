@@ -542,12 +542,12 @@ function printFindings(findings: SecurityFinding[]): void {
 }
 
 function printUsage(): void {
-  console.error("Usage: bun run security:check [--no-self-test | --self-test-only]");
+  console.error("Usage: bun run security:check [--no-self-test | --self-test | --self-test-only]");
 }
 
 function main(): void {
   const args = process.argv.slice(2);
-  const validArgs = new Set(["--no-self-test", "--self-test-only"]);
+  const validArgs = new Set(["--no-self-test", "--self-test", "--self-test-only"]);
 
   for (const arg of args) {
     if (!validArgs.has(arg)) {
@@ -557,7 +557,7 @@ function main(): void {
     }
   }
 
-  const selfTestOnly = args.includes("--self-test-only");
+  const selfTestOnly = args.includes("--self-test") || args.includes("--self-test-only");
   const shouldRunSelfTest = selfTestOnly || !args.includes("--no-self-test");
   const selfTestFindings = shouldRunSelfTest ? runSecretDetectorSelfTest() : [];
 
