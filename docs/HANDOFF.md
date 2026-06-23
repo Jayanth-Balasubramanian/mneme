@@ -118,9 +118,10 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Owns: review states, editing, approving/rejecting, single-unit regeneration
 
 5. [#5 Study approved units and record telemetry](https://github.com/Jayanth-Balasubramanian/mneme/issues/5)
-   - State: `state:lgtm`
+   - State: `state:merged`, closed
    - Branch/worktree: `issue-5-study-telemetry` at `/private/tmp/mneme-issue-5`
    - PR: [#11 Study approved units and record telemetry](https://github.com/Jayanth-Balasubramanian/mneme/pull/11)
+   - Merge: rebase-merged into `main` at `e0016a1061a6e8e7ca432e70e489e993c6f06d9c`; main CI passed after merge.
    - Blocked by: none; issue 4 is merged
    - Agent note: the initial `gpt-5.3-codex-spark` worker hit its usage limit; work continued with a `gpt-5.5` xhigh fallback worker on the same worktree.
    - Code hygiene passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/11#issuecomment-4782710234>.
@@ -129,8 +130,7 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Video: `docs/artifacts/issue-5-study-flow.mp4`
    - Implemented contract: approved units render in a mobile guided study UI; checkpoint choices, answer/rubric reveal, self-rating, confidence, local attempt feedback, and weak-concept feedback are available; `POST /api/study-attempts` records approved-checkpoint attempts; `GET /api/weak-concepts?chapterSourceId=:id` aggregates wrong/partial concept events; `study_attempts` and `concept_events` are SQLite/D1-compatible; `bun run test:e2e` is now a real headless Chrome DOM flow for import -> mock generation -> approve -> study checkpoint attempt.
    - Scoped documentation update: complete for README command/status text, study API/test/spec contracts, handoff state, and loop log; no source text was added.
-   - CI: green on the scoped documentation update head before the feature-video commit.
-   - Remaining gates: green checks at final PR head and merge readiness.
+   - CI: green on the final PR head before merge and on `main` after merge.
    - Owns: study path, attempts, weak-concept query
 
 6. [#6 Expand CI with app-specific security tests and Cloudflare deployment](https://github.com/Jayanth-Balasubramanian/mneme/issues/6)

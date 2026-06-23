@@ -315,12 +315,19 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
   - Flow shown: synthetic credited Markdown import, mock generation, approval, guided checkpoint study, MCQ option selection, answer/rubric reveal, self-rating/confidence selection, attempt submission, and weak-concept feedback.
 - The excerpt used for capture is synthetic and does not include copied Chapter 17 text.
 - Local verification on the final PR head passed: `bun run typecheck`, `bun test`, `bun run lint`, `bun run build`, `bun run test:e2e`, and `MNEME_DB_PATH=/private/tmp/mneme-issue-5-final.sqlite bun run db:migrate`.
-- Final merge readiness now depends on green GitHub checks on the feature-video commit.
+- GitHub checks passed on the feature-video commit, and PR #11 was ready for merge.
+
+### 2026-06-23T19:40Z
+
+- PR #11 was rebase-merged into `main`: merge commit `e0016a1061a6e8e7ca432e70e489e993c6f06d9c`.
+- Issue #5 was closed and relabeled `state:merged`.
+- Main-branch CI for the PR #11 merge completed successfully: <https://github.com/Jayanth-Balasubramanian/mneme/actions/runs/28052065314>.
+- The PoC now has a working local app workflow through import, mocked generation, review/approval, guided study, checkpoint attempt recording, and weak-concept telemetry.
 
 ## Queue Snapshot
 
 - #2 Import chapter excerpt with source attribution: `merged`; PR #8 merged; issue #2 closed.
 - #3 Generate validated lesson drafts with a mocked provider: `merged`; PR #9 merged; issue #3 closed.
 - #4 Review lesson units and regenerate a single unit: `merged`; PR #10 merged; issue #4 closed.
-- #5 Study approved units and record telemetry: `lgtm`; PR #11 open from branch/worktree `issue-5-study-telemetry` at `/private/tmp/mneme-issue-5`; code hygiene/security/doc gates passed and feature video recorded.
+- #5 Study approved units and record telemetry: `merged`; PR #11 merged; issue #5 closed.
 - #6 Expand CI with app-specific security tests and Cloudflare deployment: `needs-spec`.
