@@ -2,7 +2,7 @@
 
 ## Current State
 
-This repository is initialized and contains planning/contract documentation for a local-first AI-assisted study app. PR #7 implements issue #1 with a Bun/Vite/Hono runtime scaffold, minimal Mneme app shell, health route, and unit smoke test.
+This repository is initialized and contains planning/contract documentation plus the first implementation slice for a local-first AI-assisted study app. PR #7 merged issue #1 with a Bun/Vite/Hono runtime scaffold, minimal Mneme app shell, health route, and unit smoke test.
 
 Git:
 
@@ -17,7 +17,7 @@ GitHub:
 - Intended repository name: `mneme`.
 - Intended visibility: public, to use GitHub Actions CI credits.
 - Repository URL: <https://github.com/Jayanth-Balasubramanian/mneme>
-- CI status: passing after repo setup; use GitHub Actions for the current run state.
+- CI status: passing on `main` after the scaffold merge; use GitHub Actions for the current run state.
 
 ## Product Decision
 
@@ -68,21 +68,21 @@ Security posture:
 GitHub is the source of truth for issue state. These issues have been created:
 
 1. [#1 Scaffold local Bun/Vite/Hono app](https://github.com/Jayanth-Balasubramanian/mneme/issues/1)
-   - State: `state:ready-for-review`
+   - State: `state:merged`, closed
    - PR: [#7 Scaffold local Bun/Vite/Hono app](https://github.com/Jayanth-Balasubramanian/mneme/pull/7)
    - Review gates: code hygiene passed; documentation-agent passed; security passed.
-   - CI: passing on PR #7 after scaffold review fixes.
+   - CI: passing on PR #7 and merged to `main`.
    - Blocked by: none
    - Owns: package/config, initial app/server folders, smoke tests
 
 2. [#2 Import chapter excerpt with source attribution](https://github.com/Jayanth-Balasubramanian/mneme/issues/2)
    - State: `ready-for-agent`
-   - Blocked by: issue 1
+   - Blocked by: none; issue 1 is merged
    - Owns: source metadata, source anchors, import flow, attribution display
 
 3. [#3 Generate validated lesson drafts with a mocked provider](https://github.com/Jayanth-Balasubramanian/mneme/issues/3)
    - State: `ready-for-agent`
-   - Blocked by: issue 1
+   - Blocked by: none; issue 1 is merged
    - Owns: `LessonGenerator` contract, output validation, generation runs
 
 4. [#4 Review lesson units and regenerate a single unit](https://github.com/Jayanth-Balasubramanian/mneme/issues/4)
