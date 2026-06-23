@@ -120,5 +120,110 @@ describe("lesson generation draft validation", () => {
 
     expect(result.issues.map((issue) => issue.field)).toContain("units");
   });
-});
 
+  test("rejects mixed valid and invalid concept key entries", () => {
+    const result = parseLessonGenerationDraft({
+      title: "Invalid concept keys",
+      summary: "Contains one valid and one invalid concept key.",
+      units: [
+        {
+          title: "Bad concept keys",
+          learningObjective: "Verify strict array validation.",
+          conceptKeys: ["valid-concept", 42],
+          sourceAnchors: [
+            {
+              headingPath: ["Chapter 17"],
+              paragraphStart: 1,
+              paragraphEnd: 1,
+              sourceUrl: "https://www.deeplearningbook.org/contents/monte_carlo.html",
+            },
+          ],
+          explanationMd: "A unit with mixed concept key types.",
+          intuitionMd: "A unit with mixed concept key types.",
+          checkpoints: [
+            {
+              promptMd: "What is this?",
+              expectedAnswerMd: "A mixed-type concept key concept.",
+              rubric: [
+                {
+                  rating: "wrong",
+                  description: "No sample-based estimation.",
+                },
+                {
+                  rating: "partial",
+                  description: "Some quality.",
+                },
+                {
+                  rating: "correct",
+                  description: "Correct response.",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) {
+      return;
+    }
+
+    expect(result.issues.map((issue) => issue.field)).toContain(
+      "conceptKeys[1]",
+    );
+  });
+
+  test("rejects mixed valid and invalid headingPath entries", () => {
+    const result = parseLessonGenerationDraft({
+      title: "Invalid headingPath",
+      summary: "Contains mixed heading path entries.",
+      units: [
+        {
+          title: "Bad heading path",
+          learningObjective: "Verify headingPath entry strictness.",
+          conceptKeys: ["concept-key"],
+          sourceAnchors: [
+            {
+              headingPath: ["Chapter 17", 99],
+              paragraphStart: 1,
+              paragraphEnd: 1,
+              sourceUrl: "https://www.deeplearningbook.org/contents/monte_carlo.html",
+            },
+          ],
+          explanationMd: "A unit with mixed headingPath entries.",
+          intuitionMd: "A unit with mixed headingPath entries.",
+          checkpoints: [
+            {
+              promptMd: "What is this?",
+              expectedAnswerMd: "A heading path validation check.",
+              rubric: [
+                {
+                  rating: "wrong",
+                  description: "Missing heading path strictness.",
+                },
+                {
+                  rating: "partial",
+                  description: "Only partially checked.",
+                },
+                {
+                  rating: "correct",
+                  description: "Correct handling of mixed types.",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) {
+      return;
+    }
+
+    expect(result.issues.map((issue) => issue.field)).toContain(
+      "sourceAnchors[0].headingPath[1]",
+    );
+  });
+});
