@@ -80,11 +80,11 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Owns: package/config, initial app/server folders, smoke tests
 
 2. [#2 Import chapter excerpt with source attribution](https://github.com/Jayanth-Balasubramanian/mneme/issues/2)
-   - State: `state:ready-for-review`
+   - State: `state:lgtm`
    - PR: [#8 Import chapter excerpts with source attribution](https://github.com/Jayanth-Balasubramanian/mneme/pull/8)
-   - Review gates: code hygiene follow-up passed; security follow-up passed; documentation cleanup is being applied under the updated scoped-updater workflow.
-   - CI: must be checked after the documentation cleanup commit lands on PR #8.
-   - Blocked by: CI, feature video, and merge readiness
+   - Review gates: code hygiene follow-up passed; security follow-up passed; documentation cleanup complete under the updated scoped-updater workflow.
+   - CI: passing on PR #8 after the documentation workflow update.
+   - Blocked by: feature video and merge readiness
    - Owns: source metadata, source anchors, import flow, attribution display
 
 3. [#3 Generate validated lesson drafts with a mocked provider](https://github.com/Jayanth-Balasubramanian/mneme/issues/3)
@@ -134,12 +134,11 @@ Current PR #8 state:
 - Code hygiene follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/8#issuecomment-4781225906>.
 - Security follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/8#issuecomment-4781224173>.
 - The old documentation review comment is cleanup input, not a repeated review gate: <https://github.com/Jayanth-Balasubramanian/mneme/pull/8#issuecomment-4781248688>.
-- Documentation cleanup is being applied now.
-- Next gates are CI, feature video, and merge readiness.
+- Documentation cleanup is complete under the updated workflow.
+- Next gates are feature video and merge readiness.
 
 Todos:
 
-- Check CI after the documentation cleanup commit lands on PR #8.
 - Record the feature video before moving issue #2 toward `state:ready-to-merge`.
 - After issue #2 merges, schedule issue #3 only after checking for shared-schema/API conflicts with the import slice.
 

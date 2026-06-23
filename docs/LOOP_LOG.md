@@ -88,11 +88,20 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - PR #8 code hygiene follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/8#issuecomment-4781225906>.
 - PR #8 security follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/8#issuecomment-4781224173>.
 - The earlier documentation review comment remains useful cleanup input under the old model, but it is not a live gate under the updated workflow: <https://github.com/Jayanth-Balasubramanian/mneme/pull/8#issuecomment-4781248688>.
-- Documentation cleanup for the new workflow and PR #8 state is being applied in this PR. Next gates are CI, feature video, and merge readiness.
+- Documentation cleanup for the new workflow and PR #8 state was applied in commit `4468318`.
+- CI passed on PR #8 after `4468318`.
+- Next gates are feature video and merge readiness.
+
+### 2026-06-23T16:48Z
+
+- Confirmed scoped documentation update comment on PR #8: <https://github.com/Jayanth-Balasubramanian/mneme/pull/8#issuecomment-4781277564>.
+- Confirmed CI passed on PR #8 after the documentation workflow update commit.
+- Code hygiene and security remain passed; documentation cleanup is complete under the updated workflow.
+- Preparing the feature video gate before merge.
 
 ## Queue Snapshot
 
-- #2 Import chapter excerpt with source attribution: `ready-for-review`; PR #8 open; code hygiene and security passed; documentation cleanup is being applied; next gates are CI, feature video, and merge readiness.
+- #2 Import chapter excerpt with source attribution: `lgtm`; PR #8 open; code hygiene and security passed, documentation cleanup complete, CI green; next gates are feature video and merge readiness.
 - #3 Generate validated lesson drafts with a mocked provider: `ready-for-agent`, intentionally waiting on #2 because of overlap.
 - #4 Review lesson units and regenerate a single unit: blocked by #2 and #3.
 - #5 Study approved units and record telemetry: blocked by #4.
