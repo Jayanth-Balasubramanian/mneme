@@ -105,7 +105,7 @@ Verification:
 
 Notes:
 
-- `bun run test:e2e` currently remains deferred until the complete review-study flow is available as a browser flow fixture.
+- `bun run test:e2e` runs the mobile import -> mock generation -> approval -> study checkpoint attempt browser flow against a temporary SQLite database.
 
 ## Study And Telemetry
 
@@ -126,6 +126,10 @@ Verification:
 - `bun run typecheck`
 - `bun test`
 - `bun run test:e2e`
+
+Note:
+
+- `test:e2e` validates the visible study transition states with browser DOM interactions and checks that a wrong or partial checkpoint attempt creates weak-concept feedback.
 
 ## Repository And Security Gates
 

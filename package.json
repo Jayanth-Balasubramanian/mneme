@@ -10,7 +10,7 @@
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b",
     "lint": "eslint .",
-    "test:e2e": "bun scripts/deferred.ts test:e2e \"Browser flow coverage starts when the import/review/study UI lands.\"",
+    "test:e2e": "bun scripts/test-e2e.ts",
     "db:migrate": "bun scripts/migrate.ts",
     "db:studio": "bun scripts/deferred.ts db:studio \"Database inspection tooling starts with the persistence slice.\"",
     "preview": "vite preview"

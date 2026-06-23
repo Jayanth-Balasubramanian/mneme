@@ -2,6 +2,7 @@ import { Database } from "bun:sqlite";
 
 import { SQLiteChapterSourceRepository } from "./chapterSources";
 import { SQLiteGenerationPersistence } from "./generation";
+import { SQLiteStudyAttemptRepository } from "./studyAttempts";
 import { migrateDatabase } from "./migrations";
 
 export function getLocalDatabasePath(): string {
@@ -24,4 +25,10 @@ export function createLocalGenerationRepository(
   path = getLocalDatabasePath(),
 ): SQLiteGenerationPersistence {
   return new SQLiteGenerationPersistence(openLocalDatabase(path));
+}
+
+export function createLocalStudyAttemptRepository(
+  path = getLocalDatabasePath(),
+): SQLiteStudyAttemptRepository {
+  return new SQLiteStudyAttemptRepository(openLocalDatabase(path));
 }

@@ -416,6 +416,89 @@ p {
   line-height: 1.45;
 }
 
+.weak-concepts-panel {
+  margin: 1rem 0;
+  border: 1px solid #d8e1ec;
+  border-radius: 0.5rem;
+  padding: 0.9rem;
+  background: #f8fafc;
+}
+
+.weak-concepts-panel h3,
+.study-step h3 {
+  margin: 0 0 0.45rem;
+  font-size: 1.05rem;
+}
+
+.weak-concepts-panel p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.study-step {
+  margin-top: 1rem;
+  border: 1px solid #d8e1ec;
+  border-radius: 0.5rem;
+  padding: 0.95rem;
+  background: #ffffff;
+  display: grid;
+  gap: 0.9rem;
+}
+
+.study-step__section {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.study-step__section h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.study-step__options {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.study-step__options label {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.45rem;
+  align-items: start;
+  border: 1px solid #d8e1ec;
+  border-radius: 0.5rem;
+  padding: 0.6rem;
+  background: #f8fafc;
+  color: #314056;
+}
+
+.study-step__answer-text {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.study-step__reveal {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.study-step__reveal button {
+  justify-self: start;
+}
+
+.study-step__local-signals {
+  margin: 0;
+  color: #314056;
+  line-height: 1.45;
+  border: 1px dashed #d0deea;
+  border-radius: 0.5rem;
+  padding: 0.6rem;
+  background: #f8fbff;
+}
+
 .import-result code {
   overflow-wrap: anywhere;
   color: #172033;
