@@ -63,13 +63,14 @@ This file is the working contract for agents building the AI-assisted technical 
 bun run build
 bun run typecheck
 bun run lint
+bun run security:check
 bun test
 bun run test:e2e
 bun run db:migrate
 bun run db:studio
 ```
 
-`bun run db:migrate` is active for local SQLite migrations. `bun run test:e2e` is active for the mobile import -> mock generation -> approval -> study checkpoint attempt browser flow. `bun run db:studio` may remain an explicit deferred placeholder until database inspection tooling lands, but the command names must remain stable.
+`bun run security:check` is active for app-specific public-repo security checks that require no Cloudflare credentials or production secrets. `bun run db:migrate` is active for local SQLite migrations. `bun run test:e2e` is active for the mobile import -> mock generation -> approval -> study checkpoint attempt browser flow. `bun run db:studio` may remain an explicit deferred placeholder until database inspection tooling lands, but the command names must remain stable.
 - GitHub Actions must run policy/security checks and project checks on pushes to `main` and pull requests.
 - Security checks belong in CI and should expand over time; do not rely on manual review alone for secrets/public-repo policy.
 

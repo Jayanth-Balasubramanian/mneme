@@ -52,13 +52,14 @@ bun run dev
 bun run build
 bun run typecheck
 bun run lint
+bun run security:check
 bun test
 bun run test:e2e
 bun run db:migrate
 bun run db:studio
 ```
 
-The implementation should keep these commands stable even if tools change under the hood. `db:migrate` is active for local SQLite migrations. `test:e2e` is active for the mobile import -> review -> study browser flow. `db:studio` may remain an explicit deferred placeholder until database inspection tooling is introduced.
+The implementation should keep these commands stable even if tools change under the hood. `security:check` is active for app-specific public-repo security checks that require no deployment credentials. `db:migrate` is active for local SQLite migrations. `test:e2e` is active for the mobile import -> review -> study browser flow. `db:studio` may remain an explicit deferred placeholder until database inspection tooling is introduced.
 
 ## API Contract
 

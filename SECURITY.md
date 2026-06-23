@@ -17,10 +17,25 @@ Before opening or approving a pull request, agents must check for:
 
 ## CI Security Gates
 
-GitHub Actions includes:
+GitHub Actions runs `bun run security:check` on pull requests and pushes to
+`main`. The command requires no Cloudflare credentials, deployment target, or
+production secrets.
 
-- Public-repo policy checks for token-like strings, tracked env files, and committed full chapter text.
-- Repository policy checks for tracked env files and obvious token formats.
-- Project checks through Bun once `package.json` exists.
+The app-specific security command checks:
+
+- Markdown/rendering policy: app code and package manifests must not introduce
+  executable HTML/MDX rendering paths for user-controlled Markdown or generated
+  lesson content.
+- LLM output validation coverage: required schema, provenance, invalid-output,
+  invalid-anchor, and provider-failure test markers must remain present.
+- Source-text leakage policy: known *Deep Learning* Chapter 17 body markers must
+  not appear in committed text files.
+- Secret leakage policy: tracked `.env`/private-key paths and common token-like
+  values are rejected.
+- Detector self-test: a synthetic secret-like dry-run fixture is generated in
+  memory and must trigger the detector before repository files are scanned.
+
+CI also keeps the project checks for lint, typecheck, Bun tests, database
+migration, and build.
 
 Future deployment secrets must live in GitHub Secrets or Cloudflare secrets. Do not commit production secrets or print them in CI logs.

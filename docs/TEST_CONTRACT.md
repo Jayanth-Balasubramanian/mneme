@@ -138,14 +138,27 @@ Behavior:
 - No API keys, `.env` files, full chapter text, or secrets are committed.
 - LLM output and Markdown content are treated as untrusted data.
 - Markdown rendering supports GFM and math without executing MDX or arbitrary embedded code.
+- CI runs `bun run security:check` on pull requests and pushes to `main`
+  without requiring Cloudflare credentials, deployment targets, or production
+  secrets.
 
 Tests:
 
 - Unit: Markdown rendering/sanitization rejects executable embedded content.
-- Review: security pass checks committed files, fixtures, snapshots, and docs for secrets or full chapter text.
+- Unit: security scanner rejects executable Markdown/HTML rendering paths, known
+  Chapter 17 body markers, tracked env paths, and synthetic token-like values.
+- Command: `bun run security:check` checks Markdown/rendering policy, LLM output
+  schema/provenance failure-path coverage, full-source leakage markers, secret
+  leakage patterns, generated artifacts, and repository path policy.
+- Command: the security check generates an in-memory synthetic secret-like
+  dry-run fixture and requires the detector to fail that controlled fixture
+  before scanning repository files.
+- Review: security pass checks committed files, fixtures, snapshots, and docs for
+  secrets or full chapter text.
 
 Verification:
 
+- `bun run security:check`
 - `bun run lint`
 - `bun run typecheck`
 - `bun test`

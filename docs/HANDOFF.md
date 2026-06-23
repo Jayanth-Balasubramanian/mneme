@@ -2,7 +2,7 @@
 
 ## Current State
 
-This repository is initialized and contains planning/contract documentation plus implementation slices for a local-first AI-assisted study app. PR #7 merged issue #1 with a Bun/Vite/Hono runtime scaffold, minimal Mneme app shell, health route, and unit smoke test. PR #8 implemented issue #2 with Markdown excerpt import, source attribution, local SQLite persistence, and import-result UI. PR #9 implemented issue #3 with validated mocked lesson generation. PR #10 implemented issue #4 with lesson review, edit, approval, source-context snippets, and single-unit regeneration. PR #11 implements issue #5 with guided study, checkpoint attempts, weak-concept telemetry, and real browser e2e coverage; code hygiene and security gates have passed and the scoped documentation update is complete.
+This repository is initialized and contains planning/contract documentation plus implementation slices for a local-first AI-assisted study app. PR #7 merged issue #1 with a Bun/Vite/Hono runtime scaffold, minimal Mneme app shell, health route, and unit smoke test. PR #8 implemented issue #2 with Markdown excerpt import, source attribution, local SQLite persistence, and import-result UI. PR #9 implemented issue #3 with validated mocked lesson generation. PR #10 implemented issue #4 with lesson review, edit, approval, source-context snippets, and single-unit regeneration. PR #11 implemented issue #5 with guided study, checkpoint attempts, weak-concept telemetry, and real browser e2e coverage. Issue #12 is the app-specific CI/security split from issue #6: it adds `bun run security:check` without Cloudflare deployment, Workers config, deployment targets, or production secrets.
 
 Git:
 
@@ -65,6 +65,7 @@ Security posture:
 
 - The repository is public, so agents must treat committed files, fixtures, logs, screenshots, and CI artifacts as public.
 - Public-repo policy checks belong in CI from day one. Dependabot and deeper dependency security checks are ready follow-up work now that `package.json` exists; track the broader CI/security expansion under issue #6.
+- `bun run security:check` is the app-specific public-repo security command. It checks Markdown/rendering policy, LLM validation/provenance coverage markers, known Chapter 17 body markers, secret-like values, env/private-key paths, generated artifacts, and a synthetic in-memory secret-like dry-run fixture.
 - Full copyrighted chapter text must not be committed without explicit reuse rights.
 
 ## GitHub Issues
@@ -141,10 +142,13 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Owns: future continuous deployment
 
 7. [#12 Add app-specific CI security tests](https://github.com/Jayanth-Balasubramanian/mneme/issues/12)
-   - State: `state:ready-for-agent`
+   - State: `state:in-progress`
+   - Branch/worktree: `issue-12-security-ci` at `/private/tmp/mneme-issue-12`
    - Split from: issue #6
+   - Scope: deterministic Bun/TypeScript security checks and CI wiring only; no Cloudflare deployment, Workers config, preview/prod environments, deployment secrets, or rollback strategy.
    - Blocked by: none
-   - Owns: app-specific security tests, CI security command, and dry-run detector proof
+   - Owns: `bun run security:check`, scanner unit tests, CI security command wiring, and dry-run detector proof
+   - Implementation state: the security command scans executable Markdown/MDX rendering paths, required LLM validation coverage markers, known full Chapter 17 body-text signatures, tracked env/private-key/generated-artifact paths, common token-like values, and an in-memory synthetic secret-like fixture that must trip the detector before repository scanning proceeds.
 
 ## Remaining Human Inputs
 

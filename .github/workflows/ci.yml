@@ -23,37 +23,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Reject tracked env files
-        run: |
-          tracked_env_files="$(git ls-files '.env' '.env.*' '.dev.vars' || true)"
-          if [ -n "$tracked_env_files" ]; then
-            echo "Tracked environment/secret files are not allowed:"
-            echo "$tracked_env_files"
-            exit 1
-          fi
+      - uses: oven-sh/setup-bun@v2
 
-      - name: Reject generated artifacts
+      - name: Run app-specific security checks
         run: |
-          generated_artifacts="$(git ls-files 'dist/**' 'build/**' 'coverage/**' 'playwright-report/**' 'test-results/**' || true)"
-          if [ -n "$generated_artifacts" ]; then
-            echo "Generated build/test artifacts are not allowed:"
-            echo "$generated_artifacts"
-            exit 1
-          fi
-
-      - name: Scan for obvious token formats
-        run: |
-          if git grep -n -E 'sk-[A-Za-z0-9_-]{20,}|ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{20,}' -- .; then
-            echo "Potential token-like value found in tracked files."
-            exit 1
-          fi
-
-      - name: Guard against committed full chapter text
-        run: |
-          if git grep -n -F 'Randomized algorithms fall in to t w o rough categories' -- . ':(exclude).github/workflows/ci.yml'; then
-            echo "Deep Learning chapter body text appears to be committed. Keep full source text out of the public repo."
-            exit 1
-          fi
+          bun install --frozen-lockfile
+          bun run security:check
 
   project:
     name: Project checks
