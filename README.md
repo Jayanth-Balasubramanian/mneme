@@ -49,6 +49,7 @@ bun run dev
 bun test
 bun run typecheck
 bun run lint
+bun run security:check
 bun run test:e2e
 bun run db:migrate
 bun run db:studio
@@ -71,10 +72,10 @@ Current runtime endpoints:
 - `POST /api/study-attempts`
 - `GET /api/weak-concepts?chapterSourceId=:id`
 
-`bun run db:migrate` applies the local SQLite schema. `bun run test:e2e` runs the mobile import -> mock generation -> approval -> checkpoint attempt browser flow with an isolated temporary SQLite database. `db:studio` remains a stable command placeholder until database inspection tooling lands.
+`bun run security:check` runs app-specific public-repo security checks without Cloudflare credentials or production secrets. `bun run db:migrate` applies the local SQLite schema. `bun run test:e2e` runs the mobile import -> mock generation -> approval -> checkpoint attempt browser flow with an isolated temporary SQLite database. `db:studio` remains a stable command placeholder until database inspection tooling lands.
 
 ## CI
 
-GitHub Actions runs on pushes to `main` and pull requests. CI runs the Bun project checks and a temp-path migration check when `package.json` exists, and keeps public-repo policy checks for secrets, `.env` files, generated build artifacts, and full chapter text.
+GitHub Actions runs on pushes to `main` and pull requests. CI runs `bun run security:check`, Bun project checks, and a temp-path migration check. The security command checks Markdown/rendering policy, LLM validation/provenance coverage markers, source-text leakage markers, secret-like values, tracked `.env`/private-key paths, generated artifacts, and an in-memory synthetic dry-run secret fixture.
 
 Dependabot and deeper dependency security checks should be enabled after the dependency baseline settles.

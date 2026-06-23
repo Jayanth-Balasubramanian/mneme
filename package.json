@@ -10,6 +10,7 @@
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b",
     "lint": "eslint .",
+    "security:check": "bun scripts/security-check.ts",
     "test:e2e": "bun scripts/test-e2e.ts",
     "db:migrate": "bun scripts/migrate.ts",
     "db:studio": "bun scripts/deferred.ts db:studio \"Database inspection tooling starts with the persistence slice.\"",

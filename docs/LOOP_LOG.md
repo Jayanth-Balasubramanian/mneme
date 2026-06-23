@@ -339,6 +339,38 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - Issue #12 is `state:ready-for-agent` with acceptance criteria for Markdown/rendering policy checks, LLM output validation coverage checks, source-text leakage checks, secret leakage checks, and a deliberate secret-like dry-run proof.
 - Issue #6 was narrowed to Cloudflare deployment after target/secrets/rollback policy and remains `state:needs-human`.
 
+### 2026-06-23T19:54Z
+
+- Started issue #12, "Add app-specific CI security tests".
+- Branch/worktree: `issue-12-security-ci` at `/private/tmp/mneme-issue-12`.
+- Issue #12 is `state:in-progress`.
+- Scope confirmed: add deterministic app-specific security checks and CI wiring only; do not implement Cloudflare deployment, Workers config, preview/prod environments, deployment secrets, or rollback strategy.
+- Implementation direction:
+  - add `bun run security:check`;
+  - check Markdown/rendering policy for executable HTML/MDX paths;
+  - check required LLM output schema/provenance failure-path coverage markers;
+  - check known Chapter 17 body markers;
+  - check tracked env/private-key paths, generated artifacts, and token-like values;
+  - prove the detector fails on an in-memory synthetic secret-like dry-run fixture without committing a real secret.
+
+### 2026-06-23T19:56Z
+
+- Issue #12 implementation completed locally.
+- Added `bun run security:check` backed by `scripts/security-check.ts`.
+- Wired the CI policy job to install from `bun.lock` and run the app-specific security command on pull requests and pushes to `main`.
+- Added scanner unit coverage for synthetic token-like values, the in-memory dry-run detector path, tracked env paths, executable Markdown rendering paths, Chapter 17 body markers, and LLM validation coverage markers.
+- Local verification passed:
+  - `bun run security:check`
+  - `bun run typecheck`
+  - `bun test`
+  - `bun run lint`
+  - `bun run build`
+  - `env MNEME_DB_PATH=/tmp/mneme-security-ci.sqlite bun run db:migrate`
+  - `bun run test:e2e`
+- `bun run test:e2e` required sandbox escalation because it starts localhost Hono/Vite servers and a headless Chrome/CDP browser session.
+- The `security:check` output included the in-memory synthetic secret-like dry-run proof before scanning repository files.
+- Next steps: commit, push, open the PR, move issue #12 to `state:ready-for-review`, and post the verification summary on the PR.
+
 ## Queue Snapshot
 
 - #2 Import chapter excerpt with source attribution: `merged`; PR #8 merged; issue #2 closed.
@@ -346,4 +378,4 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - #4 Review lesson units and regenerate a single unit: `merged`; PR #10 merged; issue #4 closed.
 - #5 Study approved units and record telemetry: `merged`; PR #11 merged; issue #5 closed.
 - #6 Add Cloudflare deployment after target and secrets policy: `needs-human`; blocked on Cloudflare target/secrets/rollback decisions.
-- #12 Add app-specific CI security tests: `ready-for-agent`; unblocked.
+- #12 Add app-specific CI security tests: `in-progress`; branch `issue-12-security-ci`.
