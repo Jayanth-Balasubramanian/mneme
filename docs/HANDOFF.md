@@ -2,7 +2,7 @@
 
 ## Current State
 
-This repository is initialized and contains planning/contract documentation plus implementation slices for a local-first AI-assisted study app. PR #7 merged issue #1 with a Bun/Vite/Hono runtime scaffold, minimal Mneme app shell, health route, and unit smoke test. PR #8 implemented issue #2 with Markdown excerpt import, source attribution, local SQLite persistence, and import-result UI. PR #9 implemented issue #3 with validated mocked lesson generation. PR #10 implemented issue #4 with lesson review, edit, approval, source-context snippets, and single-unit regeneration. PR #11 implemented issue #5 with guided study, checkpoint attempts, weak-concept telemetry, and real browser e2e coverage. Issue #12 is the app-specific CI/security split from issue #6: it adds `bun run security:check` without Cloudflare deployment, Workers config, deployment targets, or production secrets.
+This repository is initialized and contains planning/contract documentation plus implementation slices for a local-first AI-assisted study app. PR #7 merged issue #1 with a Bun/Vite/Hono runtime scaffold, minimal Mneme app shell, health route, and unit smoke test. PR #8 implemented issue #2 with Markdown excerpt import, source attribution, local SQLite persistence, and import-result UI. PR #9 implemented issue #3 with validated mocked lesson generation. PR #10 implemented issue #4 with lesson review, edit, approval, source-context snippets, and single-unit regeneration. PR #11 implemented issue #5 with guided study, checkpoint attempts, weak-concept telemetry, and real browser e2e coverage. PR #13 implements issue #12, the app-specific CI/security split from issue #6, by adding `bun run security:check` without Cloudflare deployment, Workers config, deployment targets, or production secrets.
 
 Git:
 
@@ -149,7 +149,7 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Scope: deterministic Bun/TypeScript security checks and CI wiring only; no Cloudflare deployment, Workers config, preview/prod environments, deployment secrets, or rollback strategy.
    - Blocked by: none
    - Owns: `bun run security:check`, scanner unit tests, CI security command wiring, and dry-run detector proof
-   - Verification reported by implementation worker: `bun run security:check`, `bun run typecheck`, `bun test`, `bun run lint`, `bun run build`, `env MNEME_DB_PATH=/tmp/mneme-security-ci.sqlite bun run db:migrate`, and `bun run test:e2e`.
+   - Verification reported by implementation worker: `bun run security:check`, `bun run security:check --self-test`, `bun run typecheck`, `bun test`, `bun run lint`, `bun run build`, and `MNEME_DB_PATH=/tmp/mneme-security-ci.sqlite bun run db:migrate`. PR #13 GitHub Actions passed after the implementation push.
    - Implementation state: the security command scans executable Markdown/MDX rendering paths, required LLM validation coverage markers, known full Chapter 17 body-text signatures, tracked env/private-key/generated-artifact paths, common token-like values, and an in-memory synthetic secret-like fixture that must trip the detector before repository scanning proceeds.
 
 ## Remaining Human Inputs
