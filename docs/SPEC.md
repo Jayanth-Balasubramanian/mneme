@@ -31,14 +31,14 @@ The proof of concept starts with Chapter 17, "Monte Carlo Methods", from Ian Goo
 - Language: TypeScript.
 - Package manager and local command runner: Bun.
 - Frontend: React with Vite.
-- UI system: shadcn/ui components copied into the app as needed, styled with Tailwind CSS.
+- UI system: mobile-first React UI; shadcn/ui components copied into the app as needed. Tailwind can be introduced with the first shadcn component if it earns its dependency cost.
 - Backend/API: Hono/Web Fetch API designed to be portable to Cloudflare Workers.
 - Local runtime: Bun-driven dev commands with local-only runtime adapters where needed.
 - Future edge runtime: Cloudflare Workers.
 - Database: SQLite locally, with schema shaped to migrate to Cloudflare D1 later.
 - ORM/query layer: Drizzle with a typed SQLite/D1-shaped schema.
 - AI integration: provider interface with an OpenAI implementation first.
-- Testing: Vitest for unit/integration tests, Playwright for browser flow checks when UI exists.
+- Testing: Bun's test runner for unit/integration tests initially; Playwright for browser flow checks when the import/review/study UI exists.
 - Frontend posture: mobile-first, clean, minimal, and dependency-light.
 - Initial architecture: a single Bun package with a Vite React SPA and Hono API, not a meta-framework.
 
@@ -58,7 +58,7 @@ bun run db:migrate
 bun run db:studio
 ```
 
-The implementation should keep these commands stable even if tools change under the hood.
+The implementation should keep these commands stable even if tools change under the hood. In the initial scaffold, `test:e2e`, `db:migrate`, and `db:studio` are explicit deferred placeholders until the UI flow and persistence slices land.
 
 ## API Contract
 
@@ -376,7 +376,7 @@ Conventions:
 
 ### Unit Tests
 
-Use Vitest for:
+Use Bun's test runner for:
 
 - Markdown source parsing and source anchor creation.
 - Lesson draft schema validation.
@@ -385,7 +385,7 @@ Use Vitest for:
 
 ### Integration Tests
 
-Use Vitest with a temporary SQLite database for:
+Use Bun's test runner with a temporary SQLite database for:
 
 - Importing a Markdown chapter.
 - Saving a generation run.
