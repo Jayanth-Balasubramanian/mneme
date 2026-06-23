@@ -142,12 +142,14 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Owns: future continuous deployment
 
 7. [#12 Add app-specific CI security tests](https://github.com/Jayanth-Balasubramanian/mneme/issues/12)
-   - State: `state:in-progress`
+   - State: `state:ready-for-review`
    - Branch/worktree: `issue-12-security-ci` at `/private/tmp/mneme-issue-12`
+   - PR: [#13 Add app-specific CI security checks](https://github.com/Jayanth-Balasubramanian/mneme/pull/13)
    - Split from: issue #6
    - Scope: deterministic Bun/TypeScript security checks and CI wiring only; no Cloudflare deployment, Workers config, preview/prod environments, deployment secrets, or rollback strategy.
    - Blocked by: none
    - Owns: `bun run security:check`, scanner unit tests, CI security command wiring, and dry-run detector proof
+   - Verification reported by implementation worker: `bun run security:check`, `bun run typecheck`, `bun test`, `bun run lint`, `bun run build`, `env MNEME_DB_PATH=/tmp/mneme-security-ci.sqlite bun run db:migrate`, and `bun run test:e2e`.
    - Implementation state: the security command scans executable Markdown/MDX rendering paths, required LLM validation coverage markers, known full Chapter 17 body-text signatures, tracked env/private-key/generated-artifact paths, common token-like values, and an in-memory synthetic secret-like fixture that must trip the detector before repository scanning proceeds.
 
 ## Remaining Human Inputs
