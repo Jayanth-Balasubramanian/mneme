@@ -118,10 +118,17 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - Main-branch CI for the PR #8 merge completed successfully.
 - Issue #3 is now the next unblocked implementation slice. It should start only after confirming no new conflicts with the merged source-import API/schema.
 
+### 2026-06-23T17:01Z
+
+- Started issue #3, "Generate validated lesson drafts with a mocked provider".
+- Branch/worktree: `issue-3-mocked-generation` at `/private/tmp/mneme-issue-3`, based on main commit `56d750021d36cf5e7cb272d8d4d1f53105c49c51`.
+- Moved issue #3 to `state:in-progress`.
+- Scheduling a single coding subagent because issue #3 touches shared schemas, AI contracts, server persistence, and integration tests. Issues #4 and #5 stay unscheduled until #3 lands.
+
 ## Queue Snapshot
 
 - #2 Import chapter excerpt with source attribution: `merged`; PR #8 merged; issue #2 closed.
-- #3 Generate validated lesson drafts with a mocked provider: `ready-for-agent`; issue #2 is merged, so this is the next candidate.
+- #3 Generate validated lesson drafts with a mocked provider: `in-progress`; assigned to `issue-3-mocked-generation`.
 - #4 Review lesson units and regenerate a single unit: blocked by #3.
 - #5 Study approved units and record telemetry: blocked by #4.
 - #6 Expand CI with app-specific security tests and Cloudflare deployment: `needs-spec`.

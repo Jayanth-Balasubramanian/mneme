@@ -89,7 +89,8 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Owns: source metadata, source anchors, import flow, attribution display
 
 3. [#3 Generate validated lesson drafts with a mocked provider](https://github.com/Jayanth-Balasubramanian/mneme/issues/3)
-   - State: `ready-for-agent`
+   - State: `state:in-progress`
+   - Branch/worktree: `issue-3-mocked-generation` at `/private/tmp/mneme-issue-3`
    - Blocked by: none; issues 1 and 2 are merged
    - Owns: `LessonGenerator` contract, output validation, generation runs
 
