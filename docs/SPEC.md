@@ -100,11 +100,13 @@ The user requests AI generation for a chapter source. The system sends bounded s
 - Intuitive explanation.
 - Worked example or analogy when useful.
 - Common misconception or trap.
-- Checkpoint prompt.
-- Expected answer and self-grading rubric.
+- One or more checkpoint prompts.
+- Expected answer and self-grading rubric for each checkpoint.
 - Source anchors back to the chapter.
 
 Generation output is stored as a draft, not immediately committed to study.
+
+The PR #9 PoC path supports `provider: "mock"` for validated local draft generation. `provider: "openai"` is part of the request contract for the future live adapter, but it returns `provider_not_supported` until that adapter exists. Invalid generated output, generated anchors that do not match the imported chapter source URL and server-derived anchors, and provider exceptions are recorded as failed generation runs without creating lesson units.
 
 ### 3. Review And Edit
 
@@ -257,6 +259,7 @@ export type GenerateLessonInput = {
   bookTitle: string;
   markdown: string;
   learnerProfile: string;
+  sourceAnchors: SourceAnchor[];
 };
 
 export type LessonDraft = {
@@ -275,22 +278,22 @@ export type LessonDraftUnit = {
   notationMd?: string;
   exampleMd?: string;
   misconceptionMd?: string;
-  checkpoint: {
+  checkpoints: Array<{
     promptMd: string;
     expectedAnswerMd: string;
     rubric: Array<{
       rating: "wrong" | "partial" | "correct";
       description: string;
     }>;
-  };
+  }>;
 };
 
 export interface LessonGenerator {
-  generateLesson(input: GenerateLessonInput): Promise<LessonDraft>;
+  generate(input: GenerateLessonInput): Promise<LessonDraft>;
 }
 ```
 
-The OpenAI adapter should validate model output against a schema before saving it.
+Every provider adapter, including the mock adapter, must validate model output against a schema before saving it. The server must also validate generated source anchors against the imported chapter's stored source URL and paragraph/heading anchors.
 
 ## Project Structure
 
@@ -539,8 +542,10 @@ Verify:
 Acceptance:
 
 - Domain depends on `LessonGenerator`, not OpenAI directly.
-- OpenAI adapter returns validated `LessonDraft`.
+- Mock provider returns a validated `LessonDraft`; OpenAI remains unsupported until the live adapter lands.
 - Invalid provider output is rejected and saved as a failed generation run.
+- Provider exceptions are sanitized before being returned or persisted.
+- Generated source anchors are rejected unless they match the imported chapter provenance.
 
 Verify:
 

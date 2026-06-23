@@ -94,8 +94,8 @@ GitHub is the source of truth for issue state. These issues have been created:
    - PR: [#9 Generate validated lesson drafts with a mocked provider](https://github.com/Jayanth-Balasubramanian/mneme/pull/9)
    - Verification reported by coding subagent: `bun run typecheck`, `bun test`, `bun run lint`, `bun run build`, and `MNEME_DB_PATH=/private/tmp/mneme-issue-3-verification.sqlite bun run db:migrate`.
    - Review-fix commit: `cac3deb5078aa9d66212a9eb1acdddaa08d68128`; CI passing after the fix.
-   - Code hygiene follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/9#issuecomment-4781796028>.
-   - Security follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/9#issuecomment-4781795098>.
+   - Code hygiene follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/9#issuecomment-4781778242>.
+   - Security follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/9#issuecomment-4781781475>.
    - Documentation cleanup: scoped docs update for the mocked generation API/contract is being applied after the passed review gates; this is not a repeated review gate.
    - Implemented contract: mocked generation validates provider output, records failed runs without studyable units, validates generated source anchors against imported chapter provenance, rejects unsupported `provider: "openai"` requests until the live adapter exists, and sanitizes provider exception details.
    - Next gate: merge readiness after documentation cleanup is committed, pushed, and summarized on PR #9.
