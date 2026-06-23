@@ -298,17 +298,28 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 
 ### 2026-06-24 Documentation update for PR #11
 
-- PR #11 code hygiene passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/11#issuecomment-4782709208>.
-- PR #11 security passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/11#issuecomment-4782704698>.
+- PR #11 code hygiene passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/11#issuecomment-4782710234>.
+- PR #11 security passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/11#issuecomment-4782705873>.
 - Issue #5 is `state:lgtm`; the scoped documentation updater pass is complete after the passed review gates.
 - Documentation cleanup verified README endpoint inventory and active `bun run test:e2e` status, study telemetry API behavior, the test/spec contracts, handoff state, and this loop log. It was not a repeated review or nitpick gate.
-- PR #11 was clean and GitHub CI was green on the rebased head before this docs-only update.
-- Remaining PR #11 gates after this docs update is pushed: feature video, green checks at the final PR head, and merge readiness.
+- PR #11 was clean and GitHub CI was green on the scoped documentation update head.
+
+### 2026-06-23T19:36Z
+
+- Recorded the PR #11 guided-study feature video using an isolated Chrome instance and direct Chrome DevTools Protocol capture.
+- Video artifact: `docs/artifacts/issue-5-study-flow.mp4`.
+- Video evidence:
+  - Mobile viewport: 390 x 844.
+  - Duration: 9 seconds.
+  - Size: 158 KiB.
+  - Flow shown: synthetic credited Markdown import, mock generation, approval, guided checkpoint study, MCQ option selection, answer/rubric reveal, self-rating/confidence selection, attempt submission, and weak-concept feedback.
+- The excerpt used for capture is synthetic and does not include copied Chapter 17 text.
+- Final merge readiness now depends on green GitHub checks on the feature-video commit.
 
 ## Queue Snapshot
 
 - #2 Import chapter excerpt with source attribution: `merged`; PR #8 merged; issue #2 closed.
 - #3 Generate validated lesson drafts with a mocked provider: `merged`; PR #9 merged; issue #3 closed.
 - #4 Review lesson units and regenerate a single unit: `merged`; PR #10 merged; issue #4 closed.
-- #5 Study approved units and record telemetry: `lgtm`; PR #11 open from branch/worktree `issue-5-study-telemetry` at `/private/tmp/mneme-issue-5`; code hygiene and security review gates passed, and scoped documentation cleanup is complete.
+- #5 Study approved units and record telemetry: `lgtm`; PR #11 open from branch/worktree `issue-5-study-telemetry` at `/private/tmp/mneme-issue-5`; code hygiene/security/doc gates passed and feature video recorded.
 - #6 Expand CI with app-specific security tests and Cloudflare deployment: `needs-spec`.
