@@ -83,8 +83,9 @@ GitHub is the source of truth for issue state. These issues have been created:
    - State: `state:lgtm`
    - PR: [#8 Import chapter excerpts with source attribution](https://github.com/Jayanth-Balasubramanian/mneme/pull/8)
    - Review gates: code hygiene follow-up passed; security follow-up passed; documentation cleanup complete under the updated scoped-updater workflow.
-   - CI: passing on PR #8 after the documentation workflow update.
-   - Blocked by: feature video and merge readiness
+   - Video: `docs/artifacts/issue-2-import-flow.mp4`
+   - CI: must be green on the current PR head before merge.
+   - Blocked by: final GitHub checks on the video artifact commit
    - Owns: source metadata, source anchors, import flow, attribution display
 
 3. [#3 Generate validated lesson drafts with a mocked provider](https://github.com/Jayanth-Balasubramanian/mneme/issues/3)
@@ -135,11 +136,11 @@ Current PR #8 state:
 - Security follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/8#issuecomment-4781224173>.
 - The old documentation review comment is cleanup input, not a repeated review gate: <https://github.com/Jayanth-Balasubramanian/mneme/pull/8#issuecomment-4781248688>.
 - Documentation cleanup is complete under the updated workflow.
-- Next gates are feature video and merge readiness.
+- Feature video recorded at `docs/artifacts/issue-2-import-flow.mp4` using an isolated Chrome instance and direct Chrome DevTools Protocol capture.
+- Next gate is green GitHub checks on the current PR head, then rebase merge if no human review is needed.
 
 Todos:
 
-- Record the feature video before moving issue #2 toward `state:ready-to-merge`.
 - After issue #2 merges, schedule issue #3 only after checking for shared-schema/API conflicts with the import slice.
 
 Issues:
