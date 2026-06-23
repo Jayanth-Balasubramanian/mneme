@@ -406,6 +406,14 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - The evidence artifact contains no real secrets and no copied Chapter 17 text.
 - Final merge readiness now depends on green GitHub checks on the evidence-video commit.
 
+### 2026-06-23T20:15Z
+
+- PR #13 was rebase-merged into `main`: merge commit `cd6bebfc247585dfff4ae13f2a7586c92e2edba2`.
+- Issue #12 was closed and labeled `state:merged`.
+- Because the command-evidence artifact commit landed immediately after the merge, it was cherry-picked to `main` as follow-up commit `1e8f7420e4d2cb5d7ef1e48246831339ce0b071d`.
+- Main-branch CI passed after the evidence artifact follow-up.
+- The issue queue now has no open implementation PRs and no agent-ready issues.
+
 ## Queue Snapshot
 
 - #2 Import chapter excerpt with source attribution: `merged`; PR #8 merged; issue #2 closed.
@@ -413,4 +421,4 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - #4 Review lesson units and regenerate a single unit: `merged`; PR #10 merged; issue #4 closed.
 - #5 Study approved units and record telemetry: `merged`; PR #11 merged; issue #5 closed.
 - #6 Add Cloudflare deployment after target and secrets policy: `needs-human`; blocked on Cloudflare target/secrets/rollback decisions.
-- #12 Add app-specific CI security tests: `lgtm`; PR #13 open with code hygiene/security/doc gates passed and command-evidence video recorded.
+- #12 Add app-specific CI security tests: `merged`; PR #13 merged; issue #12 closed.

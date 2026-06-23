@@ -142,9 +142,10 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Owns: future continuous deployment
 
 7. [#12 Add app-specific CI security tests](https://github.com/Jayanth-Balasubramanian/mneme/issues/12)
-   - State: `state:lgtm`
+   - State: `state:merged`, closed
    - Branch/worktree: `issue-12-security-ci` at `/private/tmp/mneme-issue-12`
    - PR: [#13 Add app-specific CI security checks](https://github.com/Jayanth-Balasubramanian/mneme/pull/13)
+   - Merge: rebase-merged into `main` at `cd6bebfc247585dfff4ae13f2a7586c92e2edba2`; evidence artifact follow-up committed at `1e8f7420e4d2cb5d7ef1e48246831339ce0b071d`; main CI passed after both.
    - Split from: issue #6
    - Scope: deterministic Bun/TypeScript security checks and CI wiring only; no Cloudflare deployment, Workers config, preview/prod environments, deployment secrets, or rollback strategy.
    - Blocked by: none
@@ -154,7 +155,6 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Security passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/13#issuecomment-4783007158>.
    - Evidence video: `docs/artifacts/issue-12-security-checks.mp4`
    - Scoped documentation update: complete for README command text, security notes, test contract verification, handoff state, and loop log; no application code, tests, scripts, package config, or CI files were changed in the docs-updater pass.
-   - Remaining merge gates after the evidence-video commit: keep PR #13 GitHub Actions green on the final head, then rebase-merge.
    - Implementation state: the security command scans executable Markdown/MDX rendering paths, required LLM validation coverage markers, known full Chapter 17 body-text signatures, tracked env/private-key/generated-artifact paths, common token-like values, and an in-memory synthetic secret-like fixture that must trip the detector before repository scanning proceeds.
 
 ## Remaining Human Inputs
