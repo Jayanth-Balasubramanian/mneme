@@ -51,15 +51,24 @@ Verification:
 Behavior:
 
 - A user can import a Markdown excerpt from the chapter.
-- A mocked lesson generator can produce a structured lesson draft.
+- A mocked lesson generator can produce a structured lesson draft with draft units, source anchors, and checkpoints.
+- `provider: "mock"` is the only supported successful provider path until a live adapter lands.
+- `provider: "openai"` returns `provider_not_supported` instead of using the mock provider.
 - Invalid generator output is rejected and recorded as a failed generation run.
+- Generated source anchors must match the imported chapter source URL and server-derived paragraph/heading anchors.
+- Provider exceptions are sanitized before they are returned or persisted.
 - Generated content remains draft-only until reviewed.
 
 Tests:
 
+- Unit: generation request schema accepts valid mock generation requests.
 - Unit: generation output schema validates required lesson unit/checkpoint fields.
+- Unit: generation output schema rejects missing concept keys, missing source anchors, malformed concept key arrays, and malformed heading path arrays.
 - Integration: import -> mocked generation creates draft lesson units and checkpoints.
-- Integration: invalid mocked generation output does not create studyable units.
+- Integration: invalid mocked generation output creates a failed generation run and does not create studyable units.
+- Integration: unsupported `openai` provider requests return `provider_not_supported`.
+- Integration: generated anchors with a foreign source URL or impossible paragraph range create failed generation runs and do not persist lesson units.
+- Integration: thrown provider errors are stored with `generation_provider_failed` and do not expose raw exception details.
 
 Verification:
 

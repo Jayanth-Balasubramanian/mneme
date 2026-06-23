@@ -166,10 +166,26 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - Issue #3 returned to `state:ready-for-review`.
 - Next gates: follow-up code hygiene and security review comments.
 
+### 2026-06-24 Documentation update for PR #9
+
+- PR #9 code hygiene follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/9#issuecomment-4781778242>.
+- PR #9 security follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/9#issuecomment-4781781475>.
+- CI is green at PR head `a4bcb070f9d4c7f69f1533bea96381c5a79d7288`.
+- Issue #3 is labeled `state:lgtm`.
+- Scoped documentation update is applying after those gates, under the current workflow where documentation agents update contracts and handoff notes directly rather than acting as a repeated review gate.
+- Contract state now records the mocked generation guarantees from issue #3:
+  - provider output is schema-validated before persistence;
+  - invalid output and provider failures create failed generation runs without studyable lesson units;
+  - generated source anchors are checked against the imported chapter source URL and server-derived anchors;
+  - `provider: "openai"` returns unsupported-provider behavior until the live adapter exists;
+  - provider exception details are sanitized in API responses and persisted failure output.
+- Next gate after this docs-only commit is merge readiness for PR #9.
+- After PR #9 lands, the loop priority remains a working guided lesson UI with MCQ checkpoints. Manually seeded credited Chapter 17 lesson content is acceptable if needed to get the guided lesson workflow working sooner. Avoid broad backend expansion unless it directly unblocks import -> generation -> review -> study.
+
 ## Queue Snapshot
 
 - #2 Import chapter excerpt with source attribution: `merged`; PR #8 merged; issue #2 closed.
-- #3 Generate validated lesson drafts with a mocked provider: `ready-for-review`; PR #9 open; follow-up review gates pending.
-- #4 Review lesson units and regenerate a single unit: blocked by #3.
-- #5 Study approved units and record telemetry: blocked by #4.
+- #3 Generate validated lesson drafts with a mocked provider: `lgtm`; PR #9 open; code hygiene and security passed; scoped documentation update in progress; next gate is merge readiness.
+- #4 Review lesson units and regenerate a single unit: blocked by #3, but should stay UI-focused after merge.
+- #5 Study approved units and record telemetry: blocked by #4; next product priority is a working guided lesson UI with MCQ checkpoints.
 - #6 Expand CI with app-specific security tests and Cloudflare deployment: `needs-spec`.
