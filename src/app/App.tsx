@@ -8,8 +8,10 @@ import type {
   ValidationIssue,
 } from "../shared/source";
 import type {
+  CreateGenerationRunRequest,
   GenerationRunResponse,
   LessonUnitResponse,
+  RegenerateLessonUnitRequest,
   ReviewStatus,
   UpdateLessonUnitRequest,
 } from "../shared/generation";
@@ -398,7 +400,7 @@ export function App() {
     setGenerationStatus("Generating draft lesson units...");
 
     try {
-      const request = {
+      const request: CreateGenerationRunRequest = {
         chapterSourceId: chapterSource.id,
         provider: "mock",
         learnerProfile:
@@ -542,7 +544,7 @@ export function App() {
     const draft = editDrafts[unitId];
 
     try {
-      const request = {
+      const request: RegenerateLessonUnitRequest = {
         provider: "mock",
         ...(draft?.reviewerNotes ? { reviewerNotes: draft.reviewerNotes } : {}),
       };
