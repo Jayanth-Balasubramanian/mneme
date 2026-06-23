@@ -123,6 +123,7 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Blocked by: none; issue 4 is merged
    - Current priority: complete the guided study and telemetry slice, with emphasis on a working guided lesson UI and MCQ checkpoint attempts.
    - Implementation note: an existing #5 worktree contains early untracked study schema/domain seeds; keep useful pieces, but fix them before committing.
+   - Agent note: the initial `gpt-5.3-codex-spark` worker hit its usage limit; work continued with a `gpt-5.5` xhigh fallback worker on the same worktree.
    - Owns: study path, attempts, weak-concept query
 
 6. [#6 Expand CI with app-specific security tests and Cloudflare deployment](https://github.com/Jayanth-Balasubramanian/mneme/issues/6)

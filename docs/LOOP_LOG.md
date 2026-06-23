@@ -276,6 +276,12 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - Scheduling a single coding subagent because #5 spans the study API, persistence, shared schemas, guided UI, and tests. No parallel coding agent is scheduled to avoid conflicts across the same files.
 - Source grounding for the manual lesson path: *Deep Learning*, Chapter 17, "Monte Carlo Methods", by Ian Goodfellow, Yoshua Bengio, and Aaron Courville, <https://www.deeplearningbook.org/contents/monte_carlo.html>. Do not commit full chapter text.
 
+### 2026-06-23T19:09Z
+
+- The initial #5 coding subagent using `gpt-5.3-codex-spark` hit its usage limit before opening a PR.
+- Closed that worker and continued with a single fallback coding subagent using `gpt-5.5` xhigh on the same `issue-5-study-telemetry` worktree, as allowed by the user.
+- The fallback worker was instructed to preserve and finish the existing WIP rather than restarting or discarding it.
+
 ## Queue Snapshot
 
 - #2 Import chapter excerpt with source attribution: `merged`; PR #8 merged; issue #2 closed.
