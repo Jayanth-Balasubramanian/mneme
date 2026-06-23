@@ -74,6 +74,7 @@ jobs:
           bun run lint
           bun run typecheck
           bun test
+          MNEME_DB_PATH=/tmp/mneme-ci.sqlite bun run db:migrate
           bun run build
 
   deployment-placeholder:

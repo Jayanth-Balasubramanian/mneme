@@ -37,13 +37,14 @@ Tests:
 - Unit: source metadata schema requires title, authors, chapter title, chapter URL, and citation.
 - Unit: source anchor parser rejects generated units with missing anchors.
 - Integration: importing a Markdown excerpt stores source metadata and content hash.
-- Browser: review/study flow displays source credit for an approved unit.
+- UI/import: the import result displays source credit for the saved excerpt.
+- Browser, after review/study lands: review/study flow displays source credit for an approved unit.
 
 Verification:
 
 - `bun run typecheck`
 - `bun test`
-- `bun run test:e2e`
+- `bun run build`
 
 ## Import And Draft Generation
 

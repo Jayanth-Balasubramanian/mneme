@@ -67,7 +67,7 @@ bun run db:migrate
 bun run db:studio
 ```
 
-`bun run test:e2e`, `bun run db:migrate`, and `bun run db:studio` may be explicit deferred placeholders until the UI flow and persistence slices land, but the command names must remain stable.
+`bun run db:migrate` is active for local SQLite migrations. `bun run test:e2e` and `bun run db:studio` may be explicit deferred placeholders until browser coverage and database inspection tooling land, but the command names must remain stable.
 - GitHub Actions must run policy/security checks and project checks on pushes to `main` and pull requests.
 - Security checks belong in CI and should expand over time; do not rely on manual review alone for secrets/public-repo policy.
 
