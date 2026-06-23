@@ -1,0 +1,183 @@
+import type { Database } from "bun:sqlite";
+
+import { toSourceCredit, type PreparedChapterSource } from "../../domain/source";
+import type { ChapterSourceResponse, SourceAnchor } from "../../shared/source";
+
+export type ChapterSourceRepository = {
+  create(source: PreparedChapterSource): Promise<ChapterSourceResponse>;
+  findById(id: string): Promise<ChapterSourceResponse | null>;
+};
+
+type ChapterSourceRow = {
+  id: string;
+  book_title: string;
+  authors_json: string;
+  publisher: string | null;
+  year: number | null;
+  chapter_title: string;
+  chapter_number: string | null;
+  source_url: string;
+  citation_text: string;
+  content_hash: string;
+  anchors_json: string;
+  created_at: string;
+  updated_at: string;
+};
+
+function parseStringArray(json: string): string[] {
+  const parsed: unknown = JSON.parse(json);
+
+  if (!Array.isArray(parsed)) {
+    return [];
+  }
+
+  return parsed.filter((value): value is string => typeof value === "string");
+}
+
+function parseSourceAnchors(json: string): SourceAnchor[] {
+  const parsed: unknown = JSON.parse(json);
+
+  if (!Array.isArray(parsed)) {
+    return [];
+  }
+
+  return parsed.filter((value): value is SourceAnchor => {
+    if (typeof value !== "object" || value === null || Array.isArray(value)) {
+      return false;
+    }
+
+    const anchor = value as Partial<SourceAnchor>;
+
+    return (
+      Array.isArray(anchor.headingPath) &&
+      anchor.headingPath.every((part) => typeof part === "string") &&
+      typeof anchor.paragraphStart === "number" &&
+      typeof anchor.paragraphEnd === "number" &&
+      typeof anchor.sourceUrl === "string"
+    );
+  });
+}
+
+function mapChapterSourceRow(row: ChapterSourceRow): ChapterSourceResponse {
+  const authors = parseStringArray(row.authors_json);
+  const response = {
+    id: row.id,
+    bookTitle: row.book_title,
+    authors,
+    publisher: row.publisher ?? undefined,
+    year: row.year ?? undefined,
+    chapterTitle: row.chapter_title,
+    chapterNumber: row.chapter_number ?? undefined,
+    sourceUrl: row.source_url,
+    citationText: row.citation_text,
+    contentHash: row.content_hash,
+    anchors: parseSourceAnchors(row.anchors_json),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+
+  return {
+    ...response,
+    sourceCredit: toSourceCredit(response),
+  };
+}
+
+export class SQLiteChapterSourceRepository implements ChapterSourceRepository {
+  constructor(private readonly database: Database) {}
+
+  async create(source: PreparedChapterSource): Promise<ChapterSourceResponse> {
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    this.database
+      .query<
+        undefined,
+        [
+          string,
+          string,
+          string,
+          string | null,
+          number | null,
+          string,
+          string | null,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+        ]
+      >(
+        `
+          INSERT INTO chapter_sources (
+            id,
+            book_title,
+            authors_json,
+            publisher,
+            year,
+            chapter_title,
+            chapter_number,
+            source_url,
+            citation_text,
+            markdown,
+            content_hash,
+            anchors_json,
+            created_at,
+            updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+      )
+      .run(
+        id,
+        source.bookTitle,
+        JSON.stringify(source.authors),
+        source.publisher ?? null,
+        source.year ?? null,
+        source.chapterTitle,
+        source.chapterNumber ?? null,
+        source.sourceUrl,
+        source.citationText,
+        source.markdown,
+        source.contentHash,
+        JSON.stringify(source.anchors),
+        now,
+        now,
+      );
+
+    const created = await this.findById(id);
+
+    if (!created) {
+      throw new Error("Chapter source was not readable after insert.");
+    }
+
+    return created;
+  }
+
+  async findById(id: string): Promise<ChapterSourceResponse | null> {
+    const row = this.database
+      .query<ChapterSourceRow, [string]>(
+        `
+          SELECT
+            id,
+            book_title,
+            authors_json,
+            publisher,
+            year,
+            chapter_title,
+            chapter_number,
+            source_url,
+            citation_text,
+            content_hash,
+            anchors_json,
+            created_at,
+            updated_at
+          FROM chapter_sources
+          WHERE id = ?
+        `,
+      )
+      .get(id);
+
+    return row ? mapChapterSourceRow(row) : null;
+  }
+}

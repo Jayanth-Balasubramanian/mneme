@@ -21,7 +21,9 @@ body {
 }
 
 button,
-a {
+a,
+input,
+textarea {
   font: inherit;
 }
 
@@ -39,6 +41,20 @@ button:disabled {
   opacity: 0.74;
 }
 
+input,
+textarea {
+  width: 100%;
+  border: 1px solid #c9d3df;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  background: #ffffff;
+  color: #172033;
+}
+
+textarea {
+  resize: vertical;
+}
+
 a {
   min-height: 2.75rem;
   display: inline-flex;
@@ -52,13 +68,16 @@ a {
 }
 
 a:focus-visible,
-button:focus-visible {
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
   outline: 3px solid #197266;
   outline-offset: 3px;
 }
 
 h1,
 h2,
+h3,
 p {
   margin: 0;
 }
@@ -115,7 +134,9 @@ p {
 }
 
 .source-panel,
-.workspace {
+.workspace,
+.import-panel,
+.import-result {
   border-top: 1px solid #d8e1ec;
   padding: 1.25rem 0;
 }
@@ -126,7 +147,9 @@ p {
 }
 
 .source-panel h2,
-.workspace h2 {
+.workspace h2,
+.import-panel h2,
+.import-result h2 {
   margin-top: 0.35rem;
   font-size: 1.35rem;
   line-height: 1.15;
@@ -174,6 +197,84 @@ p {
   font-size: 0.9rem;
 }
 
+.section-heading {
+  margin-bottom: 1rem;
+}
+
+.import-form {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.import-form label {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.import-form label span,
+.import-result dt {
+  color: #314056;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.form-row {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.form-actions {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.form-actions button {
+  justify-self: stretch;
+  border-color: #245f52;
+  background: #16453c;
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.form-actions p {
+  color: #8a2f1c;
+  line-height: 1.45;
+}
+
+.import-result dl {
+  display: grid;
+  gap: 0.9rem;
+  margin: 0;
+}
+
+.import-result dl > div {
+  display: grid;
+  gap: 0.35rem;
+  border: 1px solid #d8e1ec;
+  border-radius: 0.5rem;
+  padding: 0.9rem;
+  background: #ffffff;
+}
+
+.import-result dd {
+  margin: 0;
+  color: #415166;
+  line-height: 1.5;
+}
+
+.import-result code {
+  overflow-wrap: anywhere;
+  color: #172033;
+}
+
+.import-result a {
+  min-height: auto;
+  display: inline;
+  border: 0;
+  padding: 0;
+  text-decoration: underline;
+}
+
 @media (min-width: 720px) {
   .app-shell {
     padding: 2rem;
@@ -200,5 +301,18 @@ p {
   .workflow-list li {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .form-row {
+    grid-template-columns: minmax(0, 1fr) minmax(9rem, 0.35fr);
+  }
+
+  .form-actions {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .form-actions button {
+    justify-self: start;
   }
 }

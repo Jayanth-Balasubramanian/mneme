@@ -36,7 +36,7 @@ The proof of concept starts with Chapter 17, "Monte Carlo Methods", from Ian Goo
 - Local runtime: Bun-driven dev commands with local-only runtime adapters where needed.
 - Future edge runtime: Cloudflare Workers.
 - Database: SQLite locally, with schema shaped to migrate to Cloudflare D1 later.
-- ORM/query layer: Drizzle with a typed SQLite/D1-shaped schema.
+- Query layer: repository interfaces over local SQLite for the PoC, with D1-compatible SQL migration shape. Drizzle can be introduced later if the schema and query surface become complex enough to justify the dependency.
 - AI integration: provider interface with an OpenAI implementation first.
 - Testing: Bun's test runner for unit/integration tests initially; Playwright for browser flow checks when the import/review/study UI exists.
 - Frontend posture: mobile-first, clean, minimal, and dependency-light.
@@ -58,7 +58,7 @@ bun run db:migrate
 bun run db:studio
 ```
 
-The implementation should keep these commands stable even if tools change under the hood. In the initial scaffold, `test:e2e`, `db:migrate`, and `db:studio` are explicit deferred placeholders until the UI flow and persistence slices land.
+The implementation should keep these commands stable even if tools change under the hood. `db:migrate` is active once the source import persistence slice lands. `test:e2e` and `db:studio` may remain explicit deferred placeholders until the browser flow and inspection tooling are introduced.
 
 ## API Contract
 
@@ -155,10 +155,16 @@ Initial SQLite tables:
 
 - `id`
 - `book_title`
+- `authors_json`
+- `publisher`
+- `year`
 - `chapter_title`
 - `chapter_number`
+- `source_url`
+- `citation_text`
 - `markdown`
 - `content_hash`
+- `anchors_json`
 - `created_at`
 - `updated_at`
 
@@ -319,7 +325,7 @@ migrations/
 
 ## Dependency Policy
 
-Allowed initial dependencies:
+Allowed dependencies when a concrete slice needs them:
 
 - Runtime/framework: `react`, `vite`, `hono`.
 - Data and validation: `drizzle-orm`, `drizzle-kit`, `zod`.

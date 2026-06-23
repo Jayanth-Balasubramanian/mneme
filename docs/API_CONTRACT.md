@@ -64,12 +64,15 @@ type ChapterSourceResponse = {
   id: string;
   bookTitle: string;
   authors: string[];
+  publisher?: string;
+  year?: number;
   chapterTitle: string;
   chapterNumber?: string;
   sourceUrl: string;
   citationText: string;
   contentHash: string;
   anchors: SourceAnchor[];
+  sourceCredit: SourceCredit;
   createdAt: string;
   updatedAt: string;
 };
@@ -292,7 +295,10 @@ type SourceAnchor = {
 type SourceCredit = {
   title: string;
   authors: string[];
+  publisher?: string;
+  year?: number;
   chapterTitle: string;
+  chapterNumber?: string;
   sourceUrl: string;
   citationText: string;
 };
