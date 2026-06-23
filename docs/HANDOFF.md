@@ -104,10 +104,11 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Owns: `LessonGenerator` contract, output validation, generation runs
 
 4. [#4 Review lesson units and regenerate a single unit](https://github.com/Jayanth-Balasubramanian/mneme/issues/4)
-   - State: `state:lgtm`; scoped documentation cleanup complete, feature video and merge readiness pending
+   - State: `state:lgtm`; scoped documentation cleanup complete, feature video recorded, final merge readiness pending
    - Branch/worktree: `issue-4-review-workflow` at `/private/tmp/mneme-issue-4`
    - PR: [#10 Review generated lesson units](https://github.com/Jayanth-Balasubramanian/mneme/pull/10)
-   - Head before final video/merge gate: `b98d752`
+   - Video: `docs/artifacts/issue-4-review-flow.mp4`
+   - Head before final merge gate: `299c6cf1a58c3a3d0fc20f4407d69905e83054be`
    - Merge state before latest main rebase: clean, rebased onto current `main`
    - CI before latest docs update: green after review fixes
    - Blocked by: none; issues 1-3 are merged
@@ -116,7 +117,7 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Security follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/10#issuecomment-4782262804>.
    - Documentation cleanup: scoped updater pass updated the spec, API contract, test contract, handoff, and loop log after passed review gates; this is not a repeated review gate.
    - Implemented contract: lesson fields plus checkpoint prompt/expected answer/rubric can be edited before approval; review statuses are `draft`, `approved`, `rejected`, and `needs_regeneration`; only approved units are returned for study; review responses and UI expose bounded source-context snippets rather than full chapter dumps; single-unit regeneration validates output/provenance before replacing only the selected unit, resets the replacement to draft, and leaves all existing units unchanged on failed regeneration.
-   - Remaining gates: feature video and final merge readiness.
+   - Remaining gate: green GitHub checks on the current PR head, then merge readiness.
    - Owns: review states, editing, approving/rejecting, single-unit regeneration
 
 5. [#5 Study approved units and record telemetry](https://github.com/Jayanth-Balasubramanian/mneme/issues/5)
@@ -215,5 +216,5 @@ Completed:
 
 Next:
 
-- Record the feature video and confirm merge readiness.
+- Confirm green GitHub checks on the video artifact commit and merge PR #10 if no human review is needed.
 - After issue #4 lands, prioritize issue #5: complete study and telemetry with a working guided lesson UI and MCQ checkpoint attempts.
