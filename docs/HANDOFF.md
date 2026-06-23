@@ -7,12 +7,7 @@ This repository is initialized locally and contains planning/contract documentat
 Git:
 
 - Branch: `main`
-- Commits:
-  - `1b365db docs: initialize study app planning loop`
-  - `18d77a6 docs: move issue queue to GitHub workflow`
-  - `6780915 docs: refresh handoff status`
-  - `f1fd049 docs: add public repo CI security baseline`
-  - `a99d9d6 ci: keep planning bootstrap checks green`
+- History: setup commits are on `main`; use `git log --oneline` for the current head.
 - Remote: `git@github.com:Jayanth-Balasubramanian/mneme.git`
 
 GitHub:
@@ -22,7 +17,7 @@ GitHub:
 - Intended repository name: `mneme`.
 - Intended visibility: public, to use GitHub Actions CI credits.
 - Repository URL: <https://github.com/Jayanth-Balasubramanian/mneme>
-- Latest CI status: passing on run `28035059510`.
+- CI status: passing after repo setup; use GitHub Actions for the current run state.
 
 ## Product Decision
 
