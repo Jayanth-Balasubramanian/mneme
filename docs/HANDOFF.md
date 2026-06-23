@@ -70,7 +70,8 @@ GitHub is the source of truth for issue state. These issues have been created:
 1. [#1 Scaffold local Bun/Vite/Hono app](https://github.com/Jayanth-Balasubramanian/mneme/issues/1)
    - State: `state:ready-for-review`
    - PR: [#7 Scaffold local Bun/Vite/Hono app](https://github.com/Jayanth-Balasubramanian/mneme/pull/7)
-   - Review gates: code hygiene requested a `typecheck` fix; documentation requested scaffold-doc updates; security passed.
+   - Review gates: code hygiene passed; documentation-agent passed; security passed.
+   - CI: passing on PR #7 after scaffold review fixes.
    - Blocked by: none
    - Owns: package/config, initial app/server folders, smoke tests
 
