@@ -310,10 +310,11 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - Video artifact: `docs/artifacts/issue-5-study-flow.mp4`.
 - Video evidence:
   - Mobile viewport: 390 x 844.
-  - Duration: 9 seconds.
-  - Size: 158 KiB.
+  - Duration: 9.6 seconds.
+  - Size: 46 KiB.
   - Flow shown: synthetic credited Markdown import, mock generation, approval, guided checkpoint study, MCQ option selection, answer/rubric reveal, self-rating/confidence selection, attempt submission, and weak-concept feedback.
 - The excerpt used for capture is synthetic and does not include copied Chapter 17 text.
+- Local verification on the final PR head passed: `bun run typecheck`, `bun test`, `bun run lint`, `bun run build`, `bun run test:e2e`, and `MNEME_DB_PATH=/private/tmp/mneme-issue-5-final.sqlite bun run db:migrate`.
 - Final merge readiness now depends on green GitHub checks on the feature-video commit.
 
 ## Queue Snapshot

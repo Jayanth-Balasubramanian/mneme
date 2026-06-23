@@ -243,7 +243,8 @@ Completed:
 - Code hygiene passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/11#issuecomment-4782709208>.
 - Security passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/11#issuecomment-4782704698>.
 - Scoped documentation update completed after the passed review gates; README, API contract, test contract, spec, handoff, and loop log now reflect the active study telemetry and e2e behavior.
+- Feature video recorded at `docs/artifacts/issue-5-study-flow.mp4` using an isolated Chrome instance and direct Chrome DevTools Protocol capture. It is 9.6 seconds at a 390 x 844 mobile viewport and shows synthetic Markdown import, mock generation, approval, guided checkpoint study, MCQ option selection, answer/rubric reveal, self-rating/confidence selection, attempt submission, and weak-concept feedback.
 
 Next:
 
-- Record a feature video, confirm green checks at the final PR head after this docs-only update, then move PR #11 to merge readiness.
+- Confirm green checks at the final PR head after the feature-video artifact commit, then move PR #11 to merge readiness.
