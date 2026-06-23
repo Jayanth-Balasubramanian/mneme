@@ -2,7 +2,7 @@
 
 ## Current State
 
-This repository is initialized and contains planning/contract documentation plus implementation slices for a local-first AI-assisted study app. PR #7 merged issue #1 with a Bun/Vite/Hono runtime scaffold, minimal Mneme app shell, health route, and unit smoke test. PR #8 implemented issue #2 with Markdown excerpt import, source attribution, local SQLite persistence, and import-result UI. PR #9 implemented issue #3 with validated mocked lesson generation.
+This repository is initialized and contains planning/contract documentation plus implementation slices for a local-first AI-assisted study app. PR #7 merged issue #1 with a Bun/Vite/Hono runtime scaffold, minimal Mneme app shell, health route, and unit smoke test. PR #8 implemented issue #2 with Markdown excerpt import, source attribution, local SQLite persistence, and import-result UI. PR #9 implemented issue #3 with validated mocked lesson generation. PR #10 for issue #4 is open with review workflow fixes applied and code hygiene/security follow-ups passed.
 
 Git:
 
@@ -104,19 +104,25 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Owns: `LessonGenerator` contract, output validation, generation runs
 
 4. [#4 Review lesson units and regenerate a single unit](https://github.com/Jayanth-Balasubramanian/mneme/issues/4)
-   - State: `state:ready-for-review`
+   - State: `state:lgtm`; scoped documentation cleanup complete, feature video and merge readiness pending
    - Branch/worktree: `issue-4-review-workflow` at `/private/tmp/mneme-issue-4`
    - PR: [#10 Review generated lesson units](https://github.com/Jayanth-Balasubramanian/mneme/pull/10)
+   - Head before final video/merge gate: `b98d752`
+   - Merge state before latest main rebase: clean, rebased onto current `main`
+   - CI before latest docs update: green at `2bedad2`
    - Blocked by: none; issues 1-3 are merged
    - Assignment: coding subagent continuing existing WIP with `gpt-5.5` xhigh because the slice is UI-heavy and already had substantial local edits.
-   - Review-fix commit: `2bedad2fa74f559a32b0a8510d8eb7df7f5ac0bc`; CI passing after the fix.
-   - Review gates: follow-up code hygiene and security pending.
-   - Current caveat: e2e remains a deferred placeholder until the full review -> study path is covered.
+   - Code hygiene follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/10#issuecomment-4782236781>.
+   - Security follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/10#issuecomment-4782247099>.
+   - Documentation cleanup: scoped updater pass updated handoff, loop log, and contracts after passed review gates; this is not a repeated review gate.
+   - Implemented contract: checkpoint prompt/expected answer/rubric can be edited before approval; review responses expose bounded source-context snippets rather than full chapter dumps; single-unit regeneration validates output/provenance before replacement and leaves existing units unchanged on failed regeneration.
+   - Current caveat: `bun run test:e2e` remains a deferred placeholder until the full review -> study path is covered.
    - Owns: review states, editing, approving/rejecting, single-unit regeneration
 
 5. [#5 Study approved units and record telemetry](https://github.com/Jayanth-Balasubramanian/mneme/issues/5)
    - State: `ready-for-agent`
    - Blocked by: issue 4
+   - Next priority after issue #4 lands: working guided lesson UI with MCQ checkpoint attempts and telemetry.
    - Owns: study path, attempts, weak-concept query
 
 6. [#6 Expand CI with app-specific security tests and Cloudflare deployment](https://github.com/Jayanth-Balasubramanian/mneme/issues/6)
@@ -182,9 +188,31 @@ Completed:
 
 Next:
 
-- Schedule issue #4 next, prioritizing a working guided lesson UI with MCQ checkpoints over broad backend expansion. The fastest acceptable path may use manually seeded credited Chapter 17 lesson content while preserving source attribution.
+- Land issue #4 after the scoped documentation update, then schedule issue #5 with priority on a working guided lesson UI with MCQ checkpoint attempts and telemetry. The fastest acceptable path may use manually seeded credited Chapter 17 lesson content while preserving source attribution.
 
 Issues:
 
 - Browser e2e remains deferred until the complete import -> generation -> review -> study path exists.
 - The local SQLite adapter is Bun-specific behind `src/server/db/`; Cloudflare D1 support should be added as a separate adapter later.
+
+## Latest Loop Run: Issue #4 Review Workflow
+
+Deliverables:
+
+- Added review workflow support for editing generated lesson units and approving, rejecting, or marking units as needing regeneration.
+- Added editable checkpoint prompt, expected answer, and rubric handling before approval.
+- Added bounded source-context snippets for review UI/API responses; the review path should not expose full chapter Markdown dumps.
+- Added single-unit regeneration that preserves other lesson units and validates regenerated output plus source-anchor provenance before replacing the target unit.
+- Failed regeneration stores a failed generation run with sanitized error output and leaves existing lesson units unchanged.
+
+Completed:
+
+- Code hygiene follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/10#issuecomment-4782236781>.
+- Security follow-up passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/10#issuecomment-4782247099>.
+- PR #10 was rebased onto current `main`; merge state was clean and CI was green at head `2bedad2` before the scoped documentation update.
+- Documentation cleanup ran as a scoped updater pass after code hygiene/security, not a repeated review gate.
+
+Next:
+
+- Record the feature video and confirm merge readiness.
+- After issue #4 lands, prioritize issue #5: guided lesson UI with MCQ checkpoint attempts and telemetry.

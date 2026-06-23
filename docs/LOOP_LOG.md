@@ -205,7 +205,7 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - Head commit: `2ed2d2dd3ca4643d2ba7159b18bab9f04eb6ed4b`.
 - Issue #4 moved to `state:ready-for-review`.
 - Reported verification passed: `bun run typecheck`, `bun test`, `bun run lint`, `bun run build`, `MNEME_DB_PATH=/private/tmp/mneme-issue-4-verification.sqlite bun run db:migrate`, and `bun run test:e2e` as a deferred placeholder.
-- Current caveat: GitHub reports PR #10 merge state as `DIRTY`, and no PR checks have reported yet. Review gates can proceed, but merge readiness will require a rebase/conflict pass and green checks.
+- At PR opening, GitHub reported PR #10 merge state as `DIRTY`, and no PR checks had reported yet. Review gates could proceed, but merge readiness still required a rebase/conflict pass and green checks.
 
 ### 2026-06-23T18:07Z
 
@@ -230,10 +230,23 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - Issue #4 returned to `state:ready-for-review`.
 - Next gates: follow-up code hygiene and security review comments.
 
+### 2026-06-24 Documentation update for PR #10
+
+- PR #10 code hygiene follow-up passed after the review workflow fixes: <https://github.com/Jayanth-Balasubramanian/mneme/pull/10#issuecomment-4782236781>.
+- PR #10 security follow-up passed after the regeneration validation fixes: <https://github.com/Jayanth-Balasubramanian/mneme/pull/10#issuecomment-4782247099>.
+- PR #10 is rebased onto current `main`; merge state is clean and CI was green at head `2bedad2` before this scoped documentation update.
+- The issue #4 implementation now covers the required follow-up themes:
+  - checkpoint prompt, expected answer, and rubric are editable before approval;
+  - review API/UI expose bounded source-context snippets derived from stored Markdown and source anchors, not full chapter dumps;
+  - single-unit regeneration reuses generated-output schema validation and source-anchor provenance checks before replacement;
+  - failed regeneration records a failed generation run and leaves existing lesson units unchanged.
+- This documentation pass is a scoped updater step after passed code hygiene/security gates. It is not a repeated documentation review gate or nitpick pass.
+- After issue #4 lands, the next product priority remains issue #5: a working guided lesson UI with MCQ checkpoint attempts and telemetry.
+
 ## Queue Snapshot
 
 - #2 Import chapter excerpt with source attribution: `merged`; PR #8 merged; issue #2 closed.
 - #3 Generate validated lesson drafts with a mocked provider: `merged`; PR #9 merged; issue #3 closed.
-- #4 Review lesson units and regenerate a single unit: `ready-for-review`; PR #10 open; merge state clean and CI green; follow-up review gates pending.
-- #5 Study approved units and record telemetry: blocked by #4; next product priority is a working guided lesson UI with MCQ checkpoints.
+- #4 Review lesson units and regenerate a single unit: `lgtm`; PR #10 open; code hygiene/security follow-ups passed; scoped documentation update complete; next gates are feature video, green checks on current head, and merge readiness.
+- #5 Study approved units and record telemetry: blocked by #4 landing; next product priority is a working guided lesson UI with MCQ checkpoint attempts and telemetry.
 - #6 Expand CI with app-specific security tests and Cloudflare deployment: `needs-spec`.
