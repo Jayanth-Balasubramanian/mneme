@@ -324,10 +324,18 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - Main-branch CI for the PR #11 merge completed successfully: <https://github.com/Jayanth-Balasubramanian/mneme/actions/runs/28052065314>.
 - The PoC now has a working local app workflow through import, mocked generation, review/approval, guided study, checkpoint attempt recording, and weak-concept telemetry.
 
+### 2026-06-23T19:43Z
+
+- Final queue sweep found no open PRs.
+- Issues #1-#5 are closed with `state:merged`.
+- Issue #6 remains open and was moved to `state:needs-human`: <https://github.com/Jayanth-Balasubramanian/mneme/issues/6>.
+- Blocker comment posted: <https://github.com/Jayanth-Balasubramanian/mneme/issues/6#issuecomment-4782843534>.
+- Required human/spec decisions before issue #6 becomes agent-ready: Cloudflare target, secrets ownership/policy, rollback/staging gate, and whether to split app-specific CI security tests from deployment.
+
 ## Queue Snapshot
 
 - #2 Import chapter excerpt with source attribution: `merged`; PR #8 merged; issue #2 closed.
 - #3 Generate validated lesson drafts with a mocked provider: `merged`; PR #9 merged; issue #3 closed.
 - #4 Review lesson units and regenerate a single unit: `merged`; PR #10 merged; issue #4 closed.
 - #5 Study approved units and record telemetry: `merged`; PR #11 merged; issue #5 closed.
-- #6 Expand CI with app-specific security tests and Cloudflare deployment: `needs-spec`.
+- #6 Expand CI with app-specific security tests and Cloudflare deployment: `needs-human`; blocked on Cloudflare target/secrets/rollback scope decisions.

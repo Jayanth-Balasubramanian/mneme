@@ -134,8 +134,9 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Owns: study path, attempts, weak-concept query
 
 6. [#6 Expand CI with app-specific security tests and Cloudflare deployment](https://github.com/Jayanth-Balasubramanian/mneme/issues/6)
-   - State: `needs-spec`
-   - Blocked by: issue 1 and Cloudflare deployment spec/secrets policy
+   - State: `state:needs-human`
+   - Blocked by: Cloudflare deployment target, secrets policy, rollback/staging policy, and whether to split app-specific CI security tests from deployment.
+   - Blocker comment: <https://github.com/Jayanth-Balasubramanian/mneme/issues/6#issuecomment-4782843534>
    - Owns: app-specific security tests and future continuous deployment
 
 ## Remaining Human Inputs
