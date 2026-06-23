@@ -80,11 +80,11 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Owns: package/config, initial app/server folders, smoke tests
 
 2. [#2 Import chapter excerpt with source attribution](https://github.com/Jayanth-Balasubramanian/mneme/issues/2)
-   - State: `state:changes-requested`
+   - State: `state:ready-for-review`
    - PR: [#8 Import chapter excerpts with source attribution](https://github.com/Jayanth-Balasubramanian/mneme/pull/8)
-   - Review gates: security passed; code hygiene and documentation-agent requested fixes.
-   - CI: passing on PR #8 after the import slice checks.
-   - Blocked by: review fixes and follow-up gates
+   - Review gates: initial code hygiene and documentation-agent fixes applied; follow-up review gates pending.
+   - CI: passing on PR #8 after `abe6f7b`.
+   - Blocked by: follow-up review gates and feature video before merge
    - Owns: source metadata, source anchors, import flow, attribution display
 
 3. [#3 Generate validated lesson drafts with a mocked provider](https://github.com/Jayanth-Balasubramanian/mneme/issues/3)

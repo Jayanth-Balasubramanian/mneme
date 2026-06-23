@@ -66,9 +66,25 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - Moved issue #2 to `state:changes-requested`.
 - Applying code and docs fixes in the PR #8 worktree.
 
+### 2026-06-23T16:18Z
+
+- Pushed PR #8 review-fix commit `abe6f7b`, covering:
+  - Persisting and returning `emphasisNotes` through migration, repository, API response type, UI display, and integration tests.
+  - Avoiding `Chapter undefined` when imported source metadata omits `chapterNumber`.
+  - Updating SPEC, API contract, test contract, ADR, handoff, and loop workflow docs for the source-import slice.
+- Local verification passed after the fix:
+  - `bun run typecheck`
+  - `bun test`
+  - `bun run lint`
+  - `bun run build`
+  - `MNEME_DB_PATH=/private/tmp/mneme-issue-2-review-fix.sqlite bun run db:migrate`
+- CI passed on PR #8 after `abe6f7b`.
+- Follow-up documentation review requested a log freshness fix because this queue snapshot still said fixes were in progress after `abe6f7b` was pushed.
+- This narrow log-state correction is included in the current PR update. The next gate is follow-up review comments on PR #8.
+
 ## Queue Snapshot
 
-- #2 Import chapter excerpt with source attribution: `changes-requested`; PR #8 open and CI green; fixes in progress.
+- #2 Import chapter excerpt with source attribution: `ready-for-review`; PR #8 open and CI green; first review fixes and log freshness correction applied; follow-up review gates pending.
 - #3 Generate validated lesson drafts with a mocked provider: `ready-for-agent`, intentionally waiting on #2 because of overlap.
 - #4 Review lesson units and regenerate a single unit: blocked by #2 and #3.
 - #5 Study approved units and record telemetry: blocked by #4.
