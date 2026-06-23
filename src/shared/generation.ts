@@ -160,10 +160,31 @@ function readStringArray(
     return [];
   }
 
-  const entries = value
-    .filter((entry): entry is string => typeof entry === "string")
-    .map((entry) => entry.trim())
-    .filter((entry) => entry.length > 0);
+  const entries: string[] = [];
+
+  for (let index = 0; index < value.length; index += 1) {
+    const rawEntry = value[index];
+
+    if (typeof rawEntry !== "string") {
+      issues.push({
+        field: `${field}[${index}]`,
+        message: "Expected a non-empty string.",
+      });
+      continue;
+    }
+
+    const trimmed = rawEntry.trim();
+
+    if (trimmed.length === 0) {
+      issues.push({
+        field: `${field}[${index}]`,
+        message: "Expected a non-empty string.",
+      });
+      continue;
+    }
+
+    entries.push(trimmed);
+  }
 
   if (entries.length === 0 && required) {
     issues.push({ field, message: "Expected at least one non-empty entry." });
@@ -249,12 +270,6 @@ function parseSourceAnchors(
       continue;
     }
 
-    const headingPath = Array.isArray(rawAnchor.headingPath)
-      ? rawAnchor.headingPath.filter(
-          (part) => typeof part === "string" && part.trim().length > 0,
-        )
-      : [];
-
     if (!Array.isArray(rawAnchor.headingPath)) {
       anchorIssues.push({
         field: `${field}[${index}].headingPath`,
@@ -262,6 +277,36 @@ function parseSourceAnchors(
       });
       issues.push(...anchorIssues);
       continue;
+    }
+
+    const headingPath: string[] = [];
+
+    for (
+      let headingIndex = 0;
+      headingIndex < rawAnchor.headingPath.length;
+      headingIndex += 1
+    ) {
+      const rawHeadingPart = rawAnchor.headingPath[headingIndex];
+
+      if (typeof rawHeadingPart !== "string") {
+        anchorIssues.push({
+          field: `${field}[${index}].headingPath[${headingIndex}]`,
+          message: "Expected headingPath entries to be non-empty strings.",
+        });
+        continue;
+      }
+
+      const headingPart = rawHeadingPart.trim();
+
+      if (headingPart.length === 0) {
+        anchorIssues.push({
+          field: `${field}[${index}].headingPath[${headingIndex}]`,
+          message: "Expected headingPath entries to be non-empty strings.",
+        });
+        continue;
+      }
+
+      headingPath.push(headingPart);
     }
 
     const paragraphStart = rawAnchor.paragraphStart;

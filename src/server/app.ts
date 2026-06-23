@@ -44,14 +44,12 @@ export function createServerApp(options: ServerAppOptions = {}): Hono {
     },
     getLessonGenerator: (provider) => {
       // Mock is the PoC provider for issue #3.
-      // We keep provider branching explicit for future adapter swaps.
-      if (provider === "mock" || provider === "openai") {
+      if (provider === "mock") {
         lessonGenerator ??= new MockLessonGenerator();
         return lessonGenerator;
       }
 
-      lessonGenerator ??= new MockLessonGenerator();
-      return lessonGenerator;
+      throw new Error(`Provider '${provider}' is not configured in this deployment.`);
     },
   });
   registerLessonUnitRoutes(app, () => {
