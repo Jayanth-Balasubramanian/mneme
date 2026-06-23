@@ -2,7 +2,7 @@
 
 ## Current State
 
-This repository is initialized and contains planning/contract documentation plus implementation slices for a local-first AI-assisted study app. PR #7 merged issue #1 with a Bun/Vite/Hono runtime scaffold, minimal Mneme app shell, health route, and unit smoke test. PR #8 implemented issue #2 with Markdown excerpt import, source attribution, local SQLite persistence, and import-result UI. PR #9 implemented issue #3 with validated mocked lesson generation. PR #10 implemented issue #4 with lesson review, edit, approval, source-context snippets, and single-unit regeneration. PR #11 implemented issue #5 with guided study, checkpoint attempts, weak-concept telemetry, and real browser e2e coverage. PR #13 implements issue #12, the app-specific CI/security split from issue #6, by adding `bun run security:check` without Cloudflare deployment, Workers config, deployment targets, or production secrets.
+This repository is initialized and contains planning/contract documentation plus implementation slices for a local-first AI-assisted study app. PR #7 merged issue #1 with a Bun/Vite/Hono runtime scaffold, minimal Mneme app shell, health route, and unit smoke test. PR #8 implemented issue #2 with Markdown excerpt import, source attribution, local SQLite persistence, and import-result UI. PR #9 implemented issue #3 with validated mocked lesson generation. PR #10 implemented issue #4 with lesson review, edit, approval, source-context snippets, and single-unit regeneration. PR #11 implemented issue #5 with guided study, checkpoint attempts, weak-concept telemetry, and real browser e2e coverage. PR #13 implements issue #12, the app-specific CI/security split from issue #6, by adding `bun run security:check` without Cloudflare deployment, Workers config, deployment targets, or production secrets; code hygiene and security review gates have passed and the scoped documentation update is complete.
 
 Git:
 
@@ -65,7 +65,7 @@ Security posture:
 
 - The repository is public, so agents must treat committed files, fixtures, logs, screenshots, and CI artifacts as public.
 - Public-repo policy checks belong in CI from day one. Dependabot and deeper dependency security checks are ready follow-up work now that `package.json` exists; track the broader CI/security expansion under issue #6.
-- `bun run security:check` is the app-specific public-repo security command. It checks Markdown/rendering policy, LLM validation/provenance coverage markers, known Chapter 17 body markers, secret-like values, env/private-key paths, generated artifacts, and a synthetic in-memory secret-like dry-run fixture.
+- `bun run security:check` is the app-specific public-repo security command. It checks Markdown/rendering policy, LLM validation/provenance coverage markers, known Chapter 17 body markers, secret-like values, env/private-key paths, generated artifacts, and a synthetic in-memory secret-like dry-run fixture. `bun run security:check --self-test` runs that dry-run proof by itself.
 - Full copyrighted chapter text must not be committed without explicit reuse rights.
 
 ## GitHub Issues
@@ -142,7 +142,7 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Owns: future continuous deployment
 
 7. [#12 Add app-specific CI security tests](https://github.com/Jayanth-Balasubramanian/mneme/issues/12)
-   - State: `state:ready-for-review`
+   - State: `state:lgtm`
    - Branch/worktree: `issue-12-security-ci` at `/private/tmp/mneme-issue-12`
    - PR: [#13 Add app-specific CI security checks](https://github.com/Jayanth-Balasubramanian/mneme/pull/13)
    - Split from: issue #6
@@ -150,6 +150,9 @@ GitHub is the source of truth for issue state. These issues have been created:
    - Blocked by: none
    - Owns: `bun run security:check`, scanner unit tests, CI security command wiring, and dry-run detector proof
    - Verification reported by implementation worker: `bun run security:check`, `bun run security:check --self-test`, `bun run typecheck`, `bun test`, `bun run lint`, `bun run build`, and `MNEME_DB_PATH=/tmp/mneme-security-ci.sqlite bun run db:migrate`. PR #13 GitHub Actions passed after the implementation push.
+   - Code hygiene passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/13#issuecomment-4783001530>.
+   - Security passed: <https://github.com/Jayanth-Balasubramanian/mneme/pull/13#issuecomment-4782997306>.
+   - Scoped documentation update: complete for README command text, security notes, test contract verification, handoff state, and loop log; no application code, tests, scripts, package config, or CI files were changed in the docs-updater pass.
    - Implementation state: the security command scans executable Markdown/MDX rendering paths, required LLM validation coverage markers, known full Chapter 17 body-text signatures, tracked env/private-key/generated-artifact paths, common token-like values, and an in-memory synthetic secret-like fixture that must trip the detector before repository scanning proceeds.
 
 ## Remaining Human Inputs

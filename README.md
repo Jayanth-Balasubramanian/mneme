@@ -50,6 +50,7 @@ bun test
 bun run typecheck
 bun run lint
 bun run security:check
+bun run security:check --self-test
 bun run test:e2e
 bun run db:migrate
 bun run db:studio
@@ -72,7 +73,7 @@ Current runtime endpoints:
 - `POST /api/study-attempts`
 - `GET /api/weak-concepts?chapterSourceId=:id`
 
-`bun run security:check` runs app-specific public-repo security checks without Cloudflare credentials or production secrets. `bun run db:migrate` applies the local SQLite schema. `bun run test:e2e` runs the mobile import -> mock generation -> approval -> checkpoint attempt browser flow with an isolated temporary SQLite database. `db:studio` remains a stable command placeholder until database inspection tooling lands.
+`bun run security:check` runs app-specific public-repo security checks without Cloudflare credentials or production secrets. `bun run security:check --self-test` runs only the in-memory dry-run detector proof. `bun run db:migrate` applies the local SQLite schema. `bun run test:e2e` runs the mobile import -> mock generation -> approval -> checkpoint attempt browser flow with an isolated temporary SQLite database. `db:studio` remains a stable command placeholder until database inspection tooling lands.
 
 ## CI
 
