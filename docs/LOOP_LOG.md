@@ -428,3 +428,7 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - Replaced product spec and domain language; updated operating rules for parent-led review and one `gpt-5.6-luna` xhigh implementation agent at a time.
 - Dependencies restored with `bun install --frozen-lockfile`. GitHub authentication works with network permission.
 - Planned sequential reader/persistence, companion/retrieval, orientation/resume and verification slices; no main merge.
+- GitHub issue #14 created: https://github.com/Jayanth-Balasubramanian/mneme/issues/14. Assigned the reader/persistence slice to the single Luna implementation agent; parent owns docs/review.
+- Baseline restored: `bun test` passes 53 tests. Prepared isolated Chrome on port 9223 and connected browser-harness without accessing personal browser state.
+- Review focus: PDF selection/zoom accuracy; position save races; cross-origin local API writes; body and extracted-text limits; citation validation; history generated with later evidence excluded after context boundary is lowered.
+- Live provider environment has no configured API key/model or .env. Plan real configurable adapter plus stubbed HTTP tests; no live model calls or user-content transmission.
