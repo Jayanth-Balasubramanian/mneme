@@ -422,3 +422,9 @@ This is the running proof-of-work log for the Mneme issue loop. GitHub issues an
 - #5 Study approved units and record telemetry: `merged`; PR #11 merged; issue #5 closed.
 - #6 Add Cloudflare deployment after target and secrets policy: `needs-human`; blocked on Cloudflare target/secrets/rollback decisions.
 - #12 Add app-specific CI security tests: `merged`; PR #13 merged; issue #12 closed.
+
+## 2026-09-05 — PDF reader rescope
+- User authorized a separate branch and desktop PDF companion implementation. Created `codex/pdf-reading-companion` from clean main.
+- Replaced product spec and domain language; updated operating rules for parent-led review and one `gpt-5.6-luna` xhigh implementation agent at a time.
+- Dependencies restored with `bun install --frozen-lockfile`. GitHub authentication works with network permission.
+- Planned sequential reader/persistence, companion/retrieval, orientation/resume and verification slices; no main merge.
