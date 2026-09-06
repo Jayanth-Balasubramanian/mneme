@@ -1,24 +1,10 @@
 import { existsSync } from "node:fs";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const chromeBinary = resolveChromeBinary();
-const syntheticMarkdown = [
-  "# Sampling",
-  "",
-  "A short synthetic paragraph about estimating expectations by averaging random draws.",
-  "",
-  "## Variance",
-  "",
-  "A second synthetic paragraph about variance and confidence in Monte Carlo estimates.",
-  "",
-  "## Bias",
-  "",
-  "A third synthetic paragraph about estimator bias and approximation error.",
-].join("\n");
-
 type CdpResponse = {
   id?: number;
   result?: unknown;
@@ -66,19 +52,16 @@ function resolveChromeBinary(): string {
   return found;
 }
 
-async function findAvailablePortForTest(
-  port: number,
-): Promise<boolean> {
+async function findAvailablePortForTest(): Promise<number> {
   const server = createServer();
 
-  const listening = await new Promise<boolean>((resolve) => {
-    server.once("error", () => resolve(false));
-    server.listen(port, "127.0.0.1", () => resolve(true));
+  const listening = await new Promise<number>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", () => {
+      const address = server.address();
+      resolve(typeof address === "object" && address !== null ? address.port : 0);
+    });
   });
-
-  if (!listening) {
-    return false;
-  }
 
   await new Promise<void>((resolve, reject) => {
     server.close((error) => {
@@ -91,26 +74,12 @@ async function findAvailablePortForTest(
     });
   });
 
-  return true;
+  return listening;
 }
 
 async function getAvailablePorts(count: number): Promise<number[]> {
-  const startPort = 4_000;
-  const maxPort = 49_000;
   const ports: number[] = [];
-
-  for (let port = startPort; port <= maxPort && ports.length < count; port += 1) {
-    const canUse = await findAvailablePortForTest(port);
-
-    if (canUse) {
-      ports.push(port);
-    }
-  }
-
-  if (ports.length !== count) {
-    throw new Error("Could not reserve enough available TCP ports.");
-  }
-
+  while (ports.length < count) ports.push(await findAvailablePortForTest());
   return ports;
 }
 
@@ -318,59 +287,91 @@ async function createChromeSession(
   return session;
 }
 
-async function runStudyFlow(session: CdpSession, webUrl: string): Promise<void> {
+function syntheticPdf(): Uint8Array {
+  const encoder = new TextEncoder();
+  const pageStreams = [
+    "BT /F1 18 Tf 72 720 Td (Synthetic Reader page one.) Tj 0 -36 Td (A bounded passage for local browser tests.) Tj ET",
+    "BT /F1 18 Tf 72 720 Td (Synthetic Reader page two.) Tj 0 -36 Td (A second page proves resume state.) Tj ET",
+  ];
+  const bodies = [
+    "<< /Type /Catalog /Pages 2 0 R >>",
+    "<< /Type /Pages /Kids [3 0 R 4 0 R] /Count 2 >>",
+    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R >> >> /Contents 6 0 R >>",
+    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R >> >> /Contents 7 0 R >>",
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    `<< /Length ${encoder.encode(pageStreams[0]!).byteLength} >>\nstream\n${pageStreams[0]}\nendstream`,
+    `<< /Length ${encoder.encode(pageStreams[1]!).byteLength} >>\nstream\n${pageStreams[1]}\nendstream`,
+  ];
+  let pdf = "%PDF-1.4\n";
+  const offsets = [0];
+  bodies.forEach((body, index) => {
+    offsets.push(encoder.encode(pdf).byteLength);
+    pdf += `${index + 1} 0 obj\n${body}\nendobj\n`;
+  });
+  const xrefOffset = encoder.encode(pdf).byteLength;
+  pdf += `xref\n0 ${bodies.length + 1}\n0000000000 65535 f \n${offsets.slice(1).map((offset) => `${String(offset).padStart(10, "0")} 00000 n \n`).join("")}trailer\n<< /Size ${bodies.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`;
+  return encoder.encode(pdf);
+}
+
+async function setFileInput(session: CdpSession, filePath: string): Promise<void> {
+  await session.send("DOM.enable");
+  const document = await session.send("DOM.getDocument") as { root: { nodeId: number } };
+  const result = await session.send("DOM.querySelector", { nodeId: document.root.nodeId, selector: "input[type=file]" }) as { nodeId: number };
+  if (!result.nodeId) throw new Error("Reader import file input was not found.");
+  await session.send("DOM.setFileInputFiles", { nodeId: result.nodeId, files: [filePath] });
+}
+
+async function runReaderFlow(session: CdpSession, webUrl: string, pdfPath: string): Promise<void> {
   await session.send("Page.navigate", { url: webUrl });
   await waitForPageCondition(
     session,
-    "document.readyState === 'complete' && Boolean(document.querySelector('[data-testid=\"markdown-input\"]'))",
+    "document.readyState === 'complete' && Boolean(document.querySelector('[data-testid=\"import-pdf\"]'))",
     "app shell",
   );
+  await setFileInput(session, pdfPath);
+  await waitForPageCondition(session, "document.body.textContent.includes('Synthetic Reader') || Boolean(document.querySelector('[data-testid=\"confirm-import\"]'))", "local PDF selection");
+  await waitForPageCondition(session, "Boolean(document.querySelector('[data-testid=\"confirm-import\"]'))", "import metadata sheet");
+  await session.evaluate(click("[data-testid='confirm-import']"));
+  await waitForPageCondition(session, "Boolean(document.querySelector('[data-testid=\"pdf-viewer\"] canvas')) && document.body.textContent.includes('synthetic-reader')", "rendered local PDF");
+  await waitForPageCondition(session, "Boolean(document.querySelector('.textLayer span'))", "selectable PDF text layer");
 
-  await session.evaluate(setValue("[data-testid='markdown-input']", syntheticMarkdown));
-  await session.evaluate(click("[data-testid='import-submit']"));
-  await waitForPageCondition(
-    session,
-    "document.body.textContent.includes('Import result') && document.body.textContent.includes('paragraph anchors stored')",
-    "import result",
-  );
+  await session.evaluate(browserAction(`
+    const span = Array.from(document.querySelectorAll('.textLayer span')).find((entry) => entry.textContent?.includes('Synthetic')) ?? document.querySelector('.textLayer span');
+    if (!span) throw new Error('No PDF text span was rendered.');
+    const range = document.createRange();
+    range.selectNodeContents(span);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    document.querySelector('.pdf-page-surface')?.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+  `));
+  await waitForPageCondition(session, "Boolean(document.querySelector('.selection-card'))", "text selection preview");
+  await session.evaluate(setValue("[aria-label='Companion provider']", "demo"));
+  await session.evaluate(setValue("[aria-label='Companion question']", "Explain this passage"));
+  await session.evaluate(click("[data-testid='ask-companion']"));
+  await waitForPageCondition(session, "Boolean(document.querySelector('.conversation-card')) && document.body.textContent.includes('Demo context')", "demo companion answer");
+  await session.evaluate(click(".conversation-citations button"));
+  await waitForPageCondition(session, "document.querySelector('[aria-label=\"Current page\"]')?.value === '1'", "citation navigation");
 
-  await session.evaluate(click("[data-testid='generate-draft']"));
+  await session.evaluate(setValue("[aria-label='Spoiler boundary page']", "2"));
+  await session.evaluate(setValue("[aria-label='Stopping note']", "Remember the bounded passage."));
+  await session.evaluate(browserAction("window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));"));
+  await waitForPageCondition(session, "document.querySelector('[aria-label=\"Current page\"]')?.value === '2' && document.querySelector('.pdf-viewer canvas') !== null", "second page navigation");
+  await sleep(900);
+  await session.send("Page.reload", { ignoreCache: true });
+  await waitForPageCondition(session, "document.readyState === 'complete' && Boolean(document.querySelector('[data-testid=\"pdf-viewer\"] canvas'))", "reader reload");
+  await waitForPageCondition(session, "document.querySelector('[aria-label=\"Current page\"]')?.value === '2' && document.querySelector('[aria-label=\"Stopping note\"]')?.value === 'Remember the bounded passage.'", "saved reading position and stopping note");
   await waitForPageCondition(
     session,
-    "Boolean(document.querySelector('[data-testid=\"approve-unit\"]'))",
-    "generated unit review",
-  );
-
-  await session.evaluate(click("[data-testid='approve-unit']"));
-  await waitForPageCondition(
-    session,
-    "Boolean(document.querySelector('[data-testid=\"study-prompt\"]')) && Boolean(document.querySelector('[data-testid=\"study-option-0\"]'))",
-    "approved study checkpoint",
-  );
-
-  await session.evaluate(click("[data-testid='study-option-0']"));
-  await session.evaluate(click("[data-testid='reveal-answer']"));
-  await session.evaluate(setValue("[data-testid='self-rating']", "wrong"));
-  await session.evaluate(setValue("[data-testid='confidence']", "low"));
-  await waitForPageCondition(
-    session,
-    "document.querySelector('[data-testid=\"submit-attempt\"]')?.disabled === false",
-    "attempt form ready to submit",
-  );
-  await session.evaluate(click("[data-testid='submit-attempt']"));
-  await waitForPageCondition(
-    session,
-    [
-      "document.querySelector('[data-testid=\"local-attempt-signal\"]')?.textContent.includes('WRONG')",
-      "(document.querySelector('[data-testid=\"weak-concepts\"]')?.textContent ?? '').includes('sampling-1')",
-    ].join(" && "),
-    "recorded attempt feedback",
+    "document.body.textContent.includes('synthetic-reader') && document.body.textContent.includes('Stored on this device')",
+    "reader resume shell",
   );
 }
 
 const [apiPort, webPort, chromePort] = await getAvailablePorts(3);
 const tempDir = await mkdtemp(join(tmpdir(), "mneme-e2e-"));
 const dbPath = join(tempDir, "mneme-e2e.sqlite");
+const pdfPath = join(tempDir, "synthetic-reader.pdf");
 const chromeProfile = join(tempDir, "chrome-profile");
 const webUrl = `http://127.0.0.1:${webPort}`;
 
@@ -406,11 +407,12 @@ const chromeProcess = Bun.spawn(
 let session: CdpSession | null = null;
 
 try {
+  await writeFile(pdfPath, syntheticPdf());
   await waitForHttp(`http://127.0.0.1:${apiPort}/api/health`, "Mneme API");
   await waitForHttp(webUrl, "Mneme web app");
   session = await createChromeSession(chromePort, webUrl);
-  await runStudyFlow(session, webUrl);
-  console.log("E2E study flow passed.");
+  await runReaderFlow(session, webUrl, pdfPath);
+  console.log("E2E reader flow passed.");
 } finally {
   session?.close();
   appProcess.kill();
