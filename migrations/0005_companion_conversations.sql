@@ -1,0 +1,26 @@
+CREATE TABLE IF NOT EXISTS reader_conversations (
+  id TEXT PRIMARY KEY,
+  book_id TEXT NOT NULL,
+  question TEXT NOT NULL,
+  mode TEXT NOT NULL CHECK(mode IN ('explain', 'define', 'missing-step', 'orient')),
+  provider TEXT NOT NULL CHECK(provider IN ('demo', 'openai', 'deepseek')),
+  page_number INTEGER,
+  page_from INTEGER,
+  page_to INTEGER,
+  selection_json TEXT,
+  answer_text TEXT,
+  citations_json TEXT NOT NULL DEFAULT '[]',
+  evidence_pages_json TEXT NOT NULL DEFAULT '[]',
+  max_context_page INTEGER NOT NULL DEFAULT 0,
+  supplementary INTEGER NOT NULL DEFAULT 0,
+  insufficient_context INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL CHECK(status IN ('pending', 'answered', 'failed')),
+  error_message TEXT,
+  resolved INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY (book_id) REFERENCES reader_books(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS reader_conversations_book_idx
+  ON reader_conversations(book_id, created_at DESC);

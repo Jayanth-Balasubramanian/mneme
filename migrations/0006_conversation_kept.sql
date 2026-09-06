@@ -1,0 +1,2 @@
+ALTER TABLE reader_conversations
+  ADD COLUMN kept INTEGER NOT NULL DEFAULT 0;
