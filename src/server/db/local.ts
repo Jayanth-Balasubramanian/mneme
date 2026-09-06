@@ -3,6 +3,8 @@ import { Database } from "bun:sqlite";
 import { SQLiteChapterSourceRepository } from "./chapterSources";
 import { SQLiteGenerationPersistence } from "./generation";
 import { SQLiteStudyAttemptRepository } from "./studyAttempts";
+import { SQLiteReaderRepository } from "./reader";
+import { SQLiteConversationRepository } from "./conversations";
 import { migrateDatabase } from "./migrations";
 
 export function getLocalDatabasePath(): string {
@@ -31,4 +33,16 @@ export function createLocalStudyAttemptRepository(
   path = getLocalDatabasePath(),
 ): SQLiteStudyAttemptRepository {
   return new SQLiteStudyAttemptRepository(openLocalDatabase(path));
+}
+
+export function createLocalReaderRepository(
+  path = getLocalDatabasePath(),
+): SQLiteReaderRepository {
+  return new SQLiteReaderRepository(openLocalDatabase(path));
+}
+
+export function createLocalConversationRepository(
+  path = getLocalDatabasePath(),
+): SQLiteConversationRepository {
+  return new SQLiteConversationRepository(openLocalDatabase(path));
 }
