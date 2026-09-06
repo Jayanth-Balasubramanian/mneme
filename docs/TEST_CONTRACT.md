@@ -1,166 +1,29 @@
-# Testable Contract
+# Verification contract
 
-This contract gates the PoC implementation. Do not move issues to `ready-for-agent` unless the relevant behavior below has concrete verification steps.
+The desktop PDF reader is the active browser workflow. Keep legacy unit/integration coverage for retained source, generation, review and study APIs while verifying the new reader independently with original synthetic material.
 
-## Scaffold And Health
+## Commands
 
-Behavior:
+- `bun run typecheck`: shared/server/browser TypeScript boundaries.
+- `bun run lint`: code hygiene.
+- `bun run build`: production Vite bundle and local PDF.js worker.
+- `bun run security:check`: public-repository secret/content policy and application security regression checks.
+- `bun test`: domain/schema, provider adapter and isolated SQLite integration tests.
+- `bun run test:e2e`: isolated Chrome and SQLite browser flow. Set `CHROME_BIN` when Chrome is not installed at a known location.
+- `MNEME_DB_PATH=/tmp/mneme-check.sqlite bun run db:migrate`: additive migration smoke test using a disposable database.
 
-- The repository has a Bun-managed Vite React SPA and Hono/Web Fetch API scaffold.
-- The app shell renders the Mneme workflow entry point and credits the Chapter 17 source.
-- `GET /api/health` returns a stable health response.
+## Reader checks
 
-Tests:
+Validate malformed/oversized PDFs, metadata and page bounds, duplicate byte identity, original-byte retrieval, outline mapping and revision conflicts. Verify page/scroll/zoom/note/context-boundary persistence. Navigation must not change the allowed context boundary. PDF rendering, text selection and region capture need real browser checks, including selection after zoom, outline navigation and keyboard behavior outside editing controls.
 
-- Unit: health route returns `{ status: "ok", service: "mneme" }`.
-- Build: Vite/TypeScript production build succeeds.
-- Runtime smoke: local API and app shell are reachable.
+## Companion checks
 
-Verification:
+Verify context size limits, physical-page provenance, selection anchors, same-book retrieval, earlier definition lookup, explicit orientation ranges, and exclusion of later source/history. Invalid provider output and out-of-context citations must not become successful answers. Preserve valid questions after provider failure. Exercise keep/resolve history updates and filtered reopening against an isolated SQLite database.
 
-- `bun test`
-- `bun run typecheck`
-- `bun run lint`
-- `bun run build`
+Provider HTTP tests use stubs and inspect bounded text/image inputs, JSON formats, refusal/incomplete/error handling, sanitized failures and citation validation. Live provider smoke tests are separate from deterministic tests and must use authorized source material. The demo provider is deterministic and is never evidence of model quality.
 
-## Source Attribution
+## Browser evidence
 
-Behavior:
+Cover PDF import, title/author, actual rendered text selection, demo question, citation navigation, saved note/history and resume after reload. Capture synthetic screenshots for public review. A live DeepSeek smoke test with the original synthetic reading notes verifies the configured adapter separately. User PDFs, local databases, API credentials and private reading history must not appear in committed evidence.
 
-- The app records source metadata for *Deep Learning*, Chapter 17, "Monte Carlo Methods".
-- Generated lesson units retain source anchors back to the chapter source.
-- Study and review screens display source credit.
-- The repository does not commit full chapter text.
-
-Tests:
-
-- Unit: source metadata schema requires title, authors, chapter title, chapter URL, and citation.
-- Unit: source anchor parser rejects imported Markdown that cannot produce usable anchors.
-- Integration: importing a Markdown excerpt stores source metadata and content hash.
-- UI/import: the import result displays source credit for the saved excerpt. This is manually covered by build/runtime review until browser automation is added.
-- Browser, after review/study lands: review/study flow displays source credit for an approved unit.
-
-Verification:
-
-- `bun run typecheck`
-- `bun test`
-- `bun run build`
-
-## Import And Draft Generation
-
-Behavior:
-
-- A user can import a Markdown excerpt from the chapter.
-- A mocked lesson generator can produce a structured lesson draft with draft units, source anchors, and checkpoints.
-- `provider: "mock"` is the only supported successful provider path until a live adapter lands.
-- `provider: "openai"` returns `provider_not_supported` instead of using the mock provider.
-- Invalid generator output is rejected and recorded as a failed generation run.
-- Generated source anchors must match the imported chapter source URL and server-derived paragraph/heading anchors.
-- Provider exceptions are sanitized before they are returned or persisted.
-- Generated content remains draft-only until reviewed.
-
-Tests:
-
-- Unit: generation request schema accepts valid mock generation requests.
-- Unit: generation output schema validates required lesson unit/checkpoint fields.
-- Unit: generation output schema rejects missing concept keys, missing source anchors, malformed concept key arrays, and malformed heading path arrays.
-- Integration: import -> mocked generation creates draft lesson units and checkpoints.
-- Integration: invalid mocked generation output creates a failed generation run and does not create studyable units.
-- Integration: unsupported `openai` provider requests return `provider_not_supported`.
-- Integration: generated anchors with a foreign source URL or impossible paragraph range create failed generation runs and do not persist lesson units.
-- Integration: thrown provider errors are stored with `generation_provider_failed` and do not expose raw exception details.
-
-Verification:
-
-- `bun run typecheck`
-- `bun test`
-
-## Review And Unit Regeneration
-
-Behavior:
-
-- A user can edit, approve, reject, or mark one lesson unit as `needs_regeneration`.
-- A user can edit checkpoint prompt, expected answer, and rubric content before approval.
-- Review responses and the review UI include bounded source context derived from stored chapter Markdown and source anchors, without returning or displaying full chapter dumps.
-- Regeneration targets a single lesson unit and preserves the rest of the lesson draft.
-- Regeneration validates provider output and source-anchor provenance before replacing the unit, and successful replacement returns to `draft` review state.
-- Only approved units are studyable.
-
-Tests:
-
-- Unit: checkpoint patch/replacement request schemas validate editable checkpoint content.
-- Unit: review-state transitions enforce allowed states.
-- Unit: source-context extraction returns a bounded paragraph window around anchors.
-- Integration: lesson-unit responses include bounded source-context snippets.
-- Integration: checkpoint edits survive save and approval into the study path.
-- Integration: unit-level regeneration replaces one unit as a draft and leaves other unit IDs/content unchanged.
-- Integration: invalid regenerated output and invalid regenerated anchors save failed generation runs and leave the existing unit plus all other units unchanged.
-- Browser: review screen can approve one unit and exclude rejected/draft units from study.
-
-Verification:
-
-- `bun run typecheck`
-- `bun test`
-- `bun run test:e2e`
-
-Notes:
-
-- `bun run test:e2e` runs the mobile import -> mock generation -> approval -> study checkpoint attempt flow in headless Chrome against a temporary SQLite database.
-
-## Study And Telemetry
-
-Behavior:
-
-- A user studies approved units in order.
-- A checkpoint records answer, self-rating, confidence, concept keys, lesson unit, and source anchors.
-- Wrong and partial attempts produce queryable weak-concept signals.
-
-Tests:
-
-- Unit: weak-concept derivation maps wrong/partial attempts to concept keys.
-- Integration: checkpoint attempt persists telemetry and can be queried by concept.
-- Browser: study flow records an attempt and shows it in local history/state.
-
-Verification:
-
-- `bun run typecheck`
-- `bun test`
-- `bun run test:e2e`
-
-Note:
-
-- `test:e2e` validates the visible study transition states with real browser DOM interactions and checks that a wrong or partial checkpoint attempt creates weak-concept feedback.
-
-## Repository And Security Gates
-
-Behavior:
-
-- No API keys, `.env` files, full chapter text, or secrets are committed.
-- LLM output and Markdown content are treated as untrusted data.
-- Markdown rendering supports GFM and math without executing MDX or arbitrary embedded code.
-- CI runs `bun run security:check` on pull requests and pushes to `main`
-  without requiring Cloudflare credentials, deployment targets, or production
-  secrets.
-
-Tests:
-
-- Unit: Markdown rendering/sanitization rejects executable embedded content.
-- Unit: security scanner rejects executable Markdown/HTML rendering paths, known
-  Chapter 17 body markers, tracked env paths, and synthetic token-like values.
-- Command: `bun run security:check` checks Markdown/rendering policy, LLM output
-  schema/provenance failure-path coverage, full-source leakage markers, secret
-  leakage patterns, generated artifacts, and repository path policy.
-- Command: the security check generates an in-memory synthetic secret-like
-  dry-run fixture and requires the detector to fail that controlled fixture
-  before scanning repository files.
-- Review: security pass checks committed files, fixtures, snapshots, and docs for
-  secrets or full chapter text.
-
-Verification:
-
-- `bun run security:check`
-- `bun run security:check --self-test`
-- `bun run lint`
-- `bun run typecheck`
-- `bun test`
-- security review before merge
+CI runs security checks, typecheck, lint, build, Bun tests and an isolated migration check. Browser checks require a locally installed Chrome/Chromium and are run locally. Record actual pass/fail results and any omitted checks in `docs/LOOP_LOG.md` and the PR; this document states the contract, not a claim that a particular run passed.
