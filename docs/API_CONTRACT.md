@@ -1,40 +1,42 @@
-# API Contract
+# API contract
 
-This is the intended PoC API surface. It is a contract for implementation and tests, not a generated OpenAPI file yet.
+The active desktop workflow is a local PDF reader and contextual companion. Shared request/response types and validators live in `src/shared/reader.ts` and `src/shared/companion.ts`. Physical PDF page numbers are one-based. The existing generated-lesson APIs below remain available for compatibility; they are not the active reader UI.
 
-Base path: `/api`
+## Local reader
 
-All request bodies and responses must be validated with shared schemas. Markdown and LLM output are untrusted data.
+| Method and path | Behavior |
+| --- | --- |
+| `GET /api/health` | Local health response. |
+| `GET /api/reader/books` | `{ books }`, ordered by recent use. |
+| `POST /api/reader/books/import` | Multipart `file` PDF and JSON `metadata`: title, optional author, pageCount, extracted pages, outline and optional contentHash. New book returns 201; identical bytes reuse the existing book with 200 and refresh available outline metadata. |
+| `GET /api/reader/books/:bookId` | Book metadata and reading state; marks the book opened. |
+| `GET /api/reader/books/:bookId/pdf` | Original PDF bytes with no-store caching. |
+| `GET /api/reader/books/:bookId/pages/:pageNumber` | Locally extracted text for a physical page. |
+| `GET /api/reader/books/:bookId/state` | Saved reading state. |
+| `PATCH /api/reader/books/:bookId/state` | Partial currentPage, scrollTop, zoom, spoilerBoundaryPage and stoppingNote, with required revision. Returns updated state or 409 for stale revision. |
 
-## `GET /api/health`
+Import validates the PDF header and parses the document server-side, verifies the actual page count and derives a SHA-256 byte hash. Limits: 25 MiB PDF, 2,000 pages and 8 MiB aggregate extracted text. PDF/page/state storage uses additive SQLite migrations; prior lesson data is retained. Scroll position is normalized; navigating never silently expands the context boundary.
 
-Return a stable local runtime health response.
+## Companion
 
-Response:
+| Method and path | Behavior |
+| --- | --- |
+| `GET /api/companion/capabilities` | Configured provider availability and model names; never credentials. |
+| `POST /api/companion/questions` | Question with bookId, mode, provider, optional pageNumber, bounded orientation pageFrom/pageTo, and optional text/region selection. Returns persisted conversation with 201. |
+| `GET /api/companion/books/:bookId/conversations` | Saved history filtered against the book's current context boundary. |
+| `PATCH /api/companion/books/:bookId/conversations/:conversationId` | Set `resolved` and/or `kept` booleans. |
 
-```ts
-type HealthResponse = {
-  status: "ok";
-  service: "mneme";
-};
-```
+Conversation list/update routes also accept `/api/reader/books/:bookId/conversations` as an alias. Providers are `demo`, `deepseek`, and `openai`; modes are `explain`, `define`, `missing-step`, and `orient`.
 
-Verification:
+Requests are bounded to 4 MiB, questions to 4,000 characters, and model context to 12,000 characters. Optional selected PNG regions are bounded to 2.5 million data-URL characters. Selection, question and orientation pages must belong to the book and obey the explicit context boundary. Retrieved source text and previous exchanges are treated as untrusted data. History from another document or carrying later-page evidence is excluded.
 
-- Unit: route returns HTTP 200 with the stable response.
-- Runtime smoke: local API responds at `/api/health`.
+Answers contain text, page citations, supplementary/insufficientContext flags and persisted evidence provenance. Validate structured output and reject citations to pages not actually supplied. Citations establish supplied context, not factual correctness. DeepSeek uses JSON mode; OpenAI uses Responses structured output. Both have bounded requests and timeouts. Errors are sanitized, with valid submitted questions retained for retry when provider execution fails.
 
-## Source Metadata
+Common failures: 400 invalid input/page/selection/boundary, 403 forbidden origin, 404 unknown book/conversation, 409 stale reading state, 413 oversized request, 502 invalid/unavailable provider response, and 503 missing provider configuration. A pre-validation failure does not create a saved conversation. No full PDF/chapter is uploaded to a provider.
 
-The first source is:
+## Retained lesson API
 
-- Book: *Deep Learning*
-- Authors: Ian Goodfellow, Yoshua Bengio, and Aaron Courville
-- Chapter: Chapter 17, "Monte Carlo Methods"
-- URL: <https://www.deeplearningbook.org/contents/monte_carlo.html>
-- Citation: see `docs/SOURCES.md`
-
-Every response that exposes generated or study content should include enough source metadata for the UI to credit the source.
+Source attribution for the prior workflow remains in `docs/SOURCES.md`. The following contract describes retained endpoints rather than the current product direction.
 
 ## `POST /api/chapter-sources`
 

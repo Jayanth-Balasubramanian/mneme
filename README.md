@@ -1,82 +1,46 @@
 # Mneme
 
-Mneme is a local-first study app for turning technical book chapters into AI-assisted guided lessons, checkpoints, and reviewable study telemetry.
+A local PDF reader with a contextual companion. Keep the book in view, ask about difficult passages, and return to the same place with your questions and notes intact.
 
-The name comes from Mneme, the Greek personification of memory and, in one tradition, one of the original Muses alongside Melete and Aoide. That lore fits the product: memory as the foundation for study, recall, and learning.
+The desktop reader rework is on `codex/pdf-reading-companion` ([PR #15](https://github.com/Jayanth-Balasubramanian/mneme/pull/15)). It supersedes the original generated-lesson interface while preserving its database tables.
 
-Repository: <https://github.com/Jayanth-Balasubramanian/mneme>
-
-## Proof Of Concept
-
-The PoC studies Chapter 17, "Monte Carlo Methods", from *Deep Learning* by Ian Goodfellow, Yoshua Bengio, and Aaron Courville.
-
-Source credit:
-
-- Book site: <https://www.deeplearningbook.org/>
-- Chapter 17: <https://www.deeplearningbook.org/contents/monte_carlo.html>
-- Citation details: `docs/SOURCES.md`
-
-Do not commit the full chapter text unless reuse rights are explicitly confirmed. Use user-supplied Markdown excerpts in local app data and minimal/synthetic fixtures in tests.
-
-## Public Repo Security Note
-
-This repository is public to use GitHub Actions CI credits. Treat every committed file, test fixture, log, and artifact as public internet content.
-
-Agents and reviewers must audit for:
-
-- API keys, tokens, credentials, and `.env` files.
-- Full copyrighted source text.
-- Sensitive data embedded in tests, snapshots, logs, fixtures, or generated examples.
-- LLM output rendered without validation or sanitization.
-
-## Contracts
-
-- `AGENTS.md`: agent operating contract.
-- `CONTEXT.md`: domain glossary.
-- `docs/SPEC.md`: product and architecture spec.
-- `docs/API_CONTRACT.md`: API contract.
-- `docs/TEST_CONTRACT.md`: testable behavior gates.
-- `docs/SOURCES.md`: source credit.
-- `docs/HANDOFF.md`: senior-engineer handoff.
-
-## Local Development
-
-Use Bun for all package and project commands.
+## Run locally
 
 ```bash
-bun install
+bun install --frozen-lockfile
 bun run dev
-bun test
-bun run typecheck
-bun run lint
-bun run security:check
-bun run security:check --self-test
-bun run test:e2e
-bun run db:migrate
-bun run db:studio
-bun run build
 ```
 
-`bun run dev` starts the Hono API and Vite web app together. Override local ports with `API_PORT` and `WEB_PORT` when defaults are occupied.
+Open [Mneme](http://127.0.0.1:5173). The API binds to loopback on port 8787. The default SQLite database is `mneme.sqlite`; set `MNEME_DB_PATH` to choose another location. Keep that database private: it contains imported PDFs, extracted text and reading history.
 
-The local SQLite path defaults to `mneme.sqlite`. Override it with `MNEME_DB_PATH`, especially for isolated migration checks.
+Import a text-based PDF (up to 25 MiB / 2,000 pages), check its title/author, and save it to your library. Select text or enable region capture for a formula. Page numbers refer to physical PDF pages, which may differ from printed numbers. Reading position and the companion's allowed context boundary are separate controls. If a question exceeds that boundary, use the explicit “Allow through page…” action and ask again. Left/right arrows and Page Up/Page Down navigate when you are not editing a field.
 
-Current runtime endpoints:
+## Companion setup
 
-- `GET /api/health`
-- `POST /api/chapter-sources`
-- `POST /api/generation-runs`
-- `GET /api/lesson-units?chapterSourceId=:id`
-- `PATCH /api/lesson-units/:id`
-- `POST /api/lesson-units/:id/regenerate`
-- `GET /api/study-paths/:chapterSourceId`
-- `POST /api/study-attempts`
-- `GET /api/weak-concepts?chapterSourceId=:id`
+Reading and local document storage require no API key. Demo responses are explicitly labeled and are only for checking the interaction. Real explanations use DeepSeek when configured; OpenAI Responses is also supported. Configure credentials server-side:
 
-`bun run security:check` runs app-specific public-repo security checks without Cloudflare credentials or production secrets. `bun run security:check --self-test` runs only the in-memory dry-run detector proof. `bun run db:migrate` applies the local SQLite schema. `bun run test:e2e` runs the mobile import -> mock generation -> approval -> checkpoint attempt browser flow with an isolated temporary SQLite database. `db:studio` remains a stable command placeholder until database inspection tooling lands.
+```bash
+export DEEPSEEK_API_KEY='<your API key>'
+export DEEPSEEK_MODEL='deepseek-v4-flash'
+bun run dev
+```
 
-## CI
+Do not put keys in browser code, commit them, or paste them into screenshots. A live question sends bounded selected/retrieved text and an optional selected image to the selected provider; it does not upload the complete PDF. The model can still make mistakes. Page citations show where supporting context came from, not a guarantee that the interpretation is correct.
 
-GitHub Actions runs on pushes to `main` and pull requests. CI runs `bun run security:check`, Bun project checks, and a temp-path migration check. The security command checks Markdown/rendering policy, LLM validation/provenance coverage markers, source-text leakage markers, secret-like values, tracked `.env`/private-key paths, generated artifacts, and an in-memory synthetic dry-run secret fixture.
+The context boundary limits supplied pages and conversation evidence. Model instructions also prohibit later spoilers, but a model's prior knowledge cannot be completely controlled by retrieval boundaries.
 
-Dependabot and deeper dependency security checks should be enabled after the dependency baseline settles.
+## Development
+
+```bash
+bun run typecheck
+bun run build
+bun run lint
+bun run security:check
+bun test
+bun run test:e2e
+bun run db:migrate
+```
+
+`bun run db:studio` remains an explicit deferred placeholder. Browser checks use an isolated local database and synthetic original PDF material. Never commit copyrighted book files or private reading history. Legacy source attribution is recorded in [docs/SOURCES.md](docs/SOURCES.md).
+
+See [product scope](docs/SPEC.md), [API contract](docs/API_CONTRACT.md), [verification contract](docs/TEST_CONTRACT.md), and [handoff](docs/HANDOFF.md). EPUB, scanned-PDF OCR, flashcards, grading, accounts and cloud deployment are outside the initial reader scope.
