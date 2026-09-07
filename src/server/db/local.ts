@@ -5,6 +5,7 @@ import { SQLiteGenerationPersistence } from "./generation";
 import { SQLiteStudyAttemptRepository } from "./studyAttempts";
 import { SQLiteReaderRepository } from "./reader";
 import { SQLiteConversationRepository } from "./conversations";
+import { SQLiteCodexThreadRepository } from "./codexThreads";
 import { migrateDatabase } from "./migrations";
 
 export function getLocalDatabasePath(): string {
@@ -45,4 +46,10 @@ export function createLocalConversationRepository(
   path = getLocalDatabasePath(),
 ): SQLiteConversationRepository {
   return new SQLiteConversationRepository(openLocalDatabase(path));
+}
+
+export function createLocalCodexThreadRepository(
+  path = getLocalDatabasePath(),
+): SQLiteCodexThreadRepository {
+  return new SQLiteCodexThreadRepository(openLocalDatabase(path));
 }

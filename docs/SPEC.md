@@ -3,7 +3,7 @@
 ## Objective
 Help a single reader get started, get unstuck, and return to a dense book. The PDF is the primary reading experience. The companion explains passages, retrieves earlier definitions, offers bounded section orientation, and preserves questions beside a reading position. Desktop/laptop first. This specification supersedes the generated-lesson PoC; its data may remain for compatibility but its workflow is not the main UI.
 
-## Experience
+## Superseded initial reader experience
 - Local browser app with a small library of text PDFs. PDF bytes and extracted page text stay in local SQLite, never the public repository.
 - Import with filename/title and optional author. Render original pages using PDF.js, selectable text, previous/next and direct page navigation, PDF outline when available, zoom, collapsible navigation.
 - Persist page, normalized scroll position, zoom, explicit spoiler boundary and editable stopping note per document. Reopen the last book. Navigating does not advance the spoiler boundary.
@@ -46,3 +46,18 @@ User authorized DeepSeek API use and loading their local Axler PDF. Store the ke
 
 ## Desktop usability follow-up
 The reader omits the redundant app-wide masthead and keeps import in the library. Resolve named and direct PDF outline destinations, and support left/right and Page Up/Page Down navigation outside editing controls. Explain/define/missing-step shortcuts prepare a usable question. A blocked context request must identify its boundary and offer an explicit allow-through-page action; never misreport it as a provider failure or claim an unsaved question was persisted.
+
+## Current companion: simple chat with book memory
+This section supersedes the modes, keep/resolve cards, orientation form and hard spoiler-boundary controls above, following the user's explicit simplification request. Preserve the PDF reader and saved position.
+
+- One plain chronological chat per book, one composer, Send/Enter (Shift+Enter newline), restrained typography and minimal neutral styling. The transcript scrolls independently with the composer visible. No mode, provider, keep/resolve or boundary controls in the chat. Provider is a local Codex App Server process authenticated through the installed Codex ChatGPT login. Demo is explicit test configuration only; unavailable runtime/login produces actionable errors.
+- Selected text/region is a compact removable attachment. Reuse the existing PDF.js reader and repositories. Keep useful page references navigable.
+- One small persistent, editable book memory note, behind a Memory control. Reuse stoppingNote storage as this memory, preserving existing notes. Include it in chat context. This v1 uses explicit reader-edited memory, not inferred learner profiles or an additional memory service. Normal saved chat history supplies conversational continuity.
+- Model tools: get_reader_position (book title/author, physical page, outline section if available and memory), search_book (grep-like literal case-insensitive search over extracted text, bounded snippets/page numbers), read_pages (small bounded page passages). Tools are scoped server-side to the active book; never accept a filesystem path, shell command or arbitrary book identifier from the model.
+- Search may cross-reference the entire active PDF, superseding the hard page boundary in the new chat path. Tell the model the current position and to avoid unsolicited later plot revelations. Only bounded retrieved excerpts, recent chat, memory and optional attachment are sent; no bulk PDF upload.
+- Use Codex App Server over local stdio, with one durable resumable thread per book. Codex owns conversation context and the agent loop. Mneme implements validated book-scoped dynamic tools and enforces per-turn tool/context budgets. Plain final text with a visible pending status; evidence-backed page references. Keep runtime access isolated from the development repo: no shell/file writes, unrelated plugins or app tools. Pin/verify the local experimental protocol against installed Codex. Store book-to-thread mapping in SQLite and preserve existing notes/history. The app retains exact reader state and explicit memory notes; native Codex memory is optional supplementary recall, not required for v1.
+- Reuse existing conversation persistence where practical and preserve prior records. Keep legacy endpoints functional if needed; do not build a parallel framework. No new dependency unless it removes substantial complexity.
+- Verify multi-turn memory/history, reader-position tool, search/read cross-references, malformed/unknown tools, cross-book isolation and bounds, provider failure/retry, native chat keyboard behavior and reload persistence. Run existing checks and a synthetic browser/live-tool smoke test. Refresh PR screenshots to reflect the simplified UI.
+
+## September 7 implementation approval
+User approved the Codex runtime approach. Reuse the current ChatGPT login without copying credentials into app storage. Keep DeepSeek as a future provider option pending verified protocol compatibility; do not change the user global Codex configuration or migrate credentials.

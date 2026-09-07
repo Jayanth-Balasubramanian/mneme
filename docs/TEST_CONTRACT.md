@@ -27,3 +27,9 @@ Provider HTTP tests use stubs and inspect bounded text/image inputs, JSON format
 Cover PDF import, title/author, actual rendered text selection, demo question, citation navigation, saved note/history and resume after reload. Capture synthetic screenshots for public review. A live DeepSeek smoke test with the original synthetic reading notes verifies the configured adapter separately. User PDFs, local databases, API credentials and private reading history must not appear in committed evidence.
 
 CI runs security checks, typecheck, lint, build, Bun tests and an isolated migration check. Browser checks require a locally installed Chrome/Chromium and are run locally. Record actual pass/fail results and any omitted checks in `docs/LOOP_LOG.md` and the PR; this document states the contract, not a claim that a particular run passed.
+
+## Codex chat follow-up
+
+Test local stdio protocol initialization, dynamic tool calls, native thread resume, process exit/timeout handling, and evidence-backed source references using a stub process. Test active-book isolation, literal search (including regex metacharacters), page bounds, tool budgets, invalid arguments and explicit memory in isolated persistence tests. The browser flow now uses the minimal chat, saved Memory note, page navigation and reload. Live runtime checks use only original synthetic source material and the current installed runtime; no account secrets or user source text enter CI or artifacts.
+
+Exact reading position remains application state. Codex native conversation persistence is verified separately across process restart. Codex's optional background memory generation is not required for app correctness.

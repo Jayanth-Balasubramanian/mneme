@@ -9,7 +9,7 @@ Read docs/SPEC.md first. Mneme is a desktop-first PDF reader with a contextual c
 - Small, purposeful dependencies. Use existing PDF rendering. Do not execute PDF scripts, MDX, arbitrary generated HTML or embedded code.
 - PDFs, extracted text, keys and real user questions are private local data. Repository/CI are public. Commit only original synthetic or explicitly reusable fixtures. Ask before sending a full copyrighted chapter to an external model.
 - Credit title/author when known and preserve document/page/selection traceability. No invented citations. Validate provider output and citation provenance before saving.
-- Reading position and context boundary are distinct; browsing never silently expands the boundary. Retrieved text and history must obey it.
+- The current plain-chat flow may search the entire active book using bounded tools. Reading position guides spoiler-aware responses. Legacy bounded companion endpoints retain their existing rules. Never send the entire PDF/chapter.
 - Store questions/notes durably without inferring understanding. Preserve prior PoC data in additive migrations.
 - No quizzes, flashcards, grading, scheduling, EPUB, OCR, accounts or deployment without user direction.
 

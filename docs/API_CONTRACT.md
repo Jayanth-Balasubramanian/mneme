@@ -17,7 +17,20 @@ The active desktop workflow is a local PDF reader and contextual companion. Shar
 
 Import validates the PDF header and parses the document server-side, verifies the actual page count and derives a SHA-256 byte hash. Limits: 25 MiB PDF, 2,000 pages and 8 MiB aggregate extracted text. PDF/page/state storage uses additive SQLite migrations; prior lesson data is retained. Scroll position is normalized; navigating never silently expands the context boundary.
 
-## Companion
+## Current Codex chat
+
+- `POST /api/companion/chat`: active bookId, message and optional text/region selection. The server reads the saved position/note, resumes the book's Codex thread and responds with the persisted exchange. Credentials and runtime thread configuration never come from the browser.
+- `GET /api/companion/books/:bookId/chat`: transcript for the active book, preserving prior local conversations.
+- Existing reader-state PATCH stores the explicit memory note in stoppingNote and continues to save physical position independently.
+
+Codex App Server runs locally over stdio. Native Codex threads retain model-visible conversation context; SQLite keeps the book-to-thread mapping and the display transcript. Three dynamic tools are scoped server-side to the active book: get_reader_position, search_book and read_pages. Search is literal, case-insensitive and bounded. Only supplied source pages become clickable citations; current-page metadata alone is not source evidence. The new chat path does not apply the legacy hard page boundary.
+
+Runtime startup and turn failures are actionable errors, never silently simulated live responses. The app does not modify global Codex settings or copy credentials. An explicit demo configuration is available for deterministic tests. See the shared types and route implementation for exact response fields and limits.
+
+## Legacy companion endpoints
+
+These endpoints remain for compatibility; their mode/provider/boundary rules do not describe the active plain-chat UI.
+
 
 | Method and path | Behavior |
 | --- | --- |
