@@ -457,6 +457,16 @@ p {
 .conversation-badges span { border-radius: 0.2rem; padding: 0.2rem 0.3rem; background: #e9e0d3; color: var(--ink-muted); font-family: Inter, ui-sans-serif, sans-serif; font-size: 0.52rem; }
 .conversation-card h3 { margin-top: 0.45rem; font-size: 0.78rem; font-weight: 600; line-height: 1.35; }
 .conversation-card p { margin-top: 0.4rem; color: #5a5148; font-size: 0.72rem; line-height: 1.45; }
+.chat-markdown > :first-child { margin-top: 0.4rem; }
+.chat-markdown > :last-child { margin-bottom: 0; }
+.chat-markdown ul, .chat-markdown ol { margin: 0.45rem 0 0 1.1rem; color: #5a5148; font-size: 0.72rem; line-height: 1.5; }
+.chat-markdown li + li { margin-top: 0.2rem; }
+.chat-markdown blockquote { margin: 0.55rem 0 0; border-left: 2px solid #b9ab99; padding-left: 0.65rem; color: var(--ink-muted); }
+.chat-markdown pre { max-width: 100%; margin-top: 0.5rem; overflow: auto; border-radius: 0.25rem; padding: 0.55rem; background: #eee7dd; font-size: 0.68rem; }
+.chat-markdown code { font-size: 0.9em; }
+.chat-markdown table { width: 100%; margin-top: 0.55rem; border-collapse: collapse; font-size: 0.68rem; }
+.chat-markdown th, .chat-markdown td { border: 1px solid #d5c8b9; padding: 0.35rem; text-align: left; }
+.chat-markdown .katex-display { max-width: 100%; overflow-x: auto; overflow-y: hidden; padding: 0.2rem 0; }
 .conversation-error { color: #874b40 !important; }
 .conversation-citations { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.55rem; }
 .conversation-citations button { min-height: 1.55rem; border: 1px solid #cdbfae; border-radius: 0.22rem; padding: 0 0.4rem; background: transparent; color: var(--sage); font-family: Inter, ui-sans-serif, sans-serif; font-size: 0.56rem; cursor: pointer; }

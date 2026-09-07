@@ -21,6 +21,8 @@ The plain chat uses a local Codex App Server process and your existing ChatGPT l
 
 Codex maintains one resumable conversation per book. Mneme keeps the exact page, scroll position and editable book memory locally. The model can check your position, search extracted PDF text and read bounded passages from the active book. Search covers the book for cross-references; the model is instructed to avoid unsolicited spoilers beyond your reading position. It cannot receive the entire PDF through these tools.
 
+Companion answers render GitHub-flavored Markdown and LaTeX-style inline or display math with KaTeX. Raw HTML and MDX are not executed.
+
 ChatGPT authentication consumes the account's Codex allowance. No API key is needed for this path. Runtime/login failures are shown explicitly. Codex's optional automatic memories are separate from the app's explicit note and are not needed to restore reading position.
 
 DeepSeek can later run through Codex's custom provider configuration using its Responses-compatible endpoint and its own API key. The prior direct DeepSeek/OpenAI endpoints are retained for compatibility but do not drive the new chat UI. Never commit credentials, private PDF databases or runtime session data.

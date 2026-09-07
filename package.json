@@ -18,9 +18,14 @@
   },
   "dependencies": {
     "hono": "4.13.7",
+    "katex": "^0.18.7",
     "pdfjs-dist": "6.3.289",
     "react": "19.2.7",
-    "react-dom": "19.2.7"
+    "react-dom": "19.2.7",
+    "react-markdown": "^10.1.0",
+    "rehype-katex": "^7.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
