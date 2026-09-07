@@ -13,3 +13,10 @@
 - Orientation: optional short purpose/prerequisite/observation guidance for a bounded section.
 
 Legacy lesson/approval/checkpoint data remains compatible but does not drive the main UI.
+
+## Plain chat terminology (current)
+- Chat: one chronological conversation per book, replacing companion mode cards.
+- Book memory: explicit reader-editable note reused from stoppingNote, included with recent chat on subsequent requests.
+- Book search: bounded literal matching over locally extracted PDF text, scoped to the active book; no shell access.
+- Reader-position tool: current physical page and source metadata, available to the model for contextual help.
+- Legacy context boundary: retained for old endpoints; no hard page gate in the new chat workflow.

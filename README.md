@@ -2,7 +2,7 @@
 
 A local PDF reader with a contextual companion. Keep the book in view, ask about difficult passages, and return to the same place with your questions and notes intact.
 
-The desktop reader rework is on `codex/pdf-reading-companion` ([PR #15](https://github.com/Jayanth-Balasubramanian/mneme/pull/15)). It supersedes the original generated-lesson interface while preserving its database tables.
+The desktop reader supersedes the original generated-lesson interface while preserving its database tables. The companion is a plain chat backed by a local Codex runtime.
 
 ## Run locally
 
@@ -13,21 +13,17 @@ bun run dev
 
 Open [Mneme](http://127.0.0.1:5173). The API binds to loopback on port 8787. The default SQLite database is `mneme.sqlite`; set `MNEME_DB_PATH` to choose another location. Keep that database private: it contains imported PDFs, extracted text and reading history.
 
-Import a text-based PDF (up to 25 MiB / 2,000 pages), check its title/author, and save it to your library. Select text or enable region capture for a formula. Page numbers refer to physical PDF pages, which may differ from printed numbers. Reading position and the companion's allowed context boundary are separate controls. If a question exceeds that boundary, use the explicit “Allow through page…” action and ask again. Left/right arrows and Page Up/Page Down navigate when you are not editing a field.
+Import a text-based PDF (up to 25 MiB / 2,000 pages), check its title/author, and save it to your library. Select text or enable region capture for a formula. Page numbers refer to physical PDF pages, which may differ from printed numbers. The chat can search the active book for cross-references and knows your current reading position. Left/right arrows and Page Up/Page Down navigate when you are not editing a field.
 
-## Companion setup
+## Chat runtime
 
-Reading and local document storage require no API key. Demo responses are explicitly labeled and are only for checking the interaction. Real explanations use DeepSeek when configured; OpenAI Responses is also supported. Configure credentials server-side:
+The plain chat uses a local Codex App Server process and your existing ChatGPT login. Install the current Codex CLI or desktop app, then run `codex login` if needed. Mneme prefers the current desktop app's bundled binary when available; set `MNEME_CODEX_BIN` to override the executable and `MNEME_CODEX_MODEL` to override the configured model.
 
-```bash
-export DEEPSEEK_API_KEY='<your API key>'
-export DEEPSEEK_MODEL='deepseek-v4-flash'
-bun run dev
-```
+Codex maintains one resumable conversation per book. Mneme keeps the exact page, scroll position and editable book memory locally. The model can check your position, search extracted PDF text and read bounded passages from the active book. Search covers the book for cross-references; the model is instructed to avoid unsolicited spoilers beyond your reading position. It cannot receive the entire PDF through these tools.
 
-Do not put keys in browser code, commit them, or paste them into screenshots. A live question sends bounded selected/retrieved text and an optional selected image to the selected provider; it does not upload the complete PDF. The model can still make mistakes. Page citations show where supporting context came from, not a guarantee that the interpretation is correct.
+ChatGPT authentication consumes the account's Codex allowance. No API key is needed for this path. Runtime/login failures are shown explicitly. Codex's optional automatic memories are separate from the app's explicit note and are not needed to restore reading position.
 
-The context boundary limits supplied pages and conversation evidence. Model instructions also prohibit later spoilers, but a model's prior knowledge cannot be completely controlled by retrieval boundaries.
+DeepSeek can later run through Codex's custom provider configuration using its Responses-compatible endpoint and its own API key. The prior direct DeepSeek/OpenAI endpoints are retained for compatibility but do not drive the new chat UI. Never commit credentials, private PDF databases or runtime session data.
 
 ## Development
 

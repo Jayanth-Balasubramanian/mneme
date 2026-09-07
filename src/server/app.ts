@@ -16,9 +16,13 @@ import type { SQLiteReaderRepository } from "./db/reader";
 import type { SQLiteConversationRepository } from "./db/conversations";
 import type { CompanionProvider } from "./ai/companion";
 import { createConfiguredDeepSeekProvider, createConfiguredOpenAIProvider, DemoCompanionProvider } from "./ai/companion";
+import type { CodexChatService } from "./ai/codex";
+import { createConfiguredCodexService, DemoCodexChatService } from "./ai/codex";
+import type { SQLiteCodexThreadRepository } from "./db/codexThreads";
 import {
   createLocalChapterSourceRepository,
   createLocalConversationRepository,
+  createLocalCodexThreadRepository,
   createLocalGenerationRepository,
   createLocalReaderRepository,
   createLocalStudyAttemptRepository,
@@ -32,6 +36,8 @@ type ServerAppOptions = {
   readerPdfValidator?: ReaderPdfValidator;
   conversationRepository?: SQLiteConversationRepository;
   companionProviders?: Partial<Record<"demo" | "openai" | "deepseek", CompanionProvider>>;
+  codexChatService?: CodexChatService;
+  codexThreadRepository?: SQLiteCodexThreadRepository;
   lessonGenerator?: LessonGenerator;
 };
 
@@ -52,6 +58,8 @@ export function createServerApp(options: ServerAppOptions = {}): Hono {
   let studyAttemptRepository = options.studyAttemptRepository;
   let readerRepository = options.readerRepository;
   let conversationRepository = options.conversationRepository;
+  let codexThreadRepository = options.codexThreadRepository;
+  let codexChatService = options.codexChatService;
   const companionProviders = options.companionProviders ?? {};
 
   registerHealthRoutes(app);
@@ -130,7 +138,16 @@ export function createServerApp(options: ServerAppOptions = {}): Hono {
     getProvider: (provider) => {
       if (provider === "demo") return companionProviders.demo ?? new DemoCompanionProvider();
       if (provider === "openai") return companionProviders.openai ?? createConfiguredOpenAIProvider();
+      if (provider === "codex") return undefined;
       return companionProviders.deepseek ?? createConfiguredDeepSeekProvider();
+    },
+    getChatService: () => {
+      if (Bun.env.MNEME_COMPANION_PROVIDER === "demo") return codexChatService ??= new DemoCodexChatService();
+      return codexChatService ??= createConfiguredCodexService();
+    },
+    getCodexThreadRepository: () => {
+      codexThreadRepository ??= createLocalCodexThreadRepository();
+      return codexThreadRepository;
     },
   });
 

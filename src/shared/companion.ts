@@ -6,7 +6,7 @@ export const COMPANION_MAX_CONTEXT_CHARS = 12_000;
 export const COMPANION_MAX_IMAGE_DATA_URL_LENGTH = 2_500_000;
 
 export type CompanionMode = "explain" | "define" | "missing-step" | "orient";
-export type CompanionProviderName = "demo" | "openai" | "deepseek";
+export type CompanionProviderName = "demo" | "openai" | "deepseek" | "codex";
 
 export type CompanionCitation = {
   pageNumber: number;
@@ -29,6 +29,31 @@ export type CompanionQuestionRequest = {
   pageFrom?: number;
   pageTo?: number;
   selection?: ReaderSelection;
+};
+
+export type CompanionChatRequest = {
+  bookId: string;
+  message: string;
+  selection?: ReaderSelection;
+};
+
+export type CompanionChatHistoryMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
+
+export type CompanionChatResult = {
+  answer: string;
+  citations: CompanionCitation[];
+  evidencePages: number[];
+  maxContextPage: number;
+};
+
+export type CompanionChatToolName = "get_reader_position" | "search_book" | "read_pages";
+
+export type CompanionChatToolCall = {
+  name: CompanionChatToolName;
+  arguments: Record<string, unknown>;
 };
 
 export type CompanionConversation = {
@@ -92,7 +117,7 @@ export function parseCompanionQuestionRequest(payload: unknown): ValidationResul
   const mode = payload.mode;
   if (mode !== "explain" && mode !== "define" && mode !== "missing-step" && mode !== "orient") issues.push({ field: "mode", message: "Expected explain, define, missing-step, or orient." });
   const provider = payload.provider ?? "demo";
-  if (provider !== "demo" && provider !== "openai" && provider !== "deepseek") issues.push({ field: "provider", message: "Expected demo, openai, or deepseek." });
+  if (provider !== "demo" && provider !== "openai" && provider !== "deepseek" && provider !== "codex") issues.push({ field: "provider", message: "Expected demo, openai, deepseek, or codex." });
   const pageFields: Array<"pageNumber" | "pageFrom" | "pageTo"> = ["pageNumber", "pageFrom", "pageTo"];
   for (const field of pageFields) {
     const value = payload[field];
@@ -111,6 +136,15 @@ export function parseCompanionQuestionRequest(payload: unknown): ValidationResul
     ...(typeof payload.pageTo === "number" ? { pageTo: payload.pageTo } : {}),
     ...(payload.selection === undefined ? {} : { selection: payload.selection as ReaderSelection }),
   } };
+}
+
+export function parseCompanionChatRequest(payload: unknown): ValidationResult<CompanionChatRequest> {
+  if (!isRecord(payload)) return { ok: false, issues: [{ field: "body", message: "Expected a JSON object." }] };
+  const parsed = parseCompanionQuestionRequest({ bookId: payload.bookId, question: payload.message, mode: "explain", selection: payload.selection });
+  if (!parsed.ok) {
+    return { ok: false, issues: parsed.issues.map((issue) => issue.field === "question" ? { ...issue, field: "message" } : issue) };
+  }
+  return { ok: true, value: { bookId: parsed.value.bookId, message: parsed.value.question, ...(parsed.value.selection ? { selection: parsed.value.selection } : {}) } };
 }
 
 export function parseCompanionAnswer(payload: unknown, allowedPages: Set<number>): ValidationResult<CompanionAnswer> {

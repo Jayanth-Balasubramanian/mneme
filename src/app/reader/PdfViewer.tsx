@@ -116,7 +116,8 @@ export function PdfViewer({
     const pageRect = surfaceRef.current.getBoundingClientRect();
     const rectangles = Array.from(selection.getRangeAt(0).getClientRects())
       .map((rect) => normalizedRectFromClientRect(rect, pageRect))
-      .filter((rect) => rect.width > 0 && rect.height > 0);
+      .filter((rect) => rect.width > 0 && rect.height > 0)
+      .slice(0, 32);
     if (rectangles.length === 0) return;
     onSelection({ text: selection.toString().trim(), pageNumber: currentPage, rectangles });
   }

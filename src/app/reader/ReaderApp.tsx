@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import type { PDFDocumentProxy } from "pdfjs-dist";
-import type { CompanionCapabilities, CompanionConversation, CompanionMode, CompanionProviderName } from "../../shared/companion";
+import type { CompanionConversation } from "../../shared/companion";
 
 import {
   disposePdfDocument,
@@ -71,16 +71,11 @@ export function ReaderApp() {
   const [selection, setSelection] = useState<ReaderSelection | null>(null);
   const [conversations, setConversations] = useState<CompanionConversation[]>([]);
   const [question, setQuestion] = useState("");
-  const [companionMode, setCompanionMode] = useState<CompanionMode>("explain");
-  const [companionProvider, setCompanionProvider] = useState<CompanionProviderName>("demo");
-  const [capabilities, setCapabilities] = useState<CompanionCapabilities | null>(null);
   const [questionStatus, setQuestionStatus] = useState<"idle" | "sending">("idle");
-  const [boundarySuggestion, setBoundarySuggestion] = useState<number | null>(null);
-  const [orientationFrom, setOrientationFrom] = useState(1);
-  const [orientationTo, setOrientationTo] = useState(1);
   const questionInputRef = useRef<HTMLTextAreaElement>(null);
   const [companionOpen, setCompanionOpen] = useState(true);
   const [companionWide, setCompanionWide] = useState(false);
+  const [memoryOpen, setMemoryOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(true);
   const stateDirty = useRef(false);
   const activeBookRef = useRef<ReaderBook | null>(null);
@@ -166,14 +161,13 @@ export function ReaderApp() {
     return nextBooks;
   }, []);
 
-  const loadConversations = useCallback(async (bookId: string, boundary: number): Promise<void> => {
+  const loadConversations = useCallback(async (bookId: string): Promise<void> => {
     try {
-      const response = await fetch(`/api/companion/books/${bookId}/conversations`);
+      const response = await fetch(`/api/companion/books/${bookId}/chat`);
       if (!response.ok) return;
       const body = await response.json() as { conversations?: CompanionConversation[] };
       if (activeBookRef.current?.id === bookId) {
-        const currentBoundary = activeBookRef.current.state.spoilerBoundaryPage;
-        setConversations((body.conversations ?? []).filter((conversation) => conversation.status !== "answered" || (conversation.maxContextPage <= Math.min(boundary, currentBoundary) && conversation.evidencePages.every((page) => page <= currentBoundary))));
+        setConversations(body.conversations ?? []);
       }
     } catch {
       // A history refresh is best effort; the reading position remains available.
@@ -214,7 +208,7 @@ export function ReaderApp() {
       setActiveBook(book);
       setConversations([]);
       setQuestion("");
-      void loadConversations(book.id, book.state.spoilerBoundaryPage);
+      void loadConversations(book.id);
       setLoadStatus("ready");
       stateDirty.current = false;
       stateReadyRef.current = true;
@@ -236,25 +230,12 @@ export function ReaderApp() {
   }, [openBook, refreshBooks]);
 
   useEffect(() => {
-    void fetch("/api/companion/capabilities").then(async (response) => {
-      if (!response.ok) return;
-      const next = await response.json() as CompanionCapabilities;
-      setCapabilities(next);
-      if (next.deepseekAvailable) setCompanionProvider("deepseek");
-    }).catch(() => {
-      // The deterministic demo remains available when capability discovery fails.
-    });
-  }, []);
-
-  useEffect(() => {
     if (!activeBook) {
       setConversations([]);
       return;
     }
-    setOrientationFrom(activeBook.state.currentPage);
-    setOrientationTo(Math.min(activeBook.pageCount, activeBook.state.currentPage + 2));
-    void loadConversations(activeBook.id, activeBook.state.spoilerBoundaryPage);
-  }, [activeBook?.id, activeBook?.state.spoilerBoundaryPage, loadConversations]);
+    void loadConversations(activeBook.id);
+  }, [activeBook?.id, loadConversations]);
 
   useEffect(() => () => {
     if (pdfDocument) disposePdfDocument(pdfDocument);
@@ -343,7 +324,7 @@ export function ReaderApp() {
       setQuestion("");
       setConversations([]);
       stateConflictRef.current = false;
-      void loadConversations(book.id, book.state.spoilerBoundaryPage);
+      void loadConversations(book.id);
       setPendingImport(null);
       stateDirty.current = false;
       stateReadyRef.current = true;
@@ -378,81 +359,37 @@ export function ReaderApp() {
       setQuestionStatus("idle");
       return;
     }
-    const bookState = activeBookRef.current?.state ?? activeBook.state;
-    const body = {
-      bookId,
-      question: prompt,
-      mode: companionMode,
-      provider: companionProvider,
-      pageNumber: companionMode === "orient" ? undefined : selection?.pageNumber ?? bookState.currentPage,
-      pageFrom: companionMode === "orient" ? orientationFrom : undefined,
-      pageTo: companionMode === "orient" ? orientationTo : undefined,
-      selection: companionMode === "orient" ? undefined : selection ?? undefined,
-    };
+    const attachedSelection = selection
+      ? { ...selection, rectangles: selection.rectangles.slice(0, 32) }
+      : undefined;
+    const body = { bookId, message: prompt, ...(attachedSelection ? { selection: attachedSelection } : {}) };
     try {
-      const response = await fetch("/api/companion/questions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const response = await fetch("/api/companion/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const responseBody = await response.json() as CompanionConversation | { conversation?: CompanionConversation; error?: string };
       const saved = "conversation" in responseBody ? responseBody.conversation : responseBody;
       if (activeBookRef.current?.id !== bookId) return;
       if (saved && typeof saved === "object" && "id" in saved) setConversations((current) => [...current.filter((conversation) => conversation.id !== saved.id), saved as CompanionConversation]);
       if (!response.ok) {
-        if ("error" in responseBody && responseBody.error === "spoiler_boundary_violation") {
-          const requestedPage = selection?.pageNumber ?? (companionMode === "orient" ? orientationTo : bookState.currentPage);
-          setBoundarySuggestion(Math.min(activeBook.pageCount, Math.max(bookState.spoilerBoundaryPage + 1, requestedPage)));
-          setError(`That request is beyond your page ${bookState.spoilerBoundaryPage} context boundary.`);
-        } else if ("error" in responseBody && responseBody.error === "provider_not_configured") {
-          setError("Live companion credentials are not configured. Choose Demo or configure a live provider on the server.");
-        } else if ("conversation" in responseBody && responseBody.conversation?.status === "failed") {
-          setError("The companion could not answer. Your question is saved for retry.");
-        } else {
-          setError("The companion request was rejected. Check the page and question, then try again.");
+        if ("conversation" in responseBody && responseBody.conversation?.status === "failed") setError("Chat could not answer right now. Your message is saved; use Retry below.");
+        else {
+          const firstIssue = "issues" in responseBody && Array.isArray(responseBody.issues)
+            ? responseBody.issues.find((issue): issue is { message: string } => typeof issue === "object" && issue !== null && "message" in issue && typeof issue.message === "string")
+            : undefined;
+          setError(firstIssue?.message ?? "The chat request was rejected. Check the message and try again.");
         }
         return;
       }
       setQuestion("");
     } catch {
-      setError("The companion could not be reached. Your question stays in this form for retry.");
+      setError("Chat could not be reached. Your message stays in this form for retry.");
     } finally {
       setQuestionStatus("idle");
     }
   }
 
-  function useShortcut(mode: CompanionMode): void {
-    setCompanionMode(mode);
-    if (!question.trim()) setQuestion(mode === "define" ? "Define the key term in this passage." : mode === "missing-step" ? "What step is missing here?" : "Explain this passage in plain language.");
-    questionInputRef.current?.focus();
-  }
-
-  function allowBoundary(): void {
-    if (!activeBook || boundarySuggestion === null) return;
-    updateState({ spoilerBoundaryPage: boundarySuggestion });
-    setBoundarySuggestion(null);
-    setError(null);
-  }
-
-  async function toggleResolved(conversation: CompanionConversation): Promise<void> {
-    if (!activeBook) return;
-    const response = await fetch(`/api/companion/books/${activeBook.id}/conversations/${conversation.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resolved: !conversation.resolved }) });
-    if (!response.ok) return;
-    const saved = await response.json() as CompanionConversation;
-    setConversations((current) => current.map((entry) => entry.id === saved.id ? saved : entry));
-  }
-
-  async function toggleKept(conversation: CompanionConversation): Promise<void> {
-    if (!activeBook) return;
-    const response = await fetch(`/api/companion/books/${activeBook.id}/conversations/${conversation.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kept: !conversation.kept }) });
-    if (!response.ok) return;
-    const saved = await response.json() as CompanionConversation;
-    setConversations((current) => current.map((entry) => entry.id === saved.id ? saved : entry));
-  }
-
   function retryConversation(conversation: CompanionConversation): void {
     setQuestion(conversation.question);
-    setCompanionMode(conversation.mode);
-    setCompanionProvider(conversation.provider);
     setSelection(conversation.selection ?? null);
-    if (conversation.pageFrom !== undefined) setOrientationFrom(conversation.pageFrom);
-    if (conversation.pageTo !== undefined) setOrientationTo(conversation.pageTo);
     setError(null);
     questionInputRef.current?.focus();
   }
@@ -464,7 +401,7 @@ export function ReaderApp() {
     <main className="reader-app">
       <input ref={fileInputRef} type="file" accept="application/pdf,.pdf" onChange={(event) => void handleFileChange(event)} hidden />
 
-      {error ? <div className="reader-alert" role="alert"><span>{error}</span>{boundarySuggestion !== null ? <button className="reader-alert__action" onClick={allowBoundary}>Allow through page {boundarySuggestion}</button> : null}<button onClick={() => { setError(null); setBoundarySuggestion(null); }} aria-label="Dismiss error">×</button></div> : null}
+      {error ? <div className="reader-alert" role="alert"><span>{error}</span><button onClick={() => setError(null)} aria-label="Dismiss error">×</button></div> : null}
 
       <div className={`reader-layout${navOpen ? "" : " reader-layout--nav-closed"}${companionOpen ? "" : " reader-layout--companion-closed"}${companionWide ? " reader-layout--companion-wide" : ""}`}>
         <aside className={`library-sidebar${navOpen ? "" : " library-sidebar--closed"}`}>
@@ -507,16 +444,11 @@ export function ReaderApp() {
         </section>
 
         {companionOpen ? <aside className="companion-panel">
-          <div className="companion-heading"><div><p className="reader-kicker">Contextual companion</p><h2>{companionTitle}</h2></div><div className="companion-heading-actions"><button className="panel-size-button" onClick={() => setCompanionWide((wide) => !wide)}>{companionWide ? "Compact" : "Wide"}</button><button className="icon-button" onClick={() => setCompanionOpen(false)} aria-label="Close companion">×</button></div></div>
-          {selection ? <div className="selection-card">{selection.regionImageDataUrl ? <img src={selection.regionImageDataUrl} alt="Captured page region" className="region-preview" /> : <blockquote>“{selection.text}”</blockquote>}<span className="selection-anchor">Page {selection.pageNumber} · {selection.rectangles.length} anchor{selection.rectangles.length === 1 ? "" : "s"}</span><div className="companion-actions"><button onClick={() => useShortcut("explain")}>Explain</button><button onClick={() => useShortcut("define")}>Define</button><button onClick={() => useShortcut("missing-step")}>Missing step</button></div></div> : <div className="companion-empty"><div className="companion-icon">⌁</div><h3>Keep the thread nearby.</h3><p>Select a passage or capture a region when a page asks for more attention. Your bounded page context and saved questions will stay beside the reader.</p></div>}
-          <div className="question-composer">
-            <div className="composer-row"><label className="mode-select">Mode<select aria-label="Companion mode" value={companionMode} onChange={(event) => setCompanionMode(event.currentTarget.value as CompanionMode)}><option value="explain">Explain</option><option value="define">Define</option><option value="missing-step">Find missing step</option><option value="orient">Orient in a bounded range</option></select></label><label className="mode-select">Source<select aria-label="Companion provider" value={companionProvider} onChange={(event) => setCompanionProvider(event.currentTarget.value as CompanionProviderName)}><option value="demo">Demo · local</option><option value="deepseek">DeepSeek · {capabilities?.deepseekModel ?? "deepseek-v4-flash"}{capabilities?.deepseekAvailable ? "" : " · configure server"}</option><option value="openai">OpenAI · {capabilities?.liveModel ?? "configure server"}</option></select></label></div>
-            {companionMode === "orient" ? <div className="range-row"><label>From<input type="number" min="1" max={activeBook?.pageCount ?? 1} value={orientationFrom} onChange={(event) => setOrientationFrom(Number(event.currentTarget.value))} /></label><span>to</span><label>Through<input type="number" min="1" max={activeBook?.pageCount ?? 1} value={orientationTo} onChange={(event) => setOrientationTo(Number(event.currentTarget.value))} /></label></div> : null}
-            <textarea ref={questionInputRef} aria-label="Companion question" placeholder={selection ? "What should we notice here?" : "What are you wondering about this page?"} value={question} onChange={(event) => setQuestion(event.currentTarget.value)} onKeyDown={(event) => { if ((event.metaKey || event.ctrlKey) && event.key === "Enter") void askCompanion(); }} />
-            <div className="composer-footer"><span>{companionProvider === "demo" ? "Demo · deterministic, local, no network" : companionProvider === "deepseek" && selection?.regionImageDataUrl ? `DeepSeek · ${capabilities?.deepseekVisionModel ?? "vision experimental"}` : "Bounded pages + optional region"}</span><button className="button button--dark" onClick={() => void askCompanion()} disabled={questionStatus === "sending" || !activeBook} data-testid="ask-companion">{questionStatus === "sending" ? "Thinking…" : "Ask companion"}</button></div>
-          </div>
-          <div className="conversation-history"><div className="history-heading"><p className="reader-kicker">Thread on this book</p><span>{conversations.length} saved</span></div>{conversations.length === 0 ? <p className="history-empty">Questions you keep will gather here beside their page evidence.</p> : conversations.map((conversation) => <article className={`conversation-card${conversation.resolved ? " conversation-card--resolved" : ""}`} key={conversation.id}><div className="conversation-question"><span>{conversation.mode.replaceAll("-", " ")} · {conversation.provider}</span><div className="conversation-actions">{conversation.status === "failed" ? <button onClick={() => retryConversation(conversation)}>Retry</button> : null}<button onClick={() => void toggleKept(conversation)}>{conversation.kept ? "Kept" : "Keep"}</button><button onClick={() => void toggleResolved(conversation)}>{conversation.resolved ? "Reopen" : "Resolve"}</button></div></div><h3>{conversation.question}</h3>{conversation.answer ? conversation.answer.split(/\n+/).map((paragraph, index) => <p key={index}>{paragraph}</p>) : <p className="conversation-error">{conversation.errorMessage ?? "Waiting to retry this question."}</p>}{conversation.supplementary || conversation.insufficientContext ? <div className="conversation-badges">{conversation.supplementary ? <span>Supplementary explanation</span> : null}{conversation.insufficientContext ? <span>Insufficient bounded context</span> : null}</div> : null}<div className="conversation-citations">{conversation.citations.map((citation, index) => <button key={`${citation.pageNumber}-${index}`} onClick={() => handlePageChange(citation.pageNumber)}>Page {citation.pageNumber}</button>)}</div></article>)}</div>
-          <div className="stopping-note"><div className="note-heading"><div><p className="reader-kicker">Spoiler boundary</p><h3>Safe to discuss through page</h3></div><input aria-label="Spoiler boundary page" type="number" min="1" max={activeBook?.pageCount ?? 1} value={currentState?.spoilerBoundaryPage ?? 1} onChange={(event) => { const boundary = Math.min(activeBook?.pageCount ?? 1, Math.max(1, Number(event.currentTarget.value))); updateState({ spoilerBoundaryPage: boundary }); if (selection && selection.pageNumber > boundary) setSelection(null); }} /></div><p className="note-help">Navigation and this boundary move independently.</p><textarea aria-label="Stopping note" placeholder="What do you want to remember when you return?" value={currentState?.stoppingNote ?? ""} onChange={(event) => updateState({ stoppingNote: event.currentTarget.value })} /></div>
+          <div className="companion-heading"><div><p className="reader-kicker">Companion</p><h2>{companionTitle}</h2></div><div className="companion-heading-actions"><button className="panel-size-button" onClick={() => setCompanionWide((wide) => !wide)}>{companionWide ? "Compact" : "Wide"}</button><button className="icon-button" onClick={() => setCompanionOpen(false)} aria-label="Close companion">×</button></div></div>
+          {selection ? <div className="selection-card selection-card--attachment">{selection.regionImageDataUrl ? <img src={selection.regionImageDataUrl} alt="Captured page region" className="region-preview" /> : <blockquote>“{selection.text}”</blockquote>}<span className="selection-anchor">Page {selection.pageNumber} · attached</span><button className="selection-remove" onClick={() => setSelection(null)} aria-label="Remove selection">×</button></div> : conversations.length === 0 ? <div className="companion-empty"><div className="companion-icon">⌁</div><h3>Ask alongside the page.</h3><p>Ask a question about this book, or select a passage to attach it to the message.</p></div> : null}
+          <div className="conversation-history"><div className="history-heading"><p className="reader-kicker">Chat</p><span>{conversations.length} messages</span></div>{conversations.length === 0 ? <p className="history-empty">Your conversation will stay with this book.</p> : conversations.map((conversation) => <article className={`conversation-card chat-message chat-message--${conversation.status}`} key={conversation.id}><div className="conversation-question"><span>{conversation.status === "failed" ? "Could not answer" : conversation.provider === "demo" ? "Demo" : "Mneme"}</span>{conversation.status === "failed" ? <button onClick={() => retryConversation(conversation)}>Retry</button> : null}</div><p className="chat-message__question">{conversation.question}</p>{conversation.answer ? <div className="chat-message__answer">{conversation.answer.split(/\n+/).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div> : <p className="conversation-error">{conversation.errorMessage ?? "Waiting to retry this message."}</p>}<div className="conversation-citations">{conversation.citations.map((citation, index) => <button key={`${citation.pageNumber}-${index}`} onClick={() => handlePageChange(citation.pageNumber)}>Page {citation.pageNumber}</button>)}</div></article>)}</div>
+          <div className="question-composer"><textarea ref={questionInputRef} aria-label="Companion question" placeholder={selection ? "Ask about the attached passage…" : "Ask anything about this book…"} value={question} onChange={(event) => setQuestion(event.currentTarget.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void askCompanion(); } }} /><div className="composer-footer"><span>Book chat · current position included</span><button className="button button--dark" onClick={() => void askCompanion()} disabled={questionStatus === "sending" || !activeBook} data-testid="ask-companion">{questionStatus === "sending" ? "Thinking…" : "Send"}</button></div></div>
+          <div className="stopping-note memory-panel"><button className="memory-toggle" onClick={() => setMemoryOpen((open) => !open)} aria-expanded={memoryOpen}>Memory <span>{memoryOpen ? "Hide" : "Edit"}</span></button>{memoryOpen ? <><p className="note-help">A short note Mneme can remember when you return.</p><textarea aria-label="Stopping note" placeholder="What do you want to remember about this book?" value={currentState?.stoppingNote ?? ""} onChange={(event) => updateState({ stoppingNote: event.currentTarget.value })} /></> : null}</div>
         </aside> : null}
       </div>
 
