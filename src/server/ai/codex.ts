@@ -84,9 +84,10 @@ function errorMessage(value: unknown): string {
   return "Codex App Server returned an error.";
 }
 
-type RpcRequest = { id: number; method: string; params?: unknown };
 type RpcResponse = { id: number; result?: unknown; error?: unknown };
 type RpcMessage = RpcResponse & { method?: string; params?: unknown };
+type Waiter<T> = { resolve: (value: T) => void; reject: (error: Error) => void };
+type CompletedTurn = { id: string; status?: string; items?: Array<{ type?: string; text?: string }> };
 
 type AppProcess = {
   stdin: { write(data: string): number | Promise<number>; flush(): Promise<void> };
@@ -116,14 +117,14 @@ class StdioAppServer {
   private readonly process: AppProcess;
   private readonly timeoutMs: number;
   private nextId = 1;
-  private readonly pending = new Map<number, { resolve: (value: unknown) => void; reject: (error: Error) => void }>();
+  private readonly pending = new Map<number, Waiter<unknown>>();
   private readonly toolHandler = new Map<string, ReaderToolHandler>();
   private readonly turnText = new Map<string, string>();
   private readonly turnPages = new Map<string, Set<number>>();
-  private readonly turnWaiters = new Map<string, { resolve: (value: CodexChatResult) => void; reject: (error: Error) => void }>();
-  private readonly earlyCompletions = new Map<string, { threadId: string; turn: { id: string; status?: string; items?: Array<{ type?: string; text?: string }> } }>();
+  private readonly turnWaiters = new Map<string, Waiter<CodexChatResult>>();
+  private readonly earlyCompletions = new Map<string, { threadId: string; turn: CompletedTurn }>();
   private readonly earlyToolCalls = new Map<string, Array<{ id: number; params: unknown }>>();
-  private initialized = false;
+  private initialization?: Promise<void>;
 
   constructor(private readonly options: AppServerOptions = {}) {
     if (options.runtimeDirectory) mkdirSync(options.runtimeDirectory, { recursive: true });
@@ -138,10 +139,7 @@ class StdioAppServer {
     void this.consumeOutput();
     void this.process.exited.then((code) => {
       const reason = new RpcError(`Codex App Server exited (${code}).`);
-      for (const waiter of this.pending.values()) waiter.reject(reason);
-      this.pending.clear();
-      for (const waiter of this.turnWaiters.values()) waiter.reject(reason);
-      this.turnWaiters.clear();
+      this.rejectWaiters(reason);
     });
   }
 
@@ -175,8 +173,15 @@ class StdioAppServer {
       }
     } catch (error) {
       const reason = error instanceof Error ? error : new RpcError("Codex output could not be read.");
-      for (const waiter of this.pending.values()) waiter.reject(reason);
+      this.rejectWaiters(reason);
     }
+  }
+
+  private rejectWaiters(reason: Error): void {
+    for (const waiter of this.pending.values()) waiter.reject(reason);
+    this.pending.clear();
+    for (const waiter of this.turnWaiters.values()) waiter.reject(reason);
+    this.turnWaiters.clear();
   }
 
   private handleMessage(message: RpcMessage): void {
@@ -211,19 +216,20 @@ class StdioAppServer {
       return;
     }
     if (message.method === "turn/completed") {
-      const params = message.params as { threadId?: string; turn?: { id?: string; status?: string; items?: Array<{ type?: string; text?: string }> } } | undefined;
+      const params = message.params as { threadId?: string; turn?: CompletedTurn } | undefined;
       const turn = params?.turn;
       if (!params?.threadId || !turn?.id) return;
-      const waiter = this.turnWaiters.get(turn.id);
-      if (!waiter) {
-        this.earlyCompletions.set(turn.id, { threadId: params.threadId, turn: turn as { id: string; status?: string; items?: Array<{ type?: string; text?: string }> } });
-        return;
-      }
-      this.finishTurn(turn.id, params.threadId, turn, waiter);
+      this.finishTurn(params.threadId, turn);
     }
   }
 
-  private finishTurn(turnId: string, threadId: string, turn: { id?: string; status?: string; items?: Array<{ type?: string; text?: string }> }, waiter: { resolve: (value: CodexChatResult) => void; reject: (error: Error) => void }): void {
+  private finishTurn(threadId: string, turn: CompletedTurn): void {
+    const turnId = turn.id;
+    const waiter = this.turnWaiters.get(turnId);
+    if (!waiter) {
+      this.earlyCompletions.set(turnId, { threadId, turn });
+      return;
+    }
     this.turnWaiters.delete(turnId);
     if (turn.status !== "completed") {
       waiter.reject(new RpcError("Codex could not complete the reading turn."));
@@ -234,8 +240,6 @@ class StdioAppServer {
     const citedPages = [...new Set([...text.matchAll(/\[(?:p\.?|page)\s*(\d+)\]/gi)].map((match) => Number(match[1])).filter((page) => deliveredPages.has(page)))].sort((a, b) => a - b);
     const pages = [...deliveredPages].sort((a, b) => a - b);
     waiter.resolve({ threadId, answer: text.trim(), citations: citedPages.map((pageNumber) => ({ pageNumber })), evidencePages: pages, maxContextPage: pages.at(-1) ?? 0 });
-    this.turnText.delete(turnId);
-    this.turnPages.delete(turnId);
   }
 
   private async handleToolCall(id: number, params: unknown): Promise<void> {
@@ -271,7 +275,6 @@ class StdioAppServer {
 
   private async request(method: string, params?: unknown): Promise<unknown> {
     const id = this.nextId++;
-    const request: RpcRequest = { id, method, ...(params === undefined ? {} : { params }) };
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         this.pending.delete(id);
@@ -281,7 +284,7 @@ class StdioAppServer {
         resolve: (value) => { clearTimeout(timer); resolve(value); },
         reject: (error) => { clearTimeout(timer); reject(error); },
       });
-      void this.write(request).catch((error) => {
+      void this.write({ id, method, params }).catch((error) => {
         clearTimeout(timer);
         this.pending.delete(id);
         reject(error instanceof Error ? error : new RpcError("Codex request could not be sent."));
@@ -289,12 +292,17 @@ class StdioAppServer {
     });
   }
 
+  private async initialize(): Promise<void> {
+    await this.request("initialize", { clientInfo: { name: "mneme", title: "Mneme Reader", version: "0.1.0" }, capabilities: { experimentalApi: true, requestAttestation: false } });
+    await this.write({ method: "initialized" });
+  }
+
   async chat(input: CodexChatInput): Promise<CodexChatResult> {
-    if (!this.initialized) {
-      await this.request("initialize", { clientInfo: { name: "mneme", title: "Mneme Reader", version: "0.1.0" }, capabilities: { experimentalApi: true, requestAttestation: false } });
-      await this.write({ method: "initialized" });
-      this.initialized = true;
-    }
+    // Different books share one process and must share its handshake as well.
+    await (this.initialization ??= this.initialize().catch((error) => {
+      this.initialization = undefined;
+      throw error;
+    }));
     let threadId = input.threadId;
     if (threadId) {
       await this.request("thread/resume", {
@@ -342,7 +350,7 @@ class StdioAppServer {
     this.earlyToolCalls.delete(turnId);
     for (const call of earlyCalls ?? []) void this.handleToolCall(call.id, call.params);
     try {
-      const result = await new Promise<CodexChatResult>((resolve, reject) => {
+      return await new Promise<CodexChatResult>((resolve, reject) => {
         const timer = setTimeout(() => {
           this.turnWaiters.delete(turnId);
           void this.write({ id: this.nextId++, method: "turn/interrupt", params: { threadId, turnId } });
@@ -355,12 +363,15 @@ class StdioAppServer {
         const completion = this.earlyCompletions.get(turnId);
         if (completion) {
           this.earlyCompletions.delete(turnId);
-          this.finishTurn(turnId, completion.threadId, completion.turn, this.turnWaiters.get(turnId)!);
+          this.finishTurn(completion.threadId, completion.turn);
         }
       });
-      return result;
     } finally {
       this.toolHandler.delete(turnId);
+      this.turnText.delete(turnId);
+      this.turnPages.delete(turnId);
+      this.earlyCompletions.delete(turnId);
+      this.earlyToolCalls.delete(turnId);
     }
   }
 
@@ -401,7 +412,7 @@ function configArgsFromUserConfig(): string[] {
 export class CodexAppServerService implements CodexChatService {
   readonly provider = "codex" as const;
   private readonly server: StdioAppServer;
-  private readonly locks = new Map<string, Promise<unknown>>();
+  private readonly busyBooks = new Set<string>();
 
   constructor(options: AppServerOptions = {}) {
     this.server = new StdioAppServer(options);
@@ -409,13 +420,12 @@ export class CodexAppServerService implements CodexChatService {
 
   async chat(input: CodexChatInput): Promise<CodexChatResult> {
     const key = input.book.id;
-    if (this.locks.has(key)) throw new RpcError("This book is already answering another message.");
-    const next = this.server.chat(input);
-    this.locks.set(key, next);
-    try { return await next; } finally { if (this.locks.get(key) === next) this.locks.delete(key); }
+    if (this.busyBooks.has(key)) throw new RpcError("This book is already answering another message.");
+    this.busyBooks.add(key);
+    try { return await this.server.chat(input); } finally { this.busyBooks.delete(key); }
   }
 
-  isBusy(bookId: string): boolean { return this.locks.has(bookId); }
+  isBusy(bookId: string): boolean { return this.busyBooks.has(bookId); }
 
   close(): void { this.server.close(); }
 }
