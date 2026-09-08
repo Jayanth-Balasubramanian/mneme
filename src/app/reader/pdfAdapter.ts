@@ -1,14 +1,9 @@
-import {
-  getDocument,
-  GlobalWorkerOptions,
-  PasswordException,
-  RenderingCancelledException,
-  TextLayer,
-} from "pdfjs-dist";
 import type {
   PDFDocumentProxy,
   PDFPageProxy,
   RenderTask,
+  TextLayer,
+  getDocument,
 } from "pdfjs-dist";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
@@ -21,7 +16,14 @@ import type { ReaderOutlineItem } from "../../shared/reader";
 
 type TextContent = Awaited<ReturnType<PDFPageProxy["getTextContent"]>>;
 
-GlobalWorkerOptions.workerSrc = workerUrl;
+let pdfJs: Promise<typeof import("pdfjs-dist")> | undefined;
+
+function loadPdfJs(): Promise<typeof import("pdfjs-dist")> {
+  return pdfJs ??= import("pdfjs-dist").then((pdf) => {
+    pdf.GlobalWorkerOptions.workerSrc = workerUrl;
+    return pdf;
+  });
+}
 
 export type ParsedPdfPage = {
   pageNumber: number;
@@ -54,7 +56,7 @@ type RestrictedDocumentOptions = Parameters<typeof getDocument>[0] & {
 function pdfError(error: unknown): PdfAdapterError {
   const name = error instanceof Error ? error.name : "";
   const message = error instanceof Error ? error.message : String(error);
-  if (error instanceof PasswordException || /password/i.test(`${name} ${message}`)) {
+  if (/password/i.test(`${name} ${message}`)) {
     return new PdfAdapterError("password_protected", "This PDF is password protected. Remove the password and try again.");
   }
   return new PdfAdapterError("malformed", `PDF.js could not open this file: ${message}`);
@@ -108,6 +110,7 @@ export async function parseLocalPdf(file: File): Promise<ParsedLocalPdf> {
 
   let loadingTask: ReturnType<typeof getDocument> | undefined;
   try {
+    const { getDocument } = await loadPdfJs();
     const options: RestrictedDocumentOptions = {
       data: bytes.slice(),
       isEvalSupported: false,
@@ -156,6 +159,7 @@ export async function parseLocalPdf(file: File): Promise<ParsedLocalPdf> {
 }
 
 export async function openPdfBytes(bytes: Uint8Array): Promise<PDFDocumentProxy> {
+  const { getDocument } = await loadPdfJs();
   const options: RestrictedDocumentOptions = {
     data: bytes.slice(),
     isEvalSupported: false,
@@ -191,6 +195,7 @@ export async function renderPdfPage(
   zoom: number,
   onRenderTask?: (task: RenderTask) => void,
 ): Promise<PageRender> {
+  const { TextLayer } = await loadPdfJs();
   const viewport = page.getViewport({ scale: zoom });
   const outputScale = window.devicePixelRatio || 1;
   canvas.width = Math.floor(viewport.width * outputScale);
@@ -210,5 +215,5 @@ export async function renderPdfPage(
 }
 
 export function isRenderCancellation(error: unknown): boolean {
-  return error instanceof RenderingCancelledException || (error instanceof Error && error.name === "RenderingCancelledException");
+  return error instanceof Error && error.name === "RenderingCancelledException";
 }
